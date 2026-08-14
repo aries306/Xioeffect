@@ -1,0 +1,9 @@
+{
+  "name": "xio-site",
+  "private": true,
+  "version": "0.1.0",
+  "engines": { "node": "24.x" },
+  "scripts": { "dev": "next dev", "build": "next build", "start": "next start", "lint": "eslint .", "typecheck": "tsc --noEmit" },
+  "dependencies": { "next": "16.1.0", "react": "19.2.0", "react-dom": "19.2.0", "zod": "4.1.12" },
+  "devDependencies": { "@types/node": "24.10.1", "@types/react": "19.2.2", "@types/react-dom": "19.2.2", "eslint": "9.39.1", "eslint-config-next": "16.1.0", "typescript": "5.9.3" }
+}
