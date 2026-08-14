@@ -344,10 +344,10 @@ const XIO_SITE = (() => {
     // CTAs
     document.querySelectorAll("#view-landing [data-go]").forEach(b => b.addEventListener("click", () => {
       if (b.dataset.go === "demo"){ XIO_ENGINE.reset(); XIO_ENGINE.seedDemo(); location.hash = "#/app/today"; }
-      else location.hash = "#/onboarding";
+      else window.top.location.href = "/sign-up";
     }));
     $("nav-login").addEventListener("click", () => {
-      location.hash = XIO_ENGINE.state.onboarded ? "#/app/today" : "#/onboarding";
+      window.top.location.href = "/sign-in";
     });
 
     // Intercept all in-site hash links → Slipstream handled by router/showPage
