@@ -31,3 +31,7 @@ Subscription changes must originate with Stripe Checkout and be applied only fro
 ## Authentication
 
 Clerk is connected to this Vercel project. `/sign-up` and `/sign-in` provide hosted account creation and login; `/app` and sensitive API routes are protected by verified Clerk sessions. The existing browser demo remains isolated from personal cloud data until the Neon-backed data layer is implemented.
+
+## Stripe subscriptions
+
+Checkout is enabled for the configured Pro, Business, and Executive prices and requires a verified Clerk session. Before treating an account as paid, configure a Stripe webhook for `/api/billing/webhook`, set its signing secret as `STRIPE_WEBHOOK_SECRET`, and apply the Neon migration so verified subscription events can synchronize the `subscriptions` table. The portal route remains disabled until that lookup exists.

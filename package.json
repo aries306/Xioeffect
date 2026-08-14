@@ -17,7 +17,8 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "zod": "4.1.12",
-    "@clerk/nextjs": "6.36.4"
+    "@clerk/nextjs": "6.36.4",
+    "stripe": "18.5.0"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

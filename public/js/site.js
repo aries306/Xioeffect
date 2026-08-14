@@ -36,8 +36,19 @@ const XIO_SITE = (() => {
     el.querySelectorAll("[data-plan]").forEach(b => b.addEventListener("click", () => {
       const id = b.dataset.plan;
       if (XIO_ENGINE.state.profile.plan === id) return;
-      XIO_ENGINE.state.profile.plan = id; XIO_ENGINE.save();
-      XIO_APP.toast(`You're now on XIO ${id === "core" ? "Core" : id[0].toUpperCase() + id.slice(1)}. (Demo — no billing yet.)`, "good");
+      if (id !== "core") {
+        fetch("/api/billing/checkout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ plan: id }) })
+          .then(async response => ({ response, body: await response.json().catch(() => ({})) }))
+          .then(({ response, body }) => {
+            if (response.ok && body.url) window.top.location.href = body.url;
+            else if (response.status === 401) window.top.location.href = "/sign-up";
+            else XIO_APP.toast(body.error || "Checkout is unavailable right now.", "bad");
+          })
+          .catch(() => XIO_APP.toast("Checkout is unavailable right now.", "bad"));
+        return;
+      }
+      XIO_ENGINE.state.profile.plan = "core"; XIO_ENGINE.save();
+      XIO_APP.toast("You're now on XIO Core.", "good");
       renderPricing(containerId, plans);
       XIO_APP.syncChrome();
     }));
