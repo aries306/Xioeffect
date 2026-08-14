@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>XIO — The Intelligence Layer for Your Ambition</title>
+<meta name="description" content="XIO is a personal intelligence ecosystem that learns how you work, understands where you're going, and helps you get there. Stop building. Start scaling." />
+<meta property="og:title" content="XIO — The Intelligence Layer for Your Ambition" />
+<meta property="og:description" content="Your private intelligence. An AI ecosystem that learns you, works for you, and helps you become more capable every day." />
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+
+<!-- ✦ XIO ambient background -->
+<div class="ambient" aria-hidden="true">
+  <canvas id="neuro-canvas"></canvas>
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<!-- ✦ The Slipstream — signature page-transition layer -->
+<canvas id="slip-canvas" class="slip-canvas" aria-hidden="true"></canvas>
+
+<!-- ═══════════════════════ LANDING ═══════════════════════ -->
+<div id="view-landing" class="view">
+  <header class="site-nav">
+    <div class="wrap nav-inner">
+      <a class="brand xtl" href="#/home" aria-label="XIO — home">
+        <span class="xio-mark"><svg class="xio-svg" viewBox="0 0 124 46" role="img" aria-label="XIO"><defs><linearGradient id="xg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f7bff"/><stop offset=".55" stop-color="#5a8bff"/><stop offset="1" stop-color="#00e5ff"/></linearGradient></defs><g stroke="url(#xg)" stroke-width="5.5" stroke-linecap="round" fill="none"><path d="M8 8 34 38 M34 8 8 38"/><path d="M50 8v30"/><circle cx="92" cy="23" r="15" class="xio-o"/><circle cx="92" cy="23" r="20" class="xio-halo" stroke-dasharray="2 7"/></g><circle cx="50" cy="23" r="3.4" fill="#fff"/><circle class="xio-e" r="3" fill="#00e5ff"><animateMotion dur="4.2s" repeatCount="indefinite" path="M92 23 m-15 0 a15 15 0 1 1 30 0 a15 15 0 1 1 -30 0"/></circle></svg></span>
+        <span class="xtl-tag">intelligence layer</span>
+      </a>
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav-links">
+        <span class="sr-only">Toggle navigation</span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="site-nav-links">
+        <a href="#/home" data-page="home" class="on">Home</a>
+        <a href="#/intelligence" data-page="intelligence">Intelligence</a>
+        <a href="#/systems" data-page="systems">Systems</a>
+        <a href="#/pricing" data-page="pricing">Pricing</a>
+        <a href="/about" target="_parent">About</a>
+        <a class="nav-mobile-sign-in" href="/sign-in" target="_parent">Sign in</a>
+        <a class="nav-mobile-cta" href="/sign-up" target="_parent">Start with XIO <span>→</span></a>
+      </nav>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" id="nav-login">Sign in</button>
+        <button class="btn btn-primary" data-go="start">Start with XIO</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="site-main">
+
+    <!-- ══════ PAGE: HOME ══════ -->
+    <section class="site-page" id="site-home">
+      <section class="hero2">
+        <div class="wrap hero2-grid">
+          <div class="hero2-copy">
+            <div class="hero-badge"><span class="pulse-dot"></span> A personal intelligence ecosystem</div>
+            <h1 class="hero-title">The intelligence layer<br/>for <em>your ambition.</em></h1>
+            <p class="hero-sub">Stop building. Start scaling. XIO learns how you work, understands where you're going, and helps you get there — <b>clarity</b> instead of overwhelm, <b>momentum</b> instead of catch-up. Your own private intelligence, working behind the scenes.</p>
+            <div class="hero-cta">
+              <button class="btn btn-primary btn-lg" data-go="start">Meet your XIO</button>
+              <button class="btn btn-ghost btn-lg" data-go="demo">Explore a live demo</button>
+            </div>
+            <div class="hero-proof"><span>Private by design</span><i>·</i><span>Learns every day</span><i>·</i><span>No card required</span></div>
+          </div>
+          <div class="core-orb" id="core-orb" aria-hidden="true">
+            <div class="co-halo"></div>
+            <div class="co-ring r1"></div>
+            <div class="co-ring r2"></div>
+            <div class="co-ring r3"></div>
+            <div class="co-beams"><i></i><i></i><i></i></div>
+            <div class="co-core">✦</div>
+            <div class="co-shard" style="--a:14deg"><span>goals</span></div>
+            <div class="co-shard" style="--a:105deg"><span>patterns</span></div>
+            <div class="co-shard" style="--a:213deg"><span>memory</span></div>
+            <div class="co-shard" style="--a:316deg"><span>focus</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="effect">
+        <div class="wrap">
+          <div class="section-kicker rv">The XIO Effect</div>
+          <h2 class="section-title rv">When intelligent systems work together, work starts to feel lighter.</h2>
+          <div class="effect-grid">
+            <div class="effect-row glass rv"><span class="effect-from">Feeling overwhelmed</span><span class="effect-arrow">→</span><span class="effect-to">Clarity about what matters most</span></div>
+            <div class="effect-row glass rv"><span class="effect-from">Managing repetitive tasks</span><span class="effect-arrow">→</span><span class="effect-to">Focus on meaningful work</span></div>
+            <div class="effect-row glass rv"><span class="effect-from">Constantly catching up</span><span class="effect-arrow">→</span><span class="effect-to">Building real momentum</span></div>
+            <div class="effect-row glass rv"><span class="effect-from">A business that needs you everywhere</span><span class="effect-arrow">→</span><span class="effect-to">Systems that create value behind the scenes</span></div>
+          </div>
+          <p class="section-note rv">People don't buy AI because it's AI. They buy <b>more time</b>, <b>better focus</b>, <b>faster growth</b>, <b>greater confidence</b> — and the freedom to build what matters. XIO is designed around those outcomes.</p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <div class="section-kicker rv">From the private beta</div>
+          <h2 class="section-title rv">People are already talking to their XIO.</h2>
+          <div class="reviews" id="home-reviews"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="wrap">
+          <div class="section-kicker rv">Enter the slipstream</div>
+          <h2 class="section-title rv">Two doors into XIO.</h2>
+          <div class="portal-grid">
+            <a href="#/intelligence" class="portal-card glass rv">
+              <div class="portal-ico">🧠</div>
+              <h3>How XIO learns you</h3>
+              <p>The learning loop, honest confidence, and the six stages from assistant to private intelligence.</p>
+              <span class="portal-go">Slip into Intelligence<i>→</i></span>
+            </a>
+            <a href="#/systems" class="portal-card glass rv">
+              <div class="portal-ico">🧰</div>
+              <h3>The systems inside</h3>
+              <p>Content engine, prompt builder, prompt packs, toolkits — capabilities inside one intelligence.</p>
+              <span class="portal-go">Slip into Systems<i>→</i></span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section cta-final">
+        <div class="wrap">
+          <h2>Experience the XIO Effect.</h2>
+          <p>Your private intelligence is waiting to meet you. Two minutes of conversation and it starts learning you.</p>
+          <button class="btn btn-primary btn-lg" data-go="start">Start with XIO — free</button>
+        </div>
+      </section>
+    </section>
+
+    <!-- ══════ PAGE: INTELLIGENCE ══════ -->
+    <section class="site-page" id="site-intelligence">
+      <div class="page-hero wrap">
+        <div class="section-kicker">How it learns</div>
+        <h1 class="page-title">Not another chatbot. An intelligence that <em>compounds.</em></h1>
+        <p class="page-lead">Every interaction feeds a private learning loop. The more you use XIO, the more it understands you. The more it understands you, the more capable you become. This is what a day-5 XIO sounds like:</p>
+      </div>
+
+      <div class="wrap"><div class="hero-card glass demo-card rv">
+        <div class="hero-card-top"><span class="xio-dot"></span><span class="xio-label">XIO</span><span class="xio-status">Learning · Day 5 · Live</span></div>
+        <div class="hero-msg">
+          <div class="hero-msg-title">Good morning, Alex. Here's what I think matters today.</div>
+          <div class="hero-line"><b>🎯 Biggest priority</b><p>Finish the launch plan — it's the one door everything else walks through.</p></div>
+          <div class="hero-line"><b>⚡ Your momentum</b><p>You've moved your flagship project forward three days in a row.</p></div>
+          <div class="hero-line"><b>🧠 Something I noticed</b><p>You opened the pricing page four times but never edited it. I don't think the problem is the page — it's that the next step was never defined.</p></div>
+          <div class="hero-line"><b>🚀 My recommendation</b><p>25 minutes. One step: write the three tiers as headlines only. I'll do it with you.</p></div>
+        </div>
+      </div></div>
+
+      <div class="wrap section-slim">
+        <div class="section-kicker rv">The learning loop</div>
+        <h2 class="section-title rv">Five moves your intelligence makes — every day.</h2>
+        <div class="loop-wheel-wrap">
+          <div class="loop-wheel rv" id="loop-wheel">
+            <div class="lw-ring"></div><div class="lw-ring slow"></div>
+            <div class="lw-center"><div class="lw-name" id="lw-name">Interact</div><p id="lw-desc">You talk. XIO listens for what matters.</p></div>
+            <button class="lw-node" style="--i:0" data-lw="0">Interact</button>
+            <button class="lw-node" style="--i:1" data-lw="1">Understand</button>
+            <button class="lw-node" style="--i:2" data-lw="2">Learn</button>
+            <button class="lw-node" style="--i:3" data-lw="3">Adapt</button>
+            <button class="lw-node" style="--i:4" data-lw="4">Anticipate</button>
+          </div>
+          <div class="lw-legend">
+            <div class="lw-leg rv"><span>01</span><div><h4>Interact</h4><p>Tell XIO what you're working on, in normal language.</p></div></div>
+            <div class="lw-leg rv"><span>02</span><div><h4>Understand</h4><p>XIO identifies goals, preferences, friction and patterns.</p></div></div>
+            <div class="lw-leg rv"><span>03</span><div><h4>Learn</h4><p>Meaningful context becomes memory — with your permission.</p></div></div>
+            <div class="lw-leg rv"><span>04</span><div><h4>Adapt</h4><p>Responses shift to match how you actually work.</p></div></div>
+            <div class="lw-leg rv"><span>05</span><div><h4>Anticipate</h4><p>XIO surfaces the next best move before you ask.</p></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap section-slim">
+        <div class="memory-strip glass rv">
+          <div class="ms-item"><h4>You stay in control</h4><p>See everything XIO remembers. Edit it. Correct it. Delete it. Pause learning entirely. Your intelligence is yours.</p></div>
+          <div class="ms-item"><h4>Honest about confidence</h4><p>XIO never pretends to know what it doesn't. Every insight carries a confidence level — "I've noticed…", never "you are…".</p></div>
+          <div class="ms-item"><h4>Psychology, used well</h4><p>Behavioral science applied to motivation, clarity and momentum — never manipulation, never labels, never diagnoses.</p></div>
+        </div>
+      </div>
+
+      <div class="wrap section-slim">
+        <div class="section-kicker rv">The evolution</div>
+        <h2 class="section-title rv">From assistant to private intelligence.</h2>
+        <div class="stages">
+          <div class="stage glass rv"><span class="stage-tag">Stage 1</span><h4>Assistant</h4><p>"Tell me what you need."</p></div>
+          <div class="stage glass rv"><span class="stage-tag">Stage 2</span><h4>Personalized</h4><p>"I know your goals and preferences."</p></div>
+          <div class="stage glass rv"><span class="stage-tag">Stage 3</span><h4>Partner</h4><p>"I understand how you work."</p></div>
+          <div class="stage glass on rv"><span class="stage-tag">Stage 4</span><h4>Proactive</h4><p>"I noticed something you should know."</p></div>
+          <div class="stage glass rv"><span class="stage-tag">Stage 5</span><h4>Anticipatory</h4><p>"Based on where you're going, here's your next move."</p></div>
+          <div class="stage glass rv"><span class="stage-tag">Stage 6</span><h4>Private intelligence</h4><p>"I've already handled it."</p></div>
+        </div>
+        <p class="section-note center rv">The emotional destination is simple: <b>your own private superhero working for you</b> — calm, intelligent, always in your corner.</p>
+      </div>
+
+      <div class="wrap section-slim">
+        <div class="review-banner glass rv" id="rv-intel"></div>
+      </div>
+
+      <section class="section cta-final">
+        <div class="wrap">
+          <h2>Meet an intelligence that meets you back.</h2>
+          <p>Calibrate your XIO in two minutes. Watch it start to know you.</p>
+          <button class="btn btn-primary btn-lg" data-go="start">Start with XIO — free</button>
+        </div>
+      </section>
+    </section>
+
+    <!-- ══════ PAGE: SYSTEMS ══════ -->
+    <section class="site-page" id="site-systems">
+      <div class="page-hero wrap">
+        <div class="section-kicker">One ecosystem</div>
+        <h1 class="page-title">Capabilities wired into <em>one intelligence.</em></h1>
+        <p class="page-lead">Every tool below shares the same memory, the same context, the same understanding of you. Nothing is a separate app. Everything is XIO.</p>
+      </div>
+
+      <div class="wrap"><div class="synapse-card glass rv" aria-hidden="true">
+        <div class="syn-track"><span class="syn-pulse"></span></div>
+        <div class="syn-nodes">
+          <div class="syn-node" style="--d:0s"><i>💬</i><span>Conversation</span></div>
+          <div class="syn-node" style="--d:.4s"><i>🧠</i><span>Profile</span></div>
+          <div class="syn-node" style="--d:.8s"><i>🎯</i><span>Goals</span></div>
+          <div class="syn-node" style="--d:1.2s"><i>⚡</i><span>Next move</span></div>
+          <div class="syn-node" style="--d:1.6s"><i>✍️</i><span>Content</span></div>
+          <div class="syn-node" style="--d:2s"><i>🧩</i><span>Prompts</span></div>
+          <div class="syn-node" style="--d:2.4s"><i>🧰</i><span>Toolkits</span></div>
+          <div class="syn-node" style="--d:2.8s"><i>🔎</i><span>Insights</span></div>
+        </div>
+        <div class="syn-caption">One signal travels the whole system — every capability sees what the others know about you.</div>
+      </div></div>
+
+      <div class="wrap section-slim">
+        <div class="tools-grid">
+          <div class="tool-card glass rv"><div class="tc-icon">💬</div><h4>XIO Conversation</h4><p>Talk to XIO like a partner. It remembers what matters and adapts how it helps.</p><a class="tc-link" href="#/app/chat">Open in app →</a></div>
+          <div class="tool-card glass rv"><div class="tc-icon">🧠</div><h4>Intelligence Profile</h4><p>A living picture of what XIO has learned about you — focus, patterns, motivation, opportunity.</p><a class="tc-link" href="#/app/intelligence">Open in app →</a></div>
+          <div class="tool-card glass rv"><div class="tc-icon">🎯</div><h4>Goals &amp; Momentum</h4><p>Your goals, projects, wins and streak — tracked so XIO can protect your momentum.</p><a class="tc-link" href="#/app/goals">Open in app →</a></div>
+          <div class="tool-card glass rv"><div class="tc-icon">⚡</div><h4>Next-Best Action</h4><p>Instead of seventeen options, XIO names the one move that matters most right now.</p><a class="tc-link" href="#/app/today">Open in app →</a></div>
+          <div class="tool-card glass rv"><div class="tc-icon">✍️</div><h4>Content Engine</h4><p>Posts, emails, scripts and campaigns — written in your voice, tuned to your audience.</p><a class="tc-link" href="#/app/content">Open in app →</a></div>
+          <div class="tool-card glass rv"><div class="tc-icon">🧩</div><h4>Prompt Builder &amp; Packs</h4><p>Craft professional prompts with a structured builder, or pull from curated pro-grade packs.</p><a class="tc-link" href="#/app/prompts">Open in app →</a></div>
+          <div class="tool-card glass rv"><div class="tc-icon">🧰</div><h4>Toolkits</h4><p>Frameworks for clarity, decisions and momentum — the operating systems behind the outcomes.</p><a class="tc-link" href="#/app/toolkits">Open in app →</a></div>
+          <div class="tool-card glass rv"><div class="tc-icon">🔎</div><h4>Insight Engine</h4><p>Pattern recognition across your work — surfaced with evidence and honest confidence.</p><a class="tc-link" href="#/app/insights">Open in app →</a></div>
+        </div>
+      </div>
+
+      <div class="wrap section-slim">
+        <div class="review-banner glass rv" id="rv-systems"></div>
+      </div>
+
+      <section class="section cta-final">
+        <div class="wrap">
+          <h2>One login. One memory. One intelligence.</h2>
+          <p>Start free and feel what "connected" actually means.</p>
+          <button class="btn btn-primary btn-lg" data-go="start">Start with XIO — free</button>
+        </div>
+      </section>
+    </section>
+
+    <!-- ══════ PAGE: PRICING ══════ -->
+    <section class="site-page" id="site-pricing">
+      <div class="page-hero wrap">
+        <div class="section-kicker">Pricing</div>
+        <h1 class="page-title">Start free. Grow into <em>your own intelligence.</em></h1>
+        <p class="page-lead">XIO becomes more valuable as it learns you. Every plan includes the full privacy contract — you own everything it knows about you.</p>
+      </div>
+      <div class="wrap section-slim">
+        <div class="billing-toggle">
+          <span class="bt-label active" id="bt-monthly">Monthly</span>
+          <button class="bt-switch" id="billing-switch" aria-label="Toggle annual billing"><span class="bt-knob"></span></button>
+          <span class="bt-label" id="bt-annual">Annual <em class="save-tag">save 20%</em></span>
+        </div>
+        <div class="pricing-grid" id="landing-pricing"></div>
+      </div>
+      <div class="wrap section-slim">
+        <div class="review-banner glass rv" id="rv-pricing"></div>
+      </div>
+      <div class="wrap wrap-narrow section-slim">
+        <div class="section-kicker rv">Questions</div>
+        <h2 class="section-title rv">What people usually ask.</h2>
+        <div class="faq" id="landing-faq"></div>
+      </div>
+      <section class="section cta-final">
+        <div class="wrap">
+          <h2>Your ambition deserves an intelligence layer.</h2>
+          <p>Free forever on Core. Upgrade when the relationship deepens.</p>
+          <button class="btn btn-primary btn-lg" data-go="start">Start with XIO — free</button>
+        </div>
+      </section>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div>
+        <a class="brand xtl" href="#/home">
+          <span class="xio-mark"><svg class="xio-svg sm" viewBox="0 0 124 46" role="img" aria-label="XIO"><g stroke="url(#xg)" stroke-width="5.5" stroke-linecap="round" fill="none"><path d="M8 8 34 38 M34 8 8 38"/><path d="M50 8v30"/><circle cx="92" cy="23" r="15"/><circle cx="92" cy="23" r="20" stroke-dasharray="2 7" opacity=".55"/></g><circle cx="50" cy="23" r="3.4" fill="#fff"/></svg></span>
+          <span class="xtl-tag">intelligence layer</span>
+        </a>
+        <p class="footer-tag">The intelligence layer for your ambition. Stop building. Start scaling.</p>
+      </div>
+      <div class="footer-cols">
+        <div><h5>Explore</h5><a href="#/home">Home</a><a href="#/intelligence">Intelligence</a><a href="#/systems">Systems</a><a href="#/pricing">Pricing</a></div>
+        <div><h5>The App</h5><a href="#/app/chat">Talk to XIO</a><a href="#/app/intelligence">My Intelligence</a><a href="#/app/memory">Memory</a><a href="#/app/settings">Privacy controls</a></div>
+        <div><h5>Start</h5><a href="#/onboarding">Create your XIO</a><a href="#/onboarding?demo=1">Live demo</a><a href="#/onboarding">Sign in</a></div>
+      </div>
+    </div>
+    <div class="wrap footer-base">© <span id="year"></span> XIO. Built for the ambitious.</div>
+  </footer>
+</div>
+
+<!-- ═══════════════════════ ONBOARDING ═══════════════════════ -->
+<div id="view-onboarding" class="view">
+  <div class="onboard-shell">
+    <div class="onboard-top">
+      <a class="brand xtl" href="#/home">
+        <span class="xio-mark"><svg class="xio-svg sm" viewBox="0 0 124 46" role="img" aria-label="XIO"><g stroke="url(#xg)" stroke-width="5.5" stroke-linecap="round" fill="none"><path d="M8 8 34 38 M34 8 8 38"/><path d="M50 8v30"/><circle cx="92" cy="23" r="15"/><circle cx="92" cy="23" r="20" stroke-dasharray="2 7" opacity=".55"/></g><circle cx="50" cy="23" r="3.4" fill="#fff"/></svg></span>
+      </a>
+      <div class="onboard-progress" id="onboard-progress"></div>
+      <button class="btn btn-ghost btn-sm" id="onboard-skip">Skip for now</button>
+    </div>
+    <div class="onboard-body">
+      <div class="onboard-thread" id="onboard-thread"></div>
+      <form class="onboard-input" id="onboard-form" autocomplete="off">
+        <input type="text" id="onboard-field" placeholder="Type your answer…" />
+        <button type="submit" class="btn btn-primary" id="onboard-send">Send</button>
+      </form>
+      <div class="onboard-hint" id="onboard-hint">Answer honestly — XIO is learning <i>you</i>, not grading you.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ APP ═══════════════════════ -->
+<div id="view-app" class="view">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-top">
+      <a class="brand xtl" href="#/home" title="Back to site">
+        <span class="xio-mark"><svg class="xio-svg sm" viewBox="0 0 124 46" role="img" aria-label="XIO"><g stroke="url(#xg)" stroke-width="5.5" stroke-linecap="round" fill="none"><path d="M8 8 34 38 M34 8 8 38"/><path d="M50 8v30"/><circle cx="92" cy="23" r="15"/><circle cx="92" cy="23" r="20" stroke-dasharray="2 7" opacity=".55"/></g><circle cx="50" cy="23" r="3.4" fill="#fff"/></svg></span>
+      </a>
+      <button class="side-close" id="side-close">×</button>
+    </div>
+    <div class="side-status" id="side-status"><span class="xio-dot small"></span><span id="side-status-text">Learning · 0 memories</span></div>
+    <nav class="side-nav">
+      <div class="nav-group-label">Today</div>
+      <a href="#/app/today" data-route="today"><span class="ni">☀</span> Today</a>
+      <a href="#/app/chat" data-route="chat"><span class="ni">💬</span> Talk to XIO</a>
+      <div class="nav-group-label">Intelligence</div>
+      <a href="#/app/intelligence" data-route="intelligence"><span class="ni">🧠</span> My Intelligence</a>
+      <a href="#/app/insights" data-route="insights"><span class="ni">🔎</span> Insights</a>
+      <a href="#/app/memory" data-route="memory"><span class="ni">🗂</span> Memory</a>
+      <div class="nav-group-label">Momentum</div>
+      <a href="#/app/goals" data-route="goals"><span class="ni">🎯</span> Goals &amp; Projects</a>
+      <a href="#/app/toolkits" data-route="toolkits"><span class="ni">🧰</span> Toolkits</a>
+      <div class="nav-group-label">Create</div>
+      <a href="#/app/content" data-route="content"><span class="ni">✍️</span> Content Engine</a>
+      <a href="#/app/prompts" data-route="prompts"><span class="ni">🧩</span> Prompt Builder</a>
+      <a href="#/app/packs" data-route="packs"><span class="ni">📦</span> Prompt Packs</a>
+      <div class="nav-group-label">Account</div>
+      <a href="#/app/pricing" data-route="pricing"><span class="ni">✦</span> Plans</a>
+      <a href="#/app/settings" data-route="settings"><span class="ni">⚙</span> Settings</a>
+    </nav>
+    <div class="side-foot">
+      <div class="plan-chip" id="plan-chip">XIO Core</div>
+      <a class="side-exit" href="#/">← Landing</a>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <header class="app-topbar">
+      <button class="burger" id="burger">☰</button>
+      <div class="topbar-title" id="topbar-title">Today</div>
+      <div class="topbar-right">
+        <span class="confidence-pill" id="confidence-pill" title="Average memory confidence">—</span>
+        <button class="btn btn-primary btn-sm" id="topbar-action">New conversation</button>
+      </div>
+    </header>
+    <main class="app-scroll" id="app-scroll">
+
+      <!-- TODAY -->
+      <section class="app-view" id="av-today">
+        <div class="today-head">
+          <h2 id="today-greeting">Good day.</h2>
+          <p id="today-date" class="muted"></p>
+        </div>
+        <div class="today-grid">
+          <div class="glass panel span-2">
+            <div class="panel-head"><h3>☀ Your XIO briefing</h3><span class="tag tag-live">Live</span></div>
+            <div id="briefing" class="briefing"></div>
+          </div>
+          <div class="glass panel">
+            <div class="panel-head"><h3>⚡ Momentum</h3></div>
+            <div id="momentum-block"></div>
+          </div>
+          <div class="glass panel">
+            <div class="panel-head"><h3>🎯 Current focus</h3></div>
+            <div id="focus-block"></div>
+          </div>
+          <div class="glass panel">
+            <div class="panel-head"><h3>🔎 Something XIO noticed</h3></div>
+            <div id="noticed-block"></div>
+          </div>
+          <div class="glass panel span-2">
+            <div class="panel-head"><h3>🚀 Suggested next move</h3></div>
+            <div id="nextmove-block"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHAT -->
+      <section class="app-view" id="av-chat">
+        <div class="chat-shell glass">
+          <div class="chat-thread" id="chat-thread"></div>
+          <div class="chat-suggest" id="chat-suggest"></div>
+          <form class="chat-input" id="chat-form" autocomplete="off">
+            <input id="chat-field" placeholder="Tell XIO anything — it will remember what matters…" />
+            <button type="submit" class="btn btn-primary">Send</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- MY INTELLIGENCE -->
+      <section class="app-view" id="av-intelligence">
+        <div class="stats-row" id="intel-stats"></div>
+        <div class="glass panel">
+          <div class="panel-head"><h3>🧠 What XIO has learned about you</h3><a class="mini-link" href="#/app/memory">Edit what XIO remembers →</a></div>
+          <div id="intel-narrative" class="intel-narrative"></div>
+        </div>
+        <div class="today-grid" style="margin-top:18px">
+          <div class="glass panel">
+            <div class="panel-head"><h3>🧬 Learning loop</h3></div>
+            <div class="loop-mini">
+              <span>Interact</span><i>→</i><span>Understand</span><i>→</i><span>Learn</span><i>→</i><span>Adapt</span><i>→</i><span>Anticipate</span><i>→</i><span>Act</span>
+            </div>
+            <p class="muted small" style="margin-top:12px">Every message you send runs this loop. Memory proposals always ask before they persist — you stay in control.</p>
+          </div>
+          <div class="glass panel">
+            <div class="panel-head"><h3>🧠 Psychology layer</h3></div>
+            <div id="psych-read"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INSIGHTS -->
+      <section class="app-view" id="av-insights">
+        <div class="view-intro"><h2>Insights</h2><p class="muted">Patterns XIO may be seeing in how you work — always with evidence, never as verdicts. Confirm or correct them to sharpen your XIO.</p></div>
+        <div id="insights-list" class="stack"></div>
+      </section>
+
+      <!-- MEMORY -->
+      <section class="app-view" id="av-memory">
+        <div class="view-intro"><h2>Memory</h2><p class="muted">Everything XIO remembers — with confidence levels. Edit, correct or delete anything. This is <b>your</b> intelligence.</p></div>
+        <div class="memory-controls glass panel">
+          <button class="btn btn-ghost btn-sm" id="mem-add">+ Add memory manually</button>
+          <button class="btn btn-ghost btn-sm" id="mem-export">Export my data</button>
+          <button class="btn btn-danger btn-sm" id="mem-clear">Delete all memory</button>
+        </div>
+        <div id="memory-list" class="stack"></div>
+      </section>
+
+      <!-- GOALS -->
+      <section class="app-view" id="av-goals">
+        <div class="view-intro"><h2>Goals &amp; Projects</h2><p class="muted">Where you're going and what you're building. XIO uses these to protect your focus.</p></div>
+        <div class="two-col">
+          <div class="glass panel">
+            <div class="panel-head"><h3>🎯 Goals</h3><button class="btn btn-ghost btn-sm" id="goal-add">+ Add</button></div>
+            <div id="goals-list" class="stack"></div>
+          </div>
+          <div class="glass panel">
+            <div class="panel-head"><h3>🛠 Projects</h3><button class="btn btn-ghost btn-sm" id="project-add">+ Add</button></div>
+            <div id="projects-list" class="stack"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTENT ENGINE -->
+      <section class="app-view" id="av-content">
+        <div class="view-intro"><h2>Content Engine</h2><p class="muted">Content created <b>in your voice</b> — XIO applies what it's learned about your tone and audience.</p></div>
+        <div class="two-col unequal">
+          <div class="glass panel">
+            <div class="form-grid">
+              <label>Content type<select id="cg-type">
+                <option>Social post</option><option>LinkedIn post</option><option>Email</option><option>Product description</option><option>Ad copy</option><option>Video script outline</option><option>Blog intro</option>
+              </select></label>
+              <label>Tone<select id="cg-tone">
+                <option value="auto">Match my style (XIO adaptive)</option><option>Calm &amp; confident</option><option>Bold &amp; punchy</option><option>Warm &amp; human</option><option>Premium &amp; minimal</option>
+              </select></label>
+              <label class="full">Topic / offer<textarea id="cg-topic" rows="2" placeholder="What is this about? e.g. announcing my new coaching program"></textarea></label>
+              <label>Audience<input id="cg-audience" placeholder="e.g. busy founders" /></label>
+              <label>Call to action<input id="cg-cta" placeholder="e.g. book a call" /></label>
+            </div>
+            <button class="btn btn-primary" id="cg-go" style="margin-top:14px">Generate content</button>
+          </div>
+          <div class="glass panel">
+            <div class="panel-head"><h3>✨ Variations</h3><button class="btn btn-ghost btn-sm" id="cg-copy">Copy all</button></div>
+            <div id="cg-output" class="cg-output muted">Your variations will appear here. Tell XIO a topic and it drafts in your voice.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROMPT BUILDER -->
+      <section class="app-view" id="av-prompts">
+        <div class="view-intro"><h2>Prompt Builder</h2><p class="muted">Assemble professional prompts with structure — role, context, objective, format, constraints.</p></div>
+        <div class="two-col unequal">
+          <div class="glass panel">
+            <div class="form-grid">
+              <label>Role<select id="pb-role">
+                <option value="">Choose…</option><option>World-class business strategist</option><option>Elite copywriter</option><option>Behavioral performance coach</option><option>Senior product designer</option><option>Growth marketing lead</option><option>Operations architect</option><option>Decision-science analyst</option>
+              </select></label>
+              <label>Output format<select id="pb-format">
+                <option value="">Choose…</option><option>A step-by-step plan</option><option>A ranked list</option><option>A comparison table</option><option>A ready-to-send draft</option><option>A decision memo</option><option>A checklist</option>
+              </select></label>
+              <label class="full">Objective<textarea id="pb-objective" rows="2" placeholder="What should this prompt achieve?"></textarea></label>
+              <label class="full">Context<textarea id="pb-context" rows="2" placeholder="Background the AI should know"></textarea></label>
+              <label>Constraints<input id="pb-constraints" placeholder="e.g. under 200 words, no jargon" /></label>
+              <label>Tone<select id="pb-tone">
+                <option value="">Default</option><option>Direct</option><option>Persuasive</option><option>Analytical</option><option>Encouraging</option><option>Concise</option>
+              </select></label>
+            </div>
+            <div class="row" style="margin-top:14px;gap:10px">
+              <button class="btn btn-primary" id="pb-save">Save to my library</button>
+              <button class="btn btn-ghost" id="pb-copy">Copy prompt</button>
+            </div>
+          </div>
+          <div class="glass panel">
+            <div class="panel-head"><h3>👁 Live preview</h3><span class="tag" id="pb-score">Quality: —</span></div>
+            <pre id="pb-preview" class="pb-preview muted">Start filling the builder — your prompt assembles here in real time.</pre>
+          </div>
+        </div>
+        <div class="glass panel" style="margin-top:18px">
+          <div class="panel-head"><h3>📚 My prompt library</h3></div>
+          <div id="pb-library" class="stack"></div>
+        </div>
+      </section>
+
+      <!-- PROMPT PACKS -->
+      <section class="app-view" id="av-packs">
+        <div class="view-intro"><h2>Prompt Packs</h2><p class="muted">Curated, pro-grade prompts organized by outcome. Items marked ✦ Pro require a Pro plan.</p></div>
+        <div id="packs-list"></div>
+      </section>
+
+      <!-- TOOLKITS -->
+      <section class="app-view" id="av-toolkits">
+        <div class="view-intro"><h2>Toolkits</h2><p class="muted">The frameworks behind the outcomes — clarity, decisions, momentum.</p></div>
+        <div id="toolkits-list" class="stack"></div>
+      </section>
+
+      <!-- PRICING (app) -->
+      <section class="app-view" id="av-pricing">
+        <div class="view-intro"><h2>Plans</h2><p class="muted">XIO becomes more valuable as it learns you. All plans include full privacy controls.</p></div>
+        <div class="billing-toggle" style="justify-content:flex-start;margin-bottom:18px">
+          <span class="bt-label active" id="abt-monthly">Monthly</span>
+          <button class="bt-switch" id="app-billing-switch"><span class="bt-knob"></span></button>
+          <span class="bt-label" id="abt-annual">Annual <em class="save-tag">save 20%</em></span>
+        </div>
+        <div class="pricing-grid" id="app-pricing"></div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="app-view" id="av-settings">
+        <div class="view-intro"><h2>Settings</h2><p class="muted">Your XIO, tuned to you.</p></div>
+        <div class="stack">
+          <div class="glass panel">
+            <div class="panel-head"><h3>👤 Identity</h3></div>
+            <div class="form-grid">
+              <label>What XIO calls you<input id="set-name" /></label>
+              <label>Preferred tone<select id="set-tone"><option>Calm &amp; confident</option><option>Direct</option><option>Energetic</option></select></label>
+              <label>Level of detail<select id="set-detail"><option>Balanced</option><option>Short &amp; sharp</option><option>Deep &amp; thorough</option></select></label>
+              <label>Plan (demo)<select id="set-plan"><option value="core">XIO Core</option><option value="pro">XIO Pro</option><option value="business">XIO Business</option><option value="executive">XIO Executive</option></select></label>
+            </div>
+            <button class="btn btn-primary btn-sm" id="set-save" style="margin-top:14px">Save settings</button>
+          </div>
+          <div class="glass panel">
+            <div class="panel-head"><h3>🛡 Privacy &amp; learning</h3></div>
+            <div class="toggle-row"><div><h4>Learning enabled</h4><p class="muted small">XIO proposes memories from your conversations.</p></div><button class="bt-switch on" id="set-learning"><span class="bt-knob"></span></button></div>
+            <div class="toggle-row"><div><h4>Ask before remembering</h4><p class="muted small">Every memory requires your confirmation.</p></div><button class="bt-switch on" id="set-ask"><span class="bt-knob"></span></button></div>
+            <div class="row" style="margin-top:14px;gap:10px;flex-wrap:wrap">
+              <button class="btn btn-ghost btn-sm" id="set-export">Export all my data (JSON)</button>
+              <button class="btn btn-danger btn-sm" id="set-reset">Reset XIO completely</button>
+            </div>
+            <p class="muted tiny" style="margin-top:12px">This demo stores everything locally in your browser — nothing leaves your device. The production architecture (in README) keeps the same privacy contract with per-user encrypted memory.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Focus sprint overlay -->
+<div id="sprint-overlay" class="sprint-overlay">
+  <div class="sprint-card glass">
+    <div class="xio-glyph"><span></span></div>
+    <h3 id="sprint-title">Focus sprint</h3>
+    <p class="muted" id="sprint-task">One move. Full attention.</p>
+    <div class="sprint-ring">
+      <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fg" id="sprint-ring" cx="60" cy="60" r="52"/></svg>
+      <div class="sprint-time" id="sprint-time">25:00</div>
+    </div>
+    <div class="row" style="gap:10px;justify-content:center">
+      <button class="btn btn-ghost" id="sprint-cancel">End early</button>
+      <button class="btn btn-primary" id="sprint-done">Done — log the win</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-stack"></div>
+
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/site.js"></script>
+<script src="js/tools.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
