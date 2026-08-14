@@ -352,6 +352,18 @@ const XIO_SITE = (() => {
       });
     }
 
+    const navToggle = $("nav-toggle");
+    const navLinks = $("site-nav-links");
+    const closeNav = () => {
+      navLinks.classList.remove("open");
+      navToggle.setAttribute("aria-expanded", "false");
+    };
+    navToggle.addEventListener("click", () => {
+      const open = navLinks.classList.toggle("open");
+      navToggle.setAttribute("aria-expanded", String(open));
+    });
+    navLinks.querySelectorAll("a").forEach(link => link.addEventListener("click", closeNav));
+
     // CTAs
     document.querySelectorAll("#view-landing [data-go]").forEach(b => b.addEventListener("click", () => {
       if (b.dataset.go === "demo"){ XIO_ENGINE.reset(); XIO_ENGINE.seedDemo(); location.hash = "#/app/today"; }

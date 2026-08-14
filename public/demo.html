@@ -35,12 +35,17 @@
         <span class="xio-mark"><svg class="xio-svg" viewBox="0 0 124 46" role="img" aria-label="XIO"><defs><linearGradient id="xg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8f7bff"/><stop offset=".55" stop-color="#5a8bff"/><stop offset="1" stop-color="#00e5ff"/></linearGradient></defs><g stroke="url(#xg)" stroke-width="5.5" stroke-linecap="round" fill="none"><path d="M8 8 34 38 M34 8 8 38"/><path d="M50 8v30"/><circle cx="92" cy="23" r="15" class="xio-o"/><circle cx="92" cy="23" r="20" class="xio-halo" stroke-dasharray="2 7"/></g><circle cx="50" cy="23" r="3.4" fill="#fff"/><circle class="xio-e" r="3" fill="#00e5ff"><animateMotion dur="4.2s" repeatCount="indefinite" path="M92 23 m-15 0 a15 15 0 1 1 30 0 a15 15 0 1 1 -30 0"/></circle></svg></span>
         <span class="xtl-tag">intelligence layer</span>
       </a>
-      <nav class="nav-links">
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav-links">
+        <span class="sr-only">Toggle navigation</span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="site-nav-links">
         <a href="#/home" data-page="home" class="on">Home</a>
         <a href="#/intelligence" data-page="intelligence">Intelligence</a>
         <a href="#/systems" data-page="systems">Systems</a>
         <a href="#/pricing" data-page="pricing">Pricing</a>
         <a href="/about" target="_parent">About</a>
+        <a class="nav-mobile-sign-in" href="/sign-in" target="_parent">Sign in</a>
+        <a class="nav-mobile-cta" href="/sign-up" target="_parent">Start with XIO <span>→</span></a>
       </nav>
       <div class="nav-actions">
         <button class="btn btn-ghost" id="nav-login">Sign in</button>
