@@ -35,3 +35,7 @@ Clerk is connected to this Vercel project. `/sign-up` and `/sign-in` provide hos
 ## Stripe subscriptions
 
 Checkout is enabled for the configured Pro, Business, and Executive prices and requires a verified Clerk session. Before treating an account as paid, configure a Stripe webhook for `/api/billing/webhook`, set its signing secret as `STRIPE_WEBHOOK_SECRET`, and apply the Neon migration so verified subscription events can synchronize the `subscriptions` table. The portal route remains disabled until that lookup exists.
+
+## Money Builder app
+
+Visit `/money` to use the XIO Money Builder, a browser-based offer planner that helps users choose a monetizable path, model revenue and costs, and follow launch steps for validating demand before building.
