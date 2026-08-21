@@ -362,6 +362,7 @@
       <a href="#/app/content" data-route="content"><span class="ni">✍️</span> Content Engine</a>
       <a href="#/app/prompts" data-route="prompts"><span class="ni">🧩</span> Prompt Builder</a>
       <a href="#/app/packs" data-route="packs"><span class="ni">📦</span> Prompt Packs</a>
+      <a href="#/app/statements" data-route="statements"><span class="ni">🏦</span> Statement Editor</a>
       <div class="nav-group-label">Account</div>
       <a href="#/app/pricing" data-route="pricing"><span class="ni">✦</span> Plans</a>
       <a href="#/app/settings" data-route="settings"><span class="ni">⚙</span> Settings</a>
@@ -549,6 +550,36 @@
       <section class="app-view" id="av-toolkits">
         <div class="view-intro"><h2>Toolkits</h2><p class="muted">The frameworks behind the outcomes — clarity, decisions, momentum.</p></div>
         <div id="toolkits-list" class="stack"></div>
+      </section>
+
+
+      <!-- STATEMENT EDITOR -->
+      <section class="app-view" id="av-statements">
+        <div class="view-intro"><h2>Bank Statement Editor</h2><p class="muted">Create a clearly watermarked planning copy of a statement for budgeting, reconciliation, and scenario review. This is <b>not</b> for altering official bank records or misrepresenting financial history.</p></div>
+        <div class="two-col unequal statement-editor">
+          <div class="glass panel">
+            <div class="panel-head"><h3>🏦 Statement details</h3><button class="btn btn-ghost btn-sm" id="bs-load">Load sample</button></div>
+            <div class="form-grid">
+              <label>Bank name<input id="bs-bank" placeholder="Northstar Bank" /></label>
+              <label>Account holder<input id="bs-holder" placeholder="Alex Morgan" /></label>
+              <label>Account label<input id="bs-account" placeholder="Everyday Checking •••• 4821" /></label>
+              <label>Statement period<input id="bs-period" placeholder="Aug 1–31, 2026" /></label>
+              <label>Opening balance<input id="bs-open" type="number" step="0.01" placeholder="2450.00" /></label>
+              <label>Status<select id="bs-status"><option>Draft planning copy</option><option>Reconciled internal copy</option><option>Scenario forecast</option></select></label>
+            </div>
+            <div class="panel-head" style="margin-top:18px"><h3>Transactions</h3><button class="btn btn-ghost btn-sm" id="bs-add">+ Add row</button></div>
+            <div id="bs-rows" class="statement-rows"></div>
+            <div class="row" style="gap:10px;margin-top:14px;flex-wrap:wrap">
+              <button class="btn btn-primary" id="bs-render">Update preview</button>
+              <button class="btn btn-ghost" id="bs-export">Export JSON</button>
+              <button class="btn btn-ghost" id="bs-print">Print / save PDF</button>
+            </div>
+          </div>
+          <div class="glass panel statement-preview-wrap">
+            <div class="panel-head"><h3>Preview</h3><span class="tag">Watermarked</span></div>
+            <div id="bs-preview" class="statement-preview"></div>
+          </div>
+        </div>
       </section>
 
       <!-- PRICING (app) -->
