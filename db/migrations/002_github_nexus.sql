@@ -17,6 +17,11 @@ create table if not exists github_connections (
   unique(user_id),
   unique(github_user_id)
 );
+alter table github_connections add column if not exists refresh_token_ciphertext text;
+alter table github_connections add column if not exists refresh_token_iv text;
+alter table github_connections add column if not exists refresh_token_auth_tag text;
+alter table github_connections add column if not exists access_token_expires_at timestamptz;
+alter table github_connections add column if not exists refresh_token_expires_at timestamptz;
 
 create table if not exists github_repositories (
   id uuid primary key default gen_random_uuid(),
@@ -37,6 +42,9 @@ create table if not exists github_repositories (
   sync_error text,
   unique(connection_id, github_repo_id)
 );
+alter table github_repositories add column if not exists selected boolean not null default true;
+alter table github_repositories add column if not exists sync_status text not null default 'idle';
+alter table github_repositories add column if not exists sync_error text;
 create index if not exists github_repositories_connection_idx on github_repositories(connection_id);
 create index if not exists github_repositories_selected_idx on github_repositories(connection_id, selected);
 
@@ -76,9 +84,12 @@ create table if not exists nexus_ingest_events (
   research_id uuid references research_records(id) on delete cascade,
   event_type text not null,
   payload jsonb not null,
-  dedupe_key text not null,
+  dedupe_key text,
   created_at timestamptz not null default now(),
-  delivered_at timestamptz,
-  unique(dedupe_key)
+  delivered_at timestamptz
 );
+alter table nexus_ingest_events add column if not exists dedupe_key text;
+update nexus_ingest_events set dedupe_key=md5(id::text) where dedupe_key is null;
+alter table nexus_ingest_events alter column dedupe_key set not null;
+create unique index if not exists nexus_ingest_events_dedupe_idx on nexus_ingest_events(dedupe_key);
 create index if not exists nexus_ingest_events_pending_idx on nexus_ingest_events(delivered_at, created_at);
