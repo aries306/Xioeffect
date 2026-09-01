@@ -6,6 +6,11 @@ create table if not exists github_connections (
   token_ciphertext text not null,
   token_iv text not null,
   token_auth_tag text not null,
+  refresh_token_ciphertext text,
+  refresh_token_iv text,
+  refresh_token_auth_tag text,
+  access_token_expires_at timestamptz,
+  refresh_token_expires_at timestamptz,
   scopes text not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -25,11 +30,15 @@ create table if not exists github_repositories (
   description text,
   pushed_at timestamptz,
   updated_at timestamptz not null,
+  selected boolean not null default true,
   last_synced_at timestamptz,
   last_synced_commit text,
+  sync_status text not null default 'idle' check (sync_status in ('idle','syncing','ready','error')),
+  sync_error text,
   unique(connection_id, github_repo_id)
 );
 create index if not exists github_repositories_connection_idx on github_repositories(connection_id);
+create index if not exists github_repositories_selected_idx on github_repositories(connection_id, selected);
 
 create table if not exists github_documents (
   id uuid primary key default gen_random_uuid(),
@@ -59,6 +68,7 @@ create table if not exists research_records (
   updated_at timestamptz not null default now()
 );
 create index if not exists research_records_user_idx on research_records(user_id, created_at desc);
+create index if not exists research_records_source_idx on research_records(source_type, source_id);
 
 create table if not exists nexus_ingest_events (
   id uuid primary key default gen_random_uuid(),
@@ -66,7 +76,9 @@ create table if not exists nexus_ingest_events (
   research_id uuid references research_records(id) on delete cascade,
   event_type text not null,
   payload jsonb not null,
+  dedupe_key text not null,
   created_at timestamptz not null default now(),
-  delivered_at timestamptz
+  delivered_at timestamptz,
+  unique(dedupe_key)
 );
 create index if not exists nexus_ingest_events_pending_idx on nexus_ingest_events(delivered_at, created_at);
