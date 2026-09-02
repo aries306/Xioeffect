@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const requestedRepoIds = Array.isArray(body.repositoryIds) ? body.repositoryIds.filter((id: unknown): id is string => typeof id === "string") : null;
   const sql = db();
-  const rows = await sql<Connection[]>`select id, token_ciphertext, token_iv, token_auth_tag, refresh_token_ciphertext, refresh_token_iv, refresh_token_auth_tag, access_token_expires_at, refresh_token_expires_at from github_connections where user_id=${user.id} limit 1`;
+  const rows = (await sql`select id, token_ciphertext, token_iv, token_auth_tag, refresh_token_ciphertext, refresh_token_iv, refresh_token_auth_tag, access_token_expires_at, refresh_token_expires_at from github_connections where user_id=${user.id} limit 1`) as Connection[];
   if (!rows[0]) return Response.json({ error: "GitHub is not connected" }, { status: 404 });
   const token = await usableAccessToken(user.id, rows[0], sql);
   const repos = await listGitHubRepositories(token);
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
   const failures: Array<{ repository: string; error: string }> = [];
 
   for (const repo of repos) {
-    const repoRows = await sql<{ id: string; selected: boolean }[]>`insert into github_repositories (connection_id, github_repo_id, full_name, name, is_private, default_branch, html_url, description, pushed_at, updated_at) values (${rows[0].id}, ${repo.id}, ${repo.full_name}, ${repo.name}, ${repo.private}, ${repo.default_branch}, ${repo.html_url}, ${repo.description}, ${repo.pushed_at}, ${repo.updated_at}) on conflict (connection_id, github_repo_id) do update set full_name=excluded.full_name, name=excluded.name, is_private=excluded.is_private, default_branch=excluded.default_branch, html_url=excluded.html_url, description=excluded.description, pushed_at=excluded.pushed_at, updated_at=excluded.updated_at returning id, selected`;
+    const repoRows = (await sql`insert into github_repositories (connection_id, github_repo_id, full_name, name, is_private, default_branch, html_url, description, pushed_at, updated_at) values (${rows[0].id}, ${repo.id}, ${repo.full_name}, ${repo.name}, ${repo.private}, ${repo.default_branch}, ${repo.html_url}, ${repo.description}, ${repo.pushed_at}, ${repo.updated_at}) on conflict (connection_id, github_repo_id) do update set full_name=excluded.full_name, name=excluded.name, is_private=excluded.is_private, default_branch=excluded.default_branch, html_url=excluded.html_url, description=excluded.description, pushed_at=excluded.pushed_at, updated_at=excluded.updated_at returning id, selected`) as Array<{ id: string; selected: boolean }>;
     const repositoryId = repoRows[0].id;
     const shouldSync = requestedRepoIds ? requestedRepoIds.includes(repositoryId) : repoRows[0].selected;
     if (!shouldSync) continue;
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       const [owner, name] = repo.full_name.split("/");
       if (!owner || !name) throw new Error("Invalid GitHub repository name");
       const headSha = await fetchBranchHeadSha(token, owner, name, repo.default_branch);
-      const existing = await sql<{ last_synced_commit: string | null }[]>`select last_synced_commit from github_repositories where id=${repositoryId}`;
+      const existing = (await sql`select last_synced_commit from github_repositories where id=${repositoryId}`) as Array<{ last_synced_commit: string | null }>;
       if (existing[0]?.last_synced_commit === headSha) {
         await sql`update github_repositories set last_synced_at=now(), sync_status='ready', sync_error=null where id=${repositoryId}`;
         continue;
@@ -51,17 +51,17 @@ export async function POST(request: Request) {
       if (tree.truncated) throw new Error("GitHub repository tree is truncated; sync requires subtree pagination for this repository size");
       const candidates = tree.tree.filter((item) => item.type === "blob" && shouldIndexPath(item.path) && (item.size ?? 0) <= 512_000).slice(0, 2000);
       for (const item of candidates) {
-        const known = await sql<{ blob_sha: string }[]>`select blob_sha from github_documents where repository_id=${repositoryId} and path=${item.path}`;
+        const known = (await sql`select blob_sha from github_documents where repository_id=${repositoryId} and path=${item.path}`) as Array<{ blob_sha: string }>;
         if (known[0]?.blob_sha === item.sha) continue;
         const content = await fetchBlob(token, owner, name, item.sha);
         const contentHash = sha256(content);
-        const changed = await sql<{ id: string }[]>`insert into github_documents (repository_id, path, blob_sha, content, content_hash, size_bytes) values (${repositoryId}, ${item.path}, ${item.sha}, ${content}, ${contentHash}, ${item.size ?? content.length}) on conflict (repository_id, path) do update set blob_sha=excluded.blob_sha, content=excluded.content, content_hash=excluded.content_hash, size_bytes=excluded.size_bytes, indexed_at=now() where github_documents.blob_sha is distinct from excluded.blob_sha returning id`;
+        const changed = (await sql`insert into github_documents (repository_id, path, blob_sha, content, content_hash, size_bytes) values (${repositoryId}, ${item.path}, ${item.sha}, ${content}, ${contentHash}, ${item.size ?? content.length}) on conflict (repository_id, path) do update set blob_sha=excluded.blob_sha, content=excluded.content, content_hash=excluded.content_hash, size_bytes=excluded.size_bytes, indexed_at=now() where github_documents.blob_sha is distinct from excluded.blob_sha returning id`) as Array<{ id: string }>;
         if (!changed[0]) continue;
         documents++;
         const excerpt = content.replace(/\s+/g, " ").trim().slice(0, 1800);
         const title = `${repo.full_name} · ${item.path}`;
         const provenance = { repository: repo.full_name, branch: repo.default_branch, commit_sha: headSha, path: item.path, blob_sha: item.sha, content_hash: contentHash, url: `${repo.html_url}/blob/${headSha}/${item.path}`, retrieved_at: new Date().toISOString() };
-        const researchRows = await sql<{ id: string }[]>`insert into research_records (user_id, source_type, source_id, title, summary, content, provenance) values (${user.id}, 'github', ${changed[0].id}, ${title}, ${excerpt.slice(0, 500)}, ${excerpt}, ${JSON.stringify(provenance)}::jsonb) returning id`;
+        const researchRows = (await sql`insert into research_records (user_id, source_type, source_id, title, summary, content, provenance) values (${user.id}, 'github', ${changed[0].id}, ${title}, ${excerpt.slice(0, 500)}, ${excerpt}, ${JSON.stringify(provenance)}::jsonb) returning id`) as Array<{ id: string }>;
         if (researchRows[0]) {
           research++;
           const dedupeKey = sha256(`${user.id}:${changed[0].id}:${item.sha}`);
