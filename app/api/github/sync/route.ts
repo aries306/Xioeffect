@@ -1,11 +1,11 @@
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { decryptGitHubToken, encryptGitHubToken, fetchBlob, fetchBranchHeadSha, fetchRepositoryTree, githubApi, listGitHubRepositories, refreshGitHubToken, shouldIndexPath, sha256 } from "@/lib/github";
+import { decryptGitHubToken, encryptGitHubToken, fetchBlob, fetchBranchHeadSha, fetchRepositoryTree, listGitHubRepositories, refreshGitHubToken, shouldIndexPath, sha256 } from "@/lib/github";
 
 type Connection = { id: string; token_ciphertext: string; token_iv: string; token_auth_tag: string; refresh_token_ciphertext: string | null; refresh_token_iv: string | null; refresh_token_auth_tag: string | null; access_token_expires_at: string | null; refresh_token_expires_at: string | null };
 
 async function usableAccessToken(userId: string, connection: Connection, sql: ReturnType<typeof db>) {
-  const current = decryptGitHubToken(connection);
+  const current = decryptGitHubToken({ ciphertext: connection.token_ciphertext, iv: connection.token_iv, authTag: connection.token_auth_tag });
   const expiresAt = connection.access_token_expires_at ? new Date(connection.access_token_expires_at).getTime() : 0;
   if (!expiresAt || expiresAt > Date.now() + 60_000) return current;
   if (!connection.refresh_token_ciphertext || !connection.refresh_token_iv || !connection.refresh_token_auth_tag) throw new Error("GitHub access token expired and no refresh token is available");
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   const sql = db();
   const rows = await sql<Connection[]>`select id, token_ciphertext, token_iv, token_auth_tag, refresh_token_ciphertext, refresh_token_iv, refresh_token_auth_tag, access_token_expires_at, refresh_token_expires_at from github_connections where user_id=${user.id} limit 1`;
   if (!rows[0]) return Response.json({ error: "GitHub is not connected" }, { status: 404 });
-  let token = await usableAccessToken(user.id, rows[0], sql);
+  const token = await usableAccessToken(user.id, rows[0], sql);
   const repos = await listGitHubRepositories(token);
   let repositories = 0;
   let documents = 0;
