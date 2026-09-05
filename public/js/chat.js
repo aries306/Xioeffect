@@ -45,7 +45,7 @@ const XIO_CHAT = (() => {
       bubbleEl.appendChild(controls);
       const sendOutcome = async (outcome, feedback) => {
         try {
-          const response = await fetch("/api/feedback", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspaceId, recommendation: options.recommendation, outcome, feedback, conversationId }) });
+          const response = await fetch("/api/feedback", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspaceId, recommendation: options.recommendation, outcome, feedback, conversationId, memoryIds: options.memoryIds || [] }) });
           if (!response.ok) throw new Error("Feedback failed"); controls.innerHTML = `<span class="muted tiny">✓ Outcome recorded</span>`;
         } catch (error) { XIO_APP.toast(error.message || "Could not record feedback", "bad"); }
       };
@@ -56,7 +56,6 @@ const XIO_CHAT = (() => {
   }
 
   function typing(show) { const { thread } = els(); let t = thread.querySelector(".typing-wrap"); if (show && !t) { t = document.createElement("div"); t.className = "chat-msg xio typing-wrap"; t.innerHTML = `<div class="chat-ava xio">✦</div><div class="chat-bubble typing"><span></span><span></span><span></span></div>`; thread.appendChild(t); } else if (!show && t) t.remove(); thread.scrollTop = thread.scrollHeight; }
-
   function renderSuggestions() { const { suggest } = els(); const g = E().topGoal(); const chips = ["What should I focus on today?", g ? `How's my momentum on ${g.slice(0, 28)}${g.length > 28 ? "…" : ""}?` : "Help me set a goal", "What have you learned about me?", "I keep putting something off", "I'm feeling overwhelmed"]; suggest.innerHTML = chips.map((c) => `<button class="suggest-chip">${esc(c)}</button>`).join(""); suggest.querySelectorAll(".suggest-chip").forEach((c) => c.onclick = () => { els().field.value = c.textContent; submit(); }); }
   function restore() { const { thread } = els(); thread.innerHTML = ""; const hist = E().state.chat.slice(-40); if (!hist.length) { greet(); return; } hist.forEach((m) => bubble(m.role === "user" ? "user" : "xio", m.text)); greetedOnce = true; }
   function greet() { if (greetedOnce) return; greetedOnce = true; const name = E().state.profile.name; const greetText = name ? `${E().greeting()}\n\nYour workspace is connected to Astara and the Memory Fabric. What's on your mind?` : `Hey — I'm Astara inside XIO. Your workspace context and approved memory can inform our conversations. What's on your mind?`; typing(true); setTimeout(() => { typing(false); bubble("xio", greetText); E().state.chat.push({ role: "xio", text: greetText, at: Date.now() }); E().save(); }, 500); }
@@ -68,7 +67,7 @@ const XIO_CHAT = (() => {
       const workspace = await ensureWorkspace();
       const response = await fetch("/api/chat", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspaceId: workspace.workspace.id, conversationId, message: text }) });
       const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error || "Astara could not process the request");
-      conversationId = data.conversationId || conversationId; typing(false); bubble("xio", data.answer, { proposals: data.memoryProposals || [], recommendation: data.recommendation });
+      conversationId = data.conversationId || conversationId; typing(false); bubble("xio", data.answer, { proposals: data.memoryProposals || [], recommendation: data.recommendation, memoryIds: data.evidenceMemoryIds || [] });
       E().state.chat.push({ role: "xio", text: data.answer, at: Date.now() }); E().save(); XIO_APP.syncChrome();
     } catch (error) { typing(false); bubble("xio", `I couldn't complete that turn. ${error.message || "The server returned an unexpected error."}`); }
     finally { busy = false; }
