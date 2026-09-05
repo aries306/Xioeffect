@@ -23,8 +23,7 @@ test('Feedback updates lifecycle and records provenance history', async () => {
 test('Live authenticated loop exercises the real server when test credentials are supplied', async (t) => {
   const baseUrl = process.env.XIO_TEST_BASE_URL; const cookie = process.env.XIO_TEST_COOKIE;
   if (!baseUrl || !cookie) { t.skip('Set XIO_TEST_BASE_URL and XIO_TEST_COOKIE to run the real authenticated integration loop'); return; }
-  const anonymous = await fetch(`${baseUrl}/api/workspace`, { redirect: 'manual' });
-  assert.notEqual(anonymous.status, 200);
+  const anonymous = await fetch(`${baseUrl}/api/workspace`, { redirect: 'manual' }); assert.notEqual(anonymous.status, 200);
   const headers = { Cookie: cookie, 'Content-Type': 'application/json' };
   const workspace = await fetch(`${baseUrl}/api/workspace`, { headers }); assert.equal(workspace.status, 200);
   const workspaceBody = await workspace.json(); assert.ok(workspaceBody.workspace?.id);
