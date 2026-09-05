@@ -33,7 +33,7 @@ test('Live authenticated loop exercises the real server when test credentials ar
     const memory = await fetch(`${baseUrl}/api/memory`, { method: 'POST', headers, body: JSON.stringify({ workspaceId: workspaceBody.workspace.id, ...chatBody.memoryProposals[0], confirmed: true, provenance: { type: 'integration-test', conversationId: chatBody.conversationId } }) });
     assert.equal(memory.status, 201); const memoryBody = await memory.json(); assert.ok(memoryBody.memory?.id);
     const feedback = await fetch(`${baseUrl}/api/feedback`, { method: 'POST', headers, body: JSON.stringify({ workspaceId: workspaceBody.workspace.id, memoryId: memoryBody.memory.id, signal: 'useful', note: 'Integration test feedback' }) });
-    assert.equal(feedback.status, 200);
+    assert.equal(feedback.status, 201);
     const retrieved = await fetch(`${baseUrl}/api/memory?workspaceId=${workspaceBody.workspace.id}&q=finishing%20ZIO`, { headers });
     assert.equal(retrieved.status, 200); const retrievedBody = await retrieved.json(); assert.ok(retrievedBody.memories?.some((item) => item.id === memoryBody.memory.id));
   }
