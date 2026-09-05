@@ -1,13 +1,15 @@
+import { z } from "zod";
 import { feedbackRequestSchema } from "@/lib/chat";
 import { applyMemoryFeedback } from "@/lib/memory";
 import { db } from "@/lib/db";
 import { getAuthorizedWorkspace } from "@/lib/workspace";
 
-const outcomeSchema = feedbackRequestSchema.pick({ workspaceId: true }).extend({
-  recommendation: feedbackRequestSchema.shape.note.optional(),
-  outcome: feedbackRequestSchema.shape.signal.transform((value) => value === "confirm" ? "accepted" : value === "contradict" ? "rejected" : value === "useful" ? "partial" : "unknown").optional(),
-  feedback: feedbackRequestSchema.shape.note.optional(),
-  conversationId: feedbackRequestSchema.shape.recommendationOutcomeId.optional(),
+const outcomeSchema = z.object({
+  workspaceId: z.string().uuid().optional(),
+  recommendation: z.string().trim().min(1).max(8_000),
+  outcome: z.enum(["accepted", "rejected", "partial", "unknown"]),
+  feedback: z.string().trim().max(2_000).optional(),
+  conversationId: z.string().uuid().optional(),
 });
 
 export async function POST(request: Request) {
@@ -22,9 +24,7 @@ export async function POST(request: Request) {
     }
 
     const parsed = outcomeSchema.safeParse(body);
-    if (!parsed.success || !parsed.data.recommendation || !parsed.data.outcome) {
-      return Response.json({ error: "Invalid recommendation outcome" }, { status: 400 });
-    }
+    if (!parsed.success) return Response.json({ error: "Invalid recommendation outcome" }, { status: 400 });
     const { userId, workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId);
     const sql = db();
     const inserted = await sql`
