@@ -1,10 +1,7 @@
-import { z } from "zod";
-import { feedbackRequestSchema } from "@/lib/chat";
+import { feedbackRequestSchema, recommendationOutcomeSchema } from "@/lib/chat";
 import { applyMemoryFeedback } from "@/lib/memory";
 import { db } from "@/lib/db";
 import { getAuthorizedWorkspace } from "@/lib/workspace";
-
-const outcomeSchema = z.object({ workspaceId: z.string().uuid().optional(), recommendation: z.string().trim().min(1).max(8_000), outcome: z.enum(["accepted", "rejected", "partial", "unknown"]), feedback: z.string().trim().max(2_000).optional(), conversationId: z.string().uuid().optional() });
 
 export async function POST(request: Request) {
   try {
@@ -16,7 +13,8 @@ export async function POST(request: Request) {
       const memory = await applyMemoryFeedback({ ...parsed.data, workspaceId: String(workspace.id) });
       return Response.json({ memory });
     }
-    const parsed = outcomeSchema.safeParse(body);
+
+    const parsed = recommendationOutcomeSchema.safeParse(body);
     if (!parsed.success) return Response.json({ error: "Invalid recommendation outcome" }, { status: 400 });
     const { userId, workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId);
     const sql = db();
@@ -24,12 +22,20 @@ export async function POST(request: Request) {
       const allowed = await sql`select id from conversations where id=${parsed.data.conversationId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`;
       if (!allowed[0]) return Response.json({ error: "Conversation access denied" }, { status: 403 });
     }
+    if (parsed.data.memoryIds.length) {
+      const allowedMemories = await sql`select id from memories where workspace_id=${workspace.id} and user_id=${userId} and id = any(${parsed.data.memoryIds}::uuid[])`;
+      if (allowedMemories.length !== parsed.data.memoryIds.length) return Response.json({ error: "Memory access denied" }, { status: 403 });
+    }
     const inserted = await sql`
-      insert into recommendation_outcomes (workspace_id, user_id, conversation_id, recommendation, outcome, feedback)
-      values (${workspace.id}, ${userId}, ${parsed.data.conversationId ?? null}, ${parsed.data.recommendation}, ${parsed.data.outcome}, ${parsed.data.feedback ?? null})
+      insert into recommendation_outcomes (workspace_id, user_id, conversation_id, recommendation, outcome, feedback, metadata)
+      values (${workspace.id}, ${userId}, ${parsed.data.conversationId ?? null}, ${parsed.data.recommendation}, ${parsed.data.outcome}, ${parsed.data.feedback ?? null}, ${JSON.stringify({ memoryIds: parsed.data.memoryIds })}::jsonb)
       returning id, created_at
     `;
-    await sql`insert into events (user_id, kind, metadata) values (${userId}, 'recommendation-feedback', ${JSON.stringify({ workspaceId: workspace.id, outcome: parsed.data.outcome })}::jsonb)`;
+
+    const signal = parsed.data.outcome === "accepted" || parsed.data.outcome === "partial" ? "useful" : parsed.data.outcome === "rejected" ? "not_useful" : null;
+    if (signal) for (const memoryId of parsed.data.memoryIds) await applyMemoryFeedback({ workspaceId: String(workspace.id), memoryId, signal, note: parsed.data.feedback, recommendationOutcomeId: String(inserted[0].id) });
+    await sql`insert into events (user_id, kind, metadata) values (${userId}, 'recommendation-feedback', ${JSON.stringify({ workspaceId: workspace.id, outcome: parsed.data.outcome, memoryCount: parsed.data.memoryIds.length })}::jsonb)`;
+    console.info(JSON.stringify({ event: "astara.feedback.recorded", userId, workspaceId: workspace.id, outcome: parsed.data.outcome, memoryCount: parsed.data.memoryIds.length }));
     return Response.json({ outcome: inserted[0] }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to record feedback";
