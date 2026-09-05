@@ -32,6 +32,9 @@ export async function ensureWorkspace(): Promise<{ userId: string; workspace: Wo
     `;
   }
   const userId = String(users[0].id);
+  await sql`
+    insert into preferences (user_id) values (${userId}) on conflict (user_id) do nothing
+  `;
 
   let workspaces = await sql`
     select w.id, w.name, w.context
