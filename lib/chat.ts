@@ -15,5 +15,14 @@ export const feedbackRequestSchema = z.object({
   recommendationOutcomeId: z.string().uuid().optional(),
 });
 
+export const recommendationOutcomeSchema = z.object({
+  workspaceId: z.string().uuid().optional(),
+  recommendation: z.string().trim().min(1).max(8_000),
+  outcome: z.enum(["accepted", "rejected", "partial", "unknown"]),
+  feedback: z.string().trim().max(2_000).optional(),
+  conversationId: z.string().uuid().optional(),
+  memoryIds: z.array(z.string().uuid()).max(20).default([]),
+});
+
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
 export type FeedbackRequest = z.infer<typeof feedbackRequestSchema>;
