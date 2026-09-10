@@ -16,7 +16,7 @@ export async function ensureWorkspace(): Promise<{ userId: string; workspace: Wo
     users = await sql`select id from users where email=${email} limit 1`;
     if (users[0]) await sql`update users set clerk_user_id=${authUser.id}, display_name=${displayName}, email=${email} where id=${users[0].id}`;
   }
-  if (!users[0]) users = await sql`insert into users (clerk_user_id, email, display_name) values (${authUser.id}, ${email}, ${displayName}) returning id`;
+  if (!users[0]) users = await sql`insert into users (id, clerk_user_id, email, display_name) values (gen_random_uuid(), ${authUser.id}, ${email}, ${displayName}) returning id`;
   const userId = String(users[0].id);
   await sql`insert into preferences (user_id) values (${userId}) on conflict (user_id) do nothing`;
   let workspaces = await sql`
