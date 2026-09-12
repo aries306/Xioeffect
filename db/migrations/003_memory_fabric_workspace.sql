@@ -38,7 +38,7 @@ alter table memories add column if not exists workspace_id uuid;
 alter table memories add column if not exists provenance jsonb not null default '{}';
 alter table memories add column if not exists scope jsonb not null default '{}';
 alter table memories add column if not exists relevance smallint not null default 50 check (relevance between 0 and 100);
-alter table memories add column if not exists lifecycle_state text not null default 'active' check (lifecycle_state in ('active','dormant','superseded','rejected'));
+alter table memories add column if not exists lifecycle_state text not null default 'active' check (lifecycle_state in ('active','dormant','review','superseded','invalidated','archived','rejected'));
 alter table memories add column if not exists updated_at timestamptz not null default now();
 alter table memories add column if not exists last_retrieved_at timestamptz;
 alter table memories add column if not exists supersedes_memory_id uuid references memories(id) on delete set null;

@@ -10,7 +10,7 @@ export const chatRequestSchema = z.object({
 export const feedbackRequestSchema = z.object({
   workspaceId: z.string().uuid().optional(),
   memoryId: z.string().uuid(),
-  signal: z.enum(["confirm", "contradict", "useful", "not_useful", "reactivate", "supersede", "dismiss"]),
+  signal: z.enum(["confirm", "contradict", "useful", "not_useful", "reactivate", "supersede", "review", "invalidate", "archive", "dismiss"]),
   note: z.string().trim().max(2_000).optional(),
   recommendationOutcomeId: z.string().uuid().optional(),
 });

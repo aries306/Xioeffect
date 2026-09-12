@@ -20,6 +20,13 @@ test('Feedback updates lifecycle and records provenance history', async () => {
   assert.match(memory, /memory_feedback/); assert.match(memory, /memory_events/); assert.match(memory, /reactivated/); assert.match(feedback, /recommendation_outcomes/);
 });
 
+test('Memory lifecycle supports re-evaluation states and explicit archive/edit controls', async () => {
+  const memory = await read('lib/memory.ts'); const route = await read('app/api/memory/route.ts'); const migration = await read('db/migrations/004_memory_lifecycle_controls.sql');
+  assert.match(memory, /"review"/); assert.match(memory, /"invalidated"/); assert.match(memory, /"archived"/);
+  assert.match(memory, /lifecycle_state='active'/); assert.match(route, /export async function PATCH/); assert.match(route, /export async function DELETE/);
+  assert.match(migration, /memories_lifecycle_state_check/);
+});
+
 test('Live authenticated loop exercises the real server when test credentials are supplied', async (t) => {
   const baseUrl = process.env.XIO_TEST_BASE_URL; const cookie = process.env.XIO_TEST_COOKIE;
   if (!baseUrl || !cookie) { t.skip('Set XIO_TEST_BASE_URL and XIO_TEST_COOKIE to run the real authenticated integration loop'); return; }
