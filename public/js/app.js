@@ -42,11 +42,11 @@ const XIO_APP = (() => {
   }
 
   /* ══ Router ════════════════════════════════════════ */
-  const appRoutes = ["today","chat","intelligence","insights","memory","goals","content","prompts","packs","toolkits","pricing","settings"];
+  const appRoutes = ["today","chat","intelligence","insights","memory","goals","content","prompts","packs","statements","toolkits","pricing","settings"];
   const titles = {
     today: "Today", chat: "Talk to XIO", intelligence: "My Intelligence", insights: "Insights",
     memory: "Memory", goals: "Goals & Projects", content: "Content Engine", prompts: "Prompt Builder",
-    packs: "Prompt Packs", toolkits: "Toolkits", pricing: "Plans", settings: "Settings"
+    packs: "Prompt Packs", statements: "Statement Editor", toolkits: "Toolkits", pricing: "Plans", settings: "Settings"
   };
 
   function route(){
@@ -101,6 +101,7 @@ const XIO_APP = (() => {
     if (view === "packs") XIO_TOOLS.renderPacks();
     if (view === "toolkits") XIO_TOOLS.renderToolkits();
     if (view === "prompts") XIO_TOOLS.renderLibrary();
+    if (view === "statements") XIO_TOOLS.renderStatements();
     if (view === "pricing") XIO_SITE.renderPricing("app-pricing", XIO_DATA.plans);
   }
 
@@ -476,6 +477,7 @@ const XIO_APP = (() => {
     XIO_CHAT.init();
     XIO_TOOLS.initContent();
     XIO_TOOLS.initPrompts();
+    XIO_TOOLS.initStatements();
     bindGlobal(); bindGoals(); bindMemoryControls(); bindSettings();
     route();
     // log a session event (feeds momentum honestly)
