@@ -22,6 +22,6 @@ export function extractMemoryCandidates(text: string): MemoryCandidate[] {
     const remainder = text.slice(match.index + match[0].length).replace(/^[\s,:;-]+/, "").trim();
     const sentence = remainder.split(/[.!?\n]/)[0].trim().slice(0, 180);
     if (sentence.length < 3) return [];
-    return [{ text: `${label}: ${sentence}`, category, confidence: 45, relevance: 60, source: "conversation" }];
+    return [{ text: `${label}: ${sentence}`, category, confidence: 45, relevance: 60, source: "conversation" as const }];
   }).slice(0, 2);
 }

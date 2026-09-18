@@ -17,5 +17,17 @@ export default clerkMiddleware(async (auth, request) => {
 });
 
 export const config = {
-  matcher: ["/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)", "/(api|trpc)(.*)"],
+  // Keep Clerk at the protected boundary, avoiding a Next-only regex matcher and
+  // allowing public/static routes to run without loading authentication middleware.
+  matcher: [
+    "/app/:path*",
+    "/api/account/:path*",
+    "/api/chat/:path*",
+    "/api/workspace/:path*",
+    "/api/memory/:path*",
+    "/api/feedback/:path*",
+    "/api/billing/checkout/:path*",
+    "/api/github/:path*",
+    "/api/nexus/:path*",
+  ],
 };
