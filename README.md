@@ -2,6 +2,14 @@
 
 XIO is transitioning from a browser-only demo to a server-backed SaaS application.
 
+## Runtime
+
+XIO uses **Vinext on Cloudflare Workers** as its default development, production-build,
+and production-serving runtime. This is the deployment target configured in
+`wrangler.jsonc`, and it builds the full App Router surface successfully. The legacy
+Next.js scripts remain available as `dev:next`, `build:next`, and `start:next` for
+local compatibility checks.
+
 ## Current state
 
 - `/` embeds the existing demo unchanged
