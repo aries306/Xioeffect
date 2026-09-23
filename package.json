@@ -11,7 +11,8 @@
     "dev:vinext": "vinext dev",
     "build:vinext": "vinext build",
     "start:vinext": "vinext start",
-    "deploy:cloudflare": "npx @vinext/cloudflare deploy",
+    "preview:cloudflare": "npm run build:vinext && npx wrangler dev",
+    "deploy:cloudflare": "npm run build:vinext && npx wrangler deploy",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs"
