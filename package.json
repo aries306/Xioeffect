@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "engines": { "node": "24.x" },
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -26,7 +28,7 @@
     "zod": "4.1.12",
     "@clerk/nextjs": "6.36.4",
     "stripe": "18.5.0",
-    "@neondatabase/serverless": "^1.0.2"
+    "postgres": "^3.4.7"
   },
   "devDependencies": {
     "@types/node": "24.10.1",
