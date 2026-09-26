@@ -34,7 +34,7 @@ export async function PUT(request: Request) {
     const next = parsed.data;
     const rows = await sql`
       insert into preferences (user_id, learning_enabled, ask_before_memory, tone, detail_level)
-      values (${userId}, coalesce(${next.learningEnabled ?? null}, true), coalesce(${next.askBeforeMemory ?? null}, true), coalesce(${next.tone ?? null}, "Calm & confident"), coalesce(${next.detailLevel ?? null}, "Balanced"))
+      values (${userId}, coalesce(${next.learningEnabled ?? null}, true), coalesce(${next.askBeforeMemory ?? null}, true), coalesce(${next.tone ?? null}, 'Calm & confident'), coalesce(${next.detailLevel ?? null}, 'Balanced'))
       on conflict (user_id) do update set
         learning_enabled=coalesce(${next.learningEnabled ?? null}, preferences.learning_enabled),
         ask_before_memory=coalesce(${next.askBeforeMemory ?? null}, preferences.ask_before_memory),
