@@ -15,7 +15,7 @@ export async function ensureWorkspace(): Promise<{ userId: string; workspace: Wo
   const authUser = await requireUser();
   const clerkUser = await currentUser();
   if (!clerkUser) throw new Error("Authenticated user could not be resolved");
-  const email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
+  const email = clerkUser.primaryEmailAddress?.emailAddress?.trim().toLowerCase() ?? null;
   const displayName = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null;
   const sql = db();
   let users = await sql`select id from users where clerk_user_id=${authUser.id} limit 1`;
