@@ -1,13 +1,13 @@
 # XIO
 
-XIO is transitioning from a browser-only demo to a server-backed SaaS application.
+XIO is a Next.js server-backed SaaS application with a browser-first experience. The existing Living System remains the visual front door while authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities run through server-side routes.
 
 ## Current state
 
 - `/` embeds the existing demo unchanged
 - `/api/health` is a deployment health endpoint
-- `/api/chat` validates input and intentionally returns `503` until authentication, data access, and AI Gateway are configured
-- GitHub integration is implemented on the `feat/github-nexus` branch behind authenticated server routes
+- `/api/chat` validates input, authorizes the workspace, retrieves contextual Memory Fabric evidence, calls the server-side AI Gateway, and persists the conversation
+- GitHub integration lives on `main` behind authenticated server routes; `feat/github-nexus` is a historical branch and is not the deployment baseline
 
 ## GitHub → Research → NEXUS
 
@@ -50,11 +50,11 @@ Generate the token-encryption key as a base64-encoded 32-byte value. Register th
 
 ## Database
 
-Apply `db/migrations/001_xio_core.sql` first, then `db/migrations/002_github_nexus.sql`. The GitHub migration is upgrade-safe for the integration tables and adds encrypted token lifecycle fields, repository selection/sync state, provenance indexes, and NEXUS event deduplication.
+Apply migrations in order: `001_xio_core.sql`, `002_github_nexus.sql`, `003_memory_fabric_workspace.sql`, `004_memory_lifecycle_controls.sql`, then `005_memory_feedback_lifecycle_controls.sql`. The GitHub migration is upgrade-safe for the integration tables and adds encrypted token lifecycle fields, repository selection/sync state, provenance indexes, and NEXUS event deduplication.
 
 Every user-owned query must be scoped by the verified Clerk user ID. The GitHub integration uses text `user_id` values because Clerk user IDs are strings.
 
-## Production verification
+## Deployment architecture\n\nNext.js is the primary application runtime. The repository also contains a Vinext/Cloudflare deployment path; it is an alternate target and should not be mixed into the primary Vercel deployment configuration. Vercel AI Gateway is called server-side from `lib/ai.ts`.\n\n## Production verification
 
 Before merging/deploying the GitHub branch:
 
@@ -70,11 +70,11 @@ Before merging/deploying the GitHub branch:
 - repeat sync without a new commit and confirm it is a no-op
 - push a new commit and confirm only changed blobs are re-indexed
 - test access-token refresh and expired/invalid refresh-token failure handling
-- verify account deletion removes GitHub connection data through the same ownership boundary
+- verify account export excludes encrypted GitHub token material\n- verify account deletion requires explicit confirmation and removes internal XIO data plus GitHub connection data through the same ownership boundary
 
 ## Data model and privacy
 
-`db/migrations/001_xio_core.sql` models users, preferences, memories, goals, conversations, messages, events, and subscription state. The application server must scope every query by the verified authenticated user ID. Never expose `DATABASE_URL`, Stripe secrets, or AI credentials to the browser.
+`db/migrations/001_xio_core.sql` models users, preferences, memories, goals, conversations, messages, events, and subscription state. The application server must scope every user-owned query by the verified authenticated Clerk user ID and internal XIO user/workspace ownership boundary. Never expose `DATABASE_URL`, Stripe secrets, or AI credentials to the browser.
 
 The product must retain the demo's privacy controls: consent before memory creation, per-memory edit/delete, account export, account deletion, and a learning pause. Contextual Memory must remain distinct from Research and other derived knowledge: memories retain provenance, scope, confidence, and lifecycle, and should be re-evaluated before influencing recommendations when their original context returns.
 
