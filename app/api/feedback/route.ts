@@ -9,14 +9,14 @@ export async function POST(request: Request) {
     if (body?.memoryId) {
       const parsed = feedbackRequestSchema.safeParse(body);
       if (!parsed.success) return Response.json({ error: "Invalid memory feedback" }, { status: 400 });
-      const { workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId);
+      const { workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId, "editor");
       const memory = await applyMemoryFeedback({ ...parsed.data, workspaceId: String(workspace.id) });
       return Response.json({ memory });
     }
 
     const parsed = recommendationOutcomeSchema.safeParse(body);
     if (!parsed.success) return Response.json({ error: "Invalid recommendation outcome" }, { status: 400 });
-    const { userId, workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId);
+    const { userId, workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId, "editor");
     const sql = db();
     if (parsed.data.conversationId) {
       const allowed = await sql`select id from conversations where id=${parsed.data.conversationId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`;
