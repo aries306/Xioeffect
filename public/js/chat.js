@@ -74,7 +74,7 @@ const XIO_CHAT = (() => {
   }
 
   function init() { els().form.addEventListener("submit", (event) => { event.preventDefault(); submit(); }); renderSuggestions(); }
-  async function mount() { try { await ensureWorkspace(); } catch { /* protected API reports auth/server errors on submit */ } restore(); renderSuggestions(); setTimeout(() => els().field.focus(), 60); }
+  async function mount() {
   function newConversation() { conversationId = null; E().state.chat = []; E().save(); greetedOnce = false; restore(); els().field.focus(); XIO_APP.toast("Fresh conversation. Your persistent memory remains intact."); }
   return { init, mount, newConversation };
 })();
