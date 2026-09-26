@@ -55,7 +55,7 @@ export async function PATCH(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to update memory";
     if (/Authentication is required/i.test(message)) return Response.json({ error: message }, { status: 401 });
-    if (/not found|access denied/i.test(message)) return Response.json({ error: message }, { status: 404 });
+    if (/not found|access denied|write access/i.test(message)) return Response.json({ error: message }, { status: 404 });
     return Response.json({ error: "Unable to update memory" }, { status: 500 });
   }
 }
