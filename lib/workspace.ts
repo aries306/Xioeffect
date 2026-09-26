@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
 export type Workspace = { id: string; name: string; context: Record<string, unknown> };
+export type WorkspaceRole = "owner" | "editor" | "viewer";
 
 export async function ensureWorkspace(): Promise<{ userId: string; workspace: Workspace }> {
   const authUser = await requireUser();
@@ -11,34 +12,52 @@ export async function ensureWorkspace(): Promise<{ userId: string; workspace: Wo
   const email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
   const displayName = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null;
   const sql = db();
+
   let users = await sql`select id from users where clerk_user_id=${authUser.id} limit 1`;
   if (!users[0] && email) {
-    users = await sql`select id from users where email=${email} limit 1`;
-    if (users[0]) await sql`update users set clerk_user_id=${authUser.id}, display_name=${displayName}, email=${email} where id=${users[0].id}`;
+    users = await sql`select id from users where lower(email)=lower(${email}) limit 1`;
+    if (users[0]) {
+      await sql`update users set clerk_user_id=${authUser.id}, display_name=${displayName}, email=${email} where id=${users[0].id}`;
+    }
   }
-  if (!users[0]) users = await sql`insert into users (id, clerk_user_id, email, display_name) values (gen_random_uuid(), ${authUser.id}, ${email}, ${displayName}) returning id`;
+  if (!users[0]) {
+    users = await sql`insert into users (id, clerk_user_id, email, display_name) values (gen_random_uuid(), ${authUser.id}, ${email}, ${displayName}) returning id`;
+  }
+
   const userId = String(users[0].id);
   await sql`insert into preferences (user_id) values (${userId}) on conflict (user_id) do nothing`;
+
   let workspaces = await sql`
-    select w.id, w.name, w.context from workspaces w join workspace_members wm on wm.workspace_id=w.id
-    where wm.user_id=${userId} and wm.role in ('owner','editor','viewer') order by w.created_at asc limit 1
+    select w.id, w.name, w.context, wm.role
+    from workspaces w
+    join workspace_members wm on wm.workspace_id=w.id
+    where wm.user_id=${userId}
+    order by w.created_at asc
+    limit 1
   `;
   if (!workspaces[0]) {
     workspaces = await sql`insert into workspaces (owner_user_id, name) values (${userId}, 'Personal Workspace') returning id, name, context`;
     await sql`insert into workspace_members (workspace_id, user_id, role) values (${workspaces[0].id}, ${userId}, 'owner')`;
+    return { userId, workspace: workspaces[0] as Workspace };
   }
   return { userId, workspace: workspaces[0] as Workspace };
 }
 
-export async function getAuthorizedWorkspace(workspaceId?: string) {
-  const { userId, workspace } = await ensureWorkspace();
-  if (workspaceId && workspaceId !== String(workspace.id)) {
-    const sql = db();
-    const rows = await sql`select w.id, w.name, w.context from workspaces w join workspace_members wm on wm.workspace_id=w.id where w.id=${workspaceId} and wm.user_id=${userId} limit 1`;
-    if (!rows[0]) throw new Error("Workspace access denied");
-    return { userId, workspace: rows[0] as Workspace };
-  }
-  return { userId, workspace };
+export async function getAuthorizedWorkspace(workspaceId?: string, allowedRoles?: WorkspaceRole[]) {
+  const { userId, workspace: defaultWorkspace } = await ensureWorkspace();
+  const sql = db();
+  const targetId = workspaceId ?? String(defaultWorkspace.id);
+  const rows = await sql`
+    select w.id, w.name, w.context, wm.role
+    from workspaces w
+    join workspace_members wm on wm.workspace_id=w.id
+    where w.id=${targetId} and wm.user_id=${userId}
+    limit 1
+  `;
+  if (!rows[0]) throw new Error("Workspace access denied");
+  const role = String(rows[0].role) as WorkspaceRole;
+  if (allowedRoles?.length && !allowedRoles.includes(role)) throw new Error("Workspace write access denied");
+  return { userId, workspace: rows[0] as Workspace, role };
 }
 
 export async function readWorkspaceState(workspaceId: string) {
@@ -59,7 +78,7 @@ export async function readWorkspaceState(workspaceId: string) {
 }
 
 export async function writeWorkspaceContext(workspaceId: string, context: Record<string, unknown>) {
-  const { workspace } = await getAuthorizedWorkspace(workspaceId);
+  const { workspace } = await getAuthorizedWorkspace(workspaceId, ["owner", "editor"]);
   const serialized = JSON.stringify(context);
   if (serialized.length > 200_000) throw new Error("Workspace context is too large");
   const sql = db();
