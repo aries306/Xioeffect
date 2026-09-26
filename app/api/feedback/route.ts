@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to record feedback";
     if (/Authentication is required/i.test(message)) return Response.json({ error: message }, { status: 401 });
-    if (/access denied|not found/i.test(message)) return Response.json({ error: message }, { status: 403 });
+    if (/access denied|write access|not found/i.test(message)) return Response.json({ error: message }, { status: 403 });
     return Response.json({ error: "Unable to record feedback" }, { status: 500 });
   }
 }
