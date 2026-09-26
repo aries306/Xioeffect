@@ -50,7 +50,7 @@ Generate the token-encryption key as a base64-encoded 32-byte value. Register th
 
 ## Database
 
-Apply `db/migrations/001_xio_core.sql` first, then `db/migrations/002_github_nexus.sql`. The GitHub migration is upgrade-safe for the integration tables and adds encrypted token lifecycle fields, repository selection/sync state, provenance indexes, and NEXUS event deduplication.
+Apply the migrations in order: `001_xio_core.sql`, `002_github_nexus.sql`, `003_memory_fabric_workspace.sql`, `004_memory_lifecycle_controls.sql`, then `005_memory_feedback_alignment.sql`. Run them against the intended Neon database from a trusted server-side environment; do not paste production credentials into source control. The later migrations align workspace-scoped Memory Fabric state, lifecycle controls, and application feedback signals.
 
 Every user-owned query must be scoped by the verified Clerk user ID. The GitHub integration uses text `user_id` values because Clerk user IDs are strings.
 
