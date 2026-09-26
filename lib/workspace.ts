@@ -2,7 +2,14 @@ import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 
+export type WorkspaceRole = "owner" | "editor" | "viewer";
 export type Workspace = { id: string; name: string; context: Record<string, unknown> };
+
+const ROLE_RANK: Record<WorkspaceRole, number> = { viewer: 1, editor: 2, owner: 3 };
+
+function assertRole(actual: WorkspaceRole, minimum: WorkspaceRole) {
+  if (ROLE_RANK[actual] < ROLE_RANK[minimum]) throw new Error("Workspace write access denied");
+}
 
 export async function ensureWorkspace(): Promise<{ userId: string; workspace: Workspace }> {
   const authUser = await requireUser();
@@ -13,8 +20,12 @@ export async function ensureWorkspace(): Promise<{ userId: string; workspace: Wo
   const sql = db();
   let users = await sql`select id from users where clerk_user_id=${authUser.id} limit 1`;
   if (!users[0] && email) {
-    users = await sql`select id from users where email=${email} limit 1`;
-    if (users[0]) await sql`update users set clerk_user_id=${authUser.id}, display_name=${displayName}, email=${email} where id=${users[0].id}`;
+    const matches = await sql`select id, clerk_user_id from users where lower(email)=${email} limit 1`;
+    if (matches[0]) {
+      if (matches[0].clerk_user_id && String(matches[0].clerk_user_id) !== authUser.id) throw new Error("Account identity conflict");
+      await sql`update users set clerk_user_id=${authUser.id}, display_name=${displayName}, email=${email} where id=${matches[0].id} and clerk_user_id is null`;
+      users = await sql`select id from users where clerk_user_id=${authUser.id} limit 1`;
+    }
   }
   if (!users[0]) users = await sql`insert into users (id, clerk_user_id, email, display_name) values (gen_random_uuid(), ${authUser.id}, ${email}, ${displayName}) returning id`;
   const userId = String(users[0].id);
@@ -30,17 +41,23 @@ export async function ensureWorkspace(): Promise<{ userId: string; workspace: Wo
   return { userId, workspace: workspaces[0] as Workspace };
 }
 
-export async function getAuthorizedWorkspace(workspaceId?: string) {
-  const { userId, workspace } = await ensureWorkspace();
-  if (workspaceId && workspaceId !== String(workspace.id)) {
-    const sql = db();
-    const rows = await sql`select w.id, w.name, w.context from workspaces w join workspace_members wm on wm.workspace_id=w.id where w.id=${workspaceId} and wm.user_id=${userId} limit 1`;
-    if (!rows[0]) throw new Error("Workspace access denied");
-    return { userId, workspace: rows[0] as Workspace };
-  }
-  return { userId, workspace };
+export async function getAuthorizedWorkspace(workspaceId?: string, minimumRole: WorkspaceRole = "viewer") {
+  const initial = await ensureWorkspace();
+  const { userId } = initial;
+  const sql = db();
+  const targetId = workspaceId ?? String(initial.workspace.id);
+  const rows = await sql`
+    select w.id, w.name, w.context, wm.role
+    from workspaces w
+    join workspace_members wm on wm.workspace_id=w.id
+    where w.id=${targetId} and wm.user_id=${userId}
+    limit 1
+  `;
+  if (!rows[0]) throw new Error("Workspace access denied");
+  const role = String(rows[0].role) as WorkspaceRole;
+  assertRole(role, minimumRole);
+  return { userId, workspace: rows[0] as Workspace, role };
 }
-
 export async function readWorkspaceState(workspaceId: string) {
   const { userId, workspace } = await getAuthorizedWorkspace(workspaceId);
   const sql = db();
@@ -59,7 +76,7 @@ export async function readWorkspaceState(workspaceId: string) {
 }
 
 export async function writeWorkspaceContext(workspaceId: string, context: Record<string, unknown>) {
-  const { workspace } = await getAuthorizedWorkspace(workspaceId);
+  const { workspace } = await getAuthorizedWorkspace(workspaceId, "editor");
   const serialized = JSON.stringify(context);
   if (serialized.length > 200_000) throw new Error("Workspace context is too large");
   const sql = db();
