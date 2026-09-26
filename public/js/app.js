@@ -416,7 +416,8 @@ const XIO_APP = (() => {
     a.href = URL.createObjectURL(blob);
     a.download = "xio-account-export.json";
     a.click();
-    URL.revokeObjectURL(a.href);
+    const url = a.href;
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   function renderSettings(){
     const s = E().state;
