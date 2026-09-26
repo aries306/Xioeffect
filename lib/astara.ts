@@ -7,7 +7,7 @@ export type AstaraContext = { workspaceId: string; userMessage: string; conversa
 
 export async function runAstara(input: AstaraContext) {
   const started = Date.now();
-  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId);
+  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId, "editor");
   const workspaceState = await readWorkspaceState(workspace.id);
   const memories = await retrieveContextualMemories(workspace.id, input.userMessage, { workspaceName: workspace.name, goals: workspaceState.goals.map((goal) => goal.title) }, 8);
   const sql = db();
