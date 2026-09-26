@@ -35,7 +35,7 @@ export async function createMemory(input: { workspaceId: string; text: string; c
 }
 
 export async function applyMemoryFeedback(input: { workspaceId: string; memoryId: string; signal: "confirm" | "contradict" | "useful" | "not_useful" | "reactivate" | "supersede" | "review" | "invalidate" | "archive" | "dismiss"; note?: string; recommendationOutcomeId?: string }) {
-  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId); const sql = db();
+  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId, "editor"); const sql = db();
   const rows = await sql`select * from memories where id=${input.memoryId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`; if (!rows[0]) throw new Error("Memory not found");
   const before = rows[0]; const confidenceBefore = Number(before.confidence), relevanceBefore = Number(before.relevance); let confidence = confidenceBefore, relevance = relevanceBefore, lifecycle = String(before.lifecycle_state);
   let eventType: "confirmed" | "rejected" | "feedback" | "reactivated" | "superseded" | "edited" = "feedback";
@@ -55,7 +55,7 @@ export async function applyMemoryFeedback(input: { workspaceId: string; memoryId
 }
 
 export async function updateMemory(input: { workspaceId: string; memoryId: string; text?: string; category?: string; scope?: MemoryScope; provenance?: Record<string, unknown> }) {
-  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId);
+  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId, "editor");
   const text = input.text?.trim();
   if (text === "") throw new Error("Memory text is required");
   const sql = db();
