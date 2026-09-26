@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     await sql`delete from github_connections where user_id=${clerkUserId}`;
     const deleted = await sql`delete from users where clerk_user_id=${clerkUserId} returning id`;
 
-    return Response.json({ deleted: true, internalUserDataRemoved: Boolean(deleted[0]) });
+    return Response.json({ deleted: true, xioDataRemoved: Boolean(deleted[0]), clerkIdentityRetained: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to delete account data";
     if (/Authentication is required/i.test(message)) return Response.json({ error: message }, { status: 401 });
