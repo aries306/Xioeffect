@@ -149,7 +149,7 @@ const XIO_APP = (() => {
     });
 
     // noticed
-    const ins = E().state.insights.filter(i => i.status === "open").sort((a,b2) => b2.confidence - a2.confidence)[0];
+    const ins = E().state.insights.filter(i => i.status === "open").sort((a,b) => b.confidence - a.confidence)[0];
     document.getElementById("noticed-block").innerHTML = ins ? `
       <p style="font-size:14.5px">${esc(ins.insight)}</p>
       <div class="conf-bar"><div class="conf-fill" style="width:${ins.confidence}%"></div></div>
@@ -525,7 +525,7 @@ const XIO_APP = (() => {
     if (completed){
       E().state.stats.sprints++; E().addWin("Completed a 25-minute focus sprint"); E().logEvent("sprint");
       toast("Sprint complete. That's a logged win — momentum acknowledged.", "good");
-    } else toast("Sprint ended early. The streak forgive — restart when ready.");
+    } else toast("Sprint ended early. The streak forgives — restart when ready.");
     syncChrome();
   }
 
