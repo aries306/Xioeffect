@@ -45,3 +45,21 @@ test('Live authenticated loop exercises the real server when test credentials ar
     assert.equal(retrieved.status, 200); const retrievedBody = await retrieved.json(); assert.ok(retrievedBody.memories?.some((item) => item.id === memoryBody.memory.id));
   }
 });
+
+
+test('Database lifecycle constraints match application feedback signals', async () => {
+  const migration = await read('db/migrations/003_memory_fabric_workspace.sql');
+  const alignment = await read('db/migrations/005_memory_feedback_alignment.sql');
+  const chat = await read('lib/chat.ts');
+  for (const signal of ['confirm','contradict','useful','not_useful','reactivate','supersede','review','invalidate','archive','dismiss']) {
+    assert.match(chat, new RegExp('"' + signal + '"'));
+    assert.match(alignment, new RegExp("'" + signal + "'"));
+  }
+  assert.match(migration, /memory_feedback/);
+  assert.match(alignment, /memory_feedback_signal_check/);
+});
+
+test('Memory mutation routes require write-capable workspace roles', async () => {
+  const route = await read('app/api/memory/route.ts');
+  assert.equal((route.match(/getAuthorizedWorkspace\([^)]*, \["owner", "editor"\]\)/g) ?? []).length, 3);
+});
