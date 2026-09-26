@@ -20,12 +20,12 @@ export async function GET(request: Request) {
     const workspaceId = url.searchParams.get("workspaceId") ?? undefined;
     const query = url.searchParams.get("q") ?? "";
     const lifecycle = url.searchParams.get("lifecycle");
-    const { workspace } = await getAuthorizedWorkspace(workspaceId);
+    const { userId, workspace } = await getAuthorizedWorkspace(workspaceId);
     if (query) return Response.json({ memories: await retrieveContextualMemories(String(workspace.id), query, {}, 20) });
     const sql = db();
     const memories = await sql`
       select id, text, category, confidence, relevance, lifecycle_state, confirmed, scope, provenance, source, created_at, updated_at, last_confirmed_at, last_retrieved_at
-      from memories where workspace_id=${workspace.id} and user_id=${(await getAuthorizedWorkspace(workspaceId)).userId} and (${lifecycle ?? null}::text is null or lifecycle_state=${lifecycle ?? null}::text)
+      from memories where workspace_id=${workspace.id} and user_id=${userId} and (${lifecycle ?? null}::text is null or lifecycle_state=${lifecycle ?? null}::text)
       order by relevance desc, confidence desc, updated_at desc limit 100
     `;
     return Response.json({ memories });
