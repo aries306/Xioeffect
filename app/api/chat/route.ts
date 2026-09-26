@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     const parsed = chatRequestSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return Response.json({ error: "Invalid chat request" }, { status: 400 });
     const { message, workspaceId, conversationId } = parsed.data;
-    const { userId, workspace } = await getAuthorizedWorkspace(workspaceId);
+    const { userId, workspace } = await getAuthorizedWorkspace(workspaceId, "editor");
     const sql = db();
     const preferences = await sql`select learning_enabled, ask_before_memory from preferences where user_id=${userId} limit 1`;
     const learningEnabled = preferences[0]?.learning_enabled ?? true;
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     console.error("astara.chat.failed", error instanceof Error ? error.message : "unknown error");
     const message = error instanceof Error ? error.message : "Unable to process chat";
     if (/Authentication is required/i.test(message)) return Response.json({ error: message }, { status: 401 });
-    if (/access denied|not found/i.test(message)) return Response.json({ error: message }, { status: 403 });
+    if (/access denied|write access|not found/i.test(message)) return Response.json({ error: message }, { status: 403 });
     return Response.json({ error: "Unable to process chat" }, { status: 500 });
   }
 }
