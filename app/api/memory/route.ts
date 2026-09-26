@@ -50,7 +50,7 @@ export async function PATCH(request: Request) {
   try {
     const parsed = updateSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return Response.json({ error: "Invalid memory update" }, { status: 400 });
-    const { workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId);
+    const { workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId, ["owner", "editor"]);
     return Response.json({ memory: await updateMemory({ ...parsed.data, workspaceId: String(workspace.id) }) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to update memory";
@@ -65,7 +65,7 @@ export async function DELETE(request: Request) {
     const body = await request.json().catch(() => null);
     const parsed = z.object({ workspaceId: z.string().uuid().optional(), memoryId: z.string().uuid() }).safeParse(body);
     if (!parsed.success) return Response.json({ error: "Invalid memory archive request" }, { status: 400 });
-    const { workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId);
+    const { workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId, ["owner", "editor"]);
     return Response.json({ memory: await applyMemoryFeedback({ workspaceId: String(workspace.id), memoryId: parsed.data.memoryId, signal: "archive" }) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to archive memory";
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
   try {
     const parsed = createSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return Response.json({ error: "Invalid memory request" }, { status: 400 });
-    const { workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId);
+    const { workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId, ["owner", "editor"]);
     const memory = await createMemory({ ...parsed.data, workspaceId: String(workspace.id) });
     return Response.json({ memory }, { status: 201 });
   } catch (error) {
