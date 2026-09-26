@@ -4,7 +4,11 @@ export async function generateAiResponse(messages: AiMessage[]) {
   const apiKey = process.env.AI_GATEWAY_API_KEY;
   if (!apiKey) throw new Error("AI_GATEWAY_API_KEY is not configured");
 
-  const response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20_000);
+  let response: Response;
+  try {
+    response = await fetch("https://ai-gateway.vercel.sh/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
