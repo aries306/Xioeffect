@@ -463,6 +463,26 @@ const XIO_APP = (() => {
       try { await downloadServerExport(); toast("Exported — your XIO data is in your hands.", "good"); }
       catch (error) { toast(error.message || "Could not export your data.", "bad"); }
     };
+    document.getElementById("set-delete").onclick = () => {
+      modal(`<h3>Delete all XIO data?</h3><p class="muted">This permanently removes your XIO workspace, memories, conversations, goals, research records, and GitHub connection data. Your external Clerk login remains separate. Type <b>DELETE</b> to confirm.</p>
+        <input id="del-confirm" placeholder="type DELETE" autocomplete="off" />
+        <div class="row"><button class="btn btn-ghost" data-x="1">Cancel</button><button class="btn btn-danger" id="del-go">Delete all XIO data</button></div>`,
+        (ov, close) => {
+          ov.querySelector("[data-x]").onclick = close;
+          ov.querySelector("#del-go").onclick = async () => {
+            if (ov.querySelector("#del-confirm").value.trim() !== "DELETE"){ toast("Type DELETE to confirm.", "bad"); return; }
+            try {
+              const response = await fetch("/api/account/delete", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirm: "DELETE" }) });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok) throw new Error(data.error || "Could not delete XIO data");
+              E().reset();
+              close();
+              toast("All XIO data has been permanently deleted.", "good");
+              setTimeout(() => { location.href = "/"; }, 500);
+            } catch (error) { toast(error.message || "Could not delete XIO data.", "bad"); }
+          };
+        });
+    };
     document.getElementById("set-reset").onclick = () => {
       modal(`<h3>Reset XIO completely?</h3><p class="muted">Profile, memories, goals, history — everything gone, back to a fresh install. Type <b>reset</b> to confirm.</p>
         <input id="rs-confirm" placeholder="type reset" />
