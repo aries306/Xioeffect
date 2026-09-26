@@ -70,7 +70,7 @@ Before merging/deploying the GitHub branch:
 - repeat sync without a new commit and confirm it is a no-op
 - push a new commit and confirm only changed blobs are re-indexed
 - test access-token refresh and expired/invalid refresh-token failure handling
-- verify account export excludes encrypted GitHub token material\n- verify account deletion requires explicit confirmation and removes internal XIO data plus GitHub connection data through the same ownership boundary
+- verify account export excludes encrypted GitHub token material\n- verify account data deletion requires explicit confirmation and removes internal XIO data plus GitHub connection data through the same ownership boundary
 
 ## Data model and privacy
 
