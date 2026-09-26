@@ -53,7 +53,7 @@ test("Memory lifecycle supports contextual re-evaluation and explicit archive/ed
   assert.match(memory, /"review"/);
   assert.match(memory, /"invalidated"/);
   assert.match(memory, /"archived"/);
-  assert.match(memory, /lifecycle_state in \\(\x27active\x27,\x27dormant\x27,\x27review\x27\\)/);
+  assert.match(memory, /lifecycle_state in \('active','dormant','review'\)/);
   assert.match(route, /export async function PATCH/);
   assert.match(route, /export async function DELETE/);
   assert.match(migration, /memories_lifecycle_state_check/);
