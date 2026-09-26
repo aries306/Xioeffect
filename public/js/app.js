@@ -149,7 +149,7 @@ const XIO_APP = (() => {
     });
 
     // noticed
-    const ins = E().state.insights.filter(i => i.status === "open").sort((a,b2) => b2.confidence - a2.confidence)[0];
+    const ins = E().state.insights.filter(i => i.status === "open").sort((a,b) => b.confidence - a.confidence)[0];
     document.getElementById("noticed-block").innerHTML = ins ? `
       <p style="font-size:14.5px">${esc(ins.insight)}</p>
       <div class="conf-bar"><div class="conf-fill" style="width:${ins.confidence}%"></div></div>
@@ -291,7 +291,10 @@ const XIO_APP = (() => {
           };
         });
     };
-    document.getElementById("mem-export").onclick = () => { E().exportData(); toast("Exported — everything XIO knows, in your hands."); };
+    document.getElementById("mem-export").onclick = async () => {
+      try { await downloadServerExport(); toast("Exported — everything XIO knows, in your hands.", "good"); }
+      catch (error) { toast(error.message || "Could not export your data.", "bad"); }
+    };
     document.getElementById("mem-clear").onclick = () => {
       modal(`<h3>Delete ALL memory?</h3><p class="muted">Everything XIO has learned — memories, insights, history — will be permanently forgotten. Goals and settings stay. This can't be undone.</p>
         <div class="row"><button class="btn btn-ghost" data-x="1">Cancel</button><button class="btn btn-danger" id="mc-go">Delete all memory</button></div>`,
@@ -382,6 +385,40 @@ const XIO_APP = (() => {
   }
 
   /* ══ SETTINGS ══════════════════════════════════════ */
+  async function persistPreferences(patch){
+    const response = await fetch("/api/preferences", { method: "PUT", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Could not save preferences");
+    return data.preferences;
+  }
+
+  async function loadServerPreferences(){
+    try {
+      const response = await fetch("/api/preferences", { credentials: "same-origin" });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (!data.preferences) return;
+      E().state.prefs.learning = Boolean(data.preferences.learning_enabled);
+      E().state.prefs.askBeforeMemory = Boolean(data.preferences.ask_before_memory);
+      E().state.profile.tone = data.preferences.tone || E().state.profile.tone;
+      E().state.profile.detail = data.preferences.detail_level || E().state.profile.detail;
+      E().save();
+      if ((location.hash || "").startsWith("#/app/settings")) renderSettings();
+    } catch { /* local-first demo state remains available when server preferences are unavailable */ }
+  }
+
+  async function downloadServerExport(){
+    const response = await fetch("/api/account/export", { method: "POST", credentials: "same-origin" });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "Could not export account data");
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "xio-account-export.json";
+    a.click();
+    const url = a.href;
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
   function renderSettings(){
     const s = E().state;
     document.getElementById("set-name").value = s.profile.name || "";
@@ -400,13 +437,53 @@ const XIO_APP = (() => {
       s.profile.plan = document.getElementById("set-plan").value;
       E().save(); syncChrome(); toast("Saved. XIO adapts moving forward.", "good");
     };
-    ["set-learning","set-ask"].forEach(id => document.getElementById(id).onclick = e => {
-      const on = e.currentTarget.classList.toggle("on");
-      if (id === "set-learning"){ E().state.prefs.learning = on; toast(on ? "Learning resumed. XIO will propose memories again." : "Learning paused. XIO remembers nothing new until you resume."); }
-      else { E().state.prefs.askBeforeMemory = on; toast(on ? "XIO will ask before remembering." : "XIO will remember automatically — you can still delete anything."); }
-      E().save();
+    ["set-learning","set-ask"].forEach(id => document.getElementById(id).onclick = async e => {
+      const target = e.currentTarget;
+      const on = !target.classList.contains("on");
+      const previous = id === "set-learning" ? E().state.prefs.learning : E().state.prefs.askBeforeMemory;
+      target.classList.toggle("on", on);
+      try {
+        if (id === "set-learning") {
+          E().state.prefs.learning = on;
+          await persistPreferences({ learningEnabled: on });
+          toast(on ? "Learning resumed. XIO will propose memories again." : "Learning paused. XIO remembers nothing new until you resume.");
+        } else {
+          E().state.prefs.askBeforeMemory = on;
+          await persistPreferences({ askBeforeMemory: on });
+          toast(on ? "XIO will ask before remembering." : "XIO will remember automatically — you can still delete anything.");
+        }
+        E().save();
+      } catch (error) {
+        target.classList.toggle("on", previous);
+        if (id === "set-learning") E().state.prefs.learning = previous;
+        else E().state.prefs.askBeforeMemory = previous;
+        toast(error.message || "Could not save that setting.", "bad");
+      }
     });
-    document.getElementById("set-export").onclick = () => { E().exportData(); toast("Exported — your intelligence belongs to you."); };
+    document.getElementById("set-export").onclick = async () => {
+      try { await downloadServerExport(); toast("Exported — your XIO data is in your hands.", "good"); }
+      catch (error) { toast(error.message || "Could not export your data.", "bad"); }
+    };
+    document.getElementById("set-delete").onclick = () => {
+      modal(`<h3>Delete all XIO data?</h3><p class="muted">This permanently removes your XIO workspace, memories, conversations, goals, research records, and GitHub connection data. Your external Clerk login remains separate. Type <b>DELETE</b> to confirm.</p>
+        <input id="del-confirm" placeholder="type DELETE" autocomplete="off" />
+        <div class="row"><button class="btn btn-ghost" data-x="1">Cancel</button><button class="btn btn-danger" id="del-go">Delete all XIO data</button></div>`,
+        (ov, close) => {
+          ov.querySelector("[data-x]").onclick = close;
+          ov.querySelector("#del-go").onclick = async () => {
+            if (ov.querySelector("#del-confirm").value.trim() !== "DELETE"){ toast("Type DELETE to confirm.", "bad"); return; }
+            try {
+              const response = await fetch("/api/account/delete", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirm: "DELETE" }) });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok) throw new Error(data.error || "Could not delete XIO data");
+              E().reset();
+              close();
+              toast("All XIO data has been permanently deleted.", "good");
+              setTimeout(() => { location.href = "/"; }, 500);
+            } catch (error) { toast(error.message || "Could not delete XIO data.", "bad"); }
+          };
+        });
+    };
     document.getElementById("set-reset").onclick = () => {
       modal(`<h3>Reset XIO completely?</h3><p class="muted">Profile, memories, goals, history — everything gone, back to a fresh install. Type <b>reset</b> to confirm.</p>
         <input id="rs-confirm" placeholder="type reset" />
@@ -449,7 +526,7 @@ const XIO_APP = (() => {
     if (completed){
       E().state.stats.sprints++; E().addWin("Completed a 25-minute focus sprint"); E().logEvent("sprint");
       toast("Sprint complete. That's a logged win — momentum acknowledged.", "good");
-    } else toast("Sprint ended early. The streak forgive — restart when ready.");
+    } else toast("Sprint ended early. The streak forgives — restart when ready.");
     syncChrome();
   }
 
@@ -477,6 +554,7 @@ const XIO_APP = (() => {
     XIO_TOOLS.initContent();
     XIO_TOOLS.initPrompts();
     bindGlobal(); bindGoals(); bindMemoryControls(); bindSettings();
+    void loadServerPreferences();
     route();
     // log a session event (feeds momentum honestly)
     if (E().state.onboarded) E().logEvent("session");

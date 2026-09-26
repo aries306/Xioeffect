@@ -9,14 +9,14 @@ export async function POST(request: Request) {
     if (body?.memoryId) {
       const parsed = feedbackRequestSchema.safeParse(body);
       if (!parsed.success) return Response.json({ error: "Invalid memory feedback" }, { status: 400 });
-      const { workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId);
+      const { workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId, "editor");
       const memory = await applyMemoryFeedback({ ...parsed.data, workspaceId: String(workspace.id) });
       return Response.json({ memory });
     }
 
     const parsed = recommendationOutcomeSchema.safeParse(body);
     if (!parsed.success) return Response.json({ error: "Invalid recommendation outcome" }, { status: 400 });
-    const { userId, workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId);
+    const { userId, workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId, "editor");
     const sql = db();
     if (parsed.data.conversationId) {
       const allowed = await sql`select id from conversations where id=${parsed.data.conversationId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`;
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to record feedback";
     if (/Authentication is required/i.test(message)) return Response.json({ error: message }, { status: 401 });
-    if (/access denied|not found/i.test(message)) return Response.json({ error: message }, { status: 403 });
+    if (/access denied|write access|not found/i.test(message)) return Response.json({ error: message }, { status: 403 });
     return Response.json({ error: "Unable to record feedback" }, { status: 500 });
   }
 }

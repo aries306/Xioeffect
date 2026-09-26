@@ -8,9 +8,9 @@ export type MemoryRecord = { id: string; text: string; category: string; confide
 function rowToMemory(row: Record<string, unknown>): MemoryRecord { return { id: String(row.id), text: String(row.text), category: String(row.category), confidence: Number(row.confidence), relevance: Number(row.relevance), lifecycleState: String(row.lifecycle_state) as MemoryRecord["lifecycleState"], confirmed: Boolean(row.confirmed), scope: (row.scope ?? {}) as MemoryScope, provenance: (row.provenance ?? {}) as Record<string, unknown>, source: String(row.source), createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString(), lastConfirmedAt: new Date(String(row.last_confirmed_at)).toISOString(), lastRetrievedAt: row.last_retrieved_at ? new Date(String(row.last_retrieved_at)).toISOString() : null }; }
 
 export async function retrieveContextualMemories(workspaceId: string, query: string, context: Record<string, unknown> = {}, limit = 8) {
-  const { userId, workspace } = await getAuthorizedWorkspace(workspaceId); const sql = db();
-  const rows = await sql`select id,text,category,confidence,relevance,lifecycle_state,confirmed,scope,provenance,source,created_at,updated_at,last_confirmed_at,last_retrieved_at from memories where workspace_id=${workspace.id} and lifecycle_state='active' and active=true and confidence >= 5 order by updated_at desc limit 80`;
-  const scored = rows.map((row) => ({ row, score: scoreContextualMemory({ text: String(row.text), scope: row.scope ?? {}, lifecycleState: "active", confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at) }, query, context) })).filter((item) => item.score >= 1.5).sort((a, b) => b.score - a.score).slice(0, Math.max(1, Math.min(limit, 20)));
+  const { userId, workspace } = await getAuthorizedWorkspace(workspaceId, "viewer"); const sql = db();
+  const rows = await sql`select id,text,category,confidence,relevance,lifecycle_state,confirmed,scope,provenance,source,created_at,updated_at,last_confirmed_at,last_retrieved_at from memories where workspace_id=${workspace.id} and user_id=${userId} and lifecycle_state in ('active','dormant','review') and active=true and confidence >= 5 order by updated_at desc limit 80`;
+  const scored = rows.map((row) => ({ row, score: scoreContextualMemory({ text: String(row.text), scope: row.scope ?? {}, lifecycleState: String(row.lifecycle_state) as "active" | "dormant" | "review", confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at) }, query, context) })).filter((item) => item.score >= (item.row.lifecycle_state === 'active' ? 1.5 : 2)).sort((a, b) => b.score - a.score).slice(0, Math.max(1, Math.min(limit, 20)));
   await Promise.all(scored.map(async ({ row, score }) => {
     await sql`update memories set last_retrieved_at=now() where id=${row.id} and workspace_id=${workspace.id}`;
     await sql`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata) values (${row.id},${workspace.id},${userId},'retrieved',${row.confidence},${row.confidence},${row.relevance},${row.relevance},${row.lifecycle_state},${row.lifecycle_state},'contextual-retrieval',${JSON.stringify({ score: Number(score.toFixed(3)) })}::jsonb)`;
@@ -19,8 +19,8 @@ export async function retrieveContextualMemories(workspaceId: string, query: str
 }
 
 export async function createMemory(input: { workspaceId: string; text: string; category?: string; confidence?: number; relevance?: number; source?: string; scope?: MemoryScope; provenance?: Record<string, unknown>; confirmed?: boolean }) {
-  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId); const text = input.text.trim(); if (!text) throw new Error("Memory text is required"); const sql = db();
-  const existing = await sql`select * from memories where workspace_id=${workspace.id} and lower(text)=lower(${text}) and lifecycle_state in ('active','dormant') limit 1`;
+  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId, "editor"); const text = input.text.trim(); if (!text) throw new Error("Memory text is required"); const sql = db();
+  const existing = await sql`select * from memories where workspace_id=${workspace.id} and user_id=${userId} and lower(text)=lower(${text}) and lifecycle_state in ('active','dormant') limit 1`;
   if (existing[0]) {
     const before = Number(existing[0].confidence), relevanceBefore = Number(existing[0].relevance); const after = Math.min(99, before + 8), relevanceAfter = Math.min(100, relevanceBefore + 4); const lifecycle = existing[0].lifecycle_state === 'dormant' ? 'active' : existing[0].lifecycle_state;
     const updated = await sql`update memories set confidence=${after},relevance=${relevanceAfter},lifecycle_state=${lifecycle},active=true,last_confirmed_at=now(),updated_at=now() where id=${existing[0].id} and workspace_id=${workspace.id} returning *`;
@@ -35,7 +35,7 @@ export async function createMemory(input: { workspaceId: string; text: string; c
 }
 
 export async function applyMemoryFeedback(input: { workspaceId: string; memoryId: string; signal: "confirm" | "contradict" | "useful" | "not_useful" | "reactivate" | "supersede" | "review" | "invalidate" | "archive" | "dismiss"; note?: string; recommendationOutcomeId?: string }) {
-  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId); const sql = db();
+  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId, "editor"); const sql = db();
   const rows = await sql`select * from memories where id=${input.memoryId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`; if (!rows[0]) throw new Error("Memory not found");
   const before = rows[0]; const confidenceBefore = Number(before.confidence), relevanceBefore = Number(before.relevance); let confidence = confidenceBefore, relevance = relevanceBefore, lifecycle = String(before.lifecycle_state);
   let eventType: "confirmed" | "rejected" | "feedback" | "reactivated" | "superseded" | "edited" = "feedback";
@@ -48,14 +48,14 @@ export async function applyMemoryFeedback(input: { workspaceId: string; memoryId
   else if (input.signal === "archive") lifecycle = "archived";
   else if (input.signal === "dismiss") { lifecycle = "rejected"; eventType = "rejected"; }
   else if (input.signal === "supersede") { lifecycle = "superseded"; eventType = "superseded"; }
-  const updated = await sql`update memories set confidence=${confidence},relevance=${relevance},lifecycle_state=${lifecycle},active=${lifecycle === 'active' || lifecycle === 'dormant'},updated_at=now(),last_confirmed_at=case when ${input.signal === 'confirm' || input.signal === 'useful'} then now() else last_confirmed_at end where id=${input.memoryId} and workspace_id=${workspace.id} and user_id=${userId} returning *`;
+  const updated = await sql`update memories set confidence=${confidence},relevance=${relevance},lifecycle_state=${lifecycle},active=${lifecycle === 'active' || lifecycle === 'dormant' || lifecycle === 'review'},updated_at=now(),last_confirmed_at=case when ${input.signal === 'confirm' || input.signal === 'useful'} then now() else last_confirmed_at end where id=${input.memoryId} and workspace_id=${workspace.id} and user_id=${userId} returning *`;
   await sql`insert into memory_feedback (memory_id,recommendation_outcome_id,workspace_id,user_id,signal,note) values (${input.memoryId},${input.recommendationOutcomeId ?? null},${workspace.id},${userId},${input.signal},${input.note ?? null})`;
   await sql`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata) values (${input.memoryId},${workspace.id},${userId},${eventType},${confidenceBefore},${confidence},${relevanceBefore},${relevance},${before.lifecycle_state},${lifecycle},'user-feedback',${JSON.stringify({ signal: input.signal, note: input.note ?? null })}::jsonb)`;
   return rowToMemory(updated[0] as Record<string, unknown>);
 }
 
 export async function updateMemory(input: { workspaceId: string; memoryId: string; text?: string; category?: string; scope?: MemoryScope; provenance?: Record<string, unknown> }) {
-  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId);
+  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId, "editor");
   const text = input.text?.trim();
   if (text === "") throw new Error("Memory text is required");
   const sql = db();
