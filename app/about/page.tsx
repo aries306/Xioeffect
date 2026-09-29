@@ -21,8 +21,8 @@ export default function AboutPage() {
       <div className="ambient"><i className="orb orbOne" /><i className="orb orbTwo" /><i className="grid" /></div>
       <header className="nav">
         <Link href="/" className="brand" aria-label="XIO home"><span>✦</span> XIO</Link>
-        <nav><Link href="/">Home</Link><Link href="/about" className="active">About</Link><a href="/#/pricing">Pricing</a></nav>
-        <a className="cta" href="/#/app/today">Enter XIO <span>→</span></a>
+        <nav><Link href="/">Home</Link><Link href="/about" className="active">About</Link><Link href="/#/pricing">Pricing</Link></nav>
+        <Link className="cta" href="/#/app/today">Enter XIO <span>→</span></Link>
       </header>
 
       <section className="hero">
@@ -53,7 +53,7 @@ export default function AboutPage() {
 
       <section className="section process"><p className="eyebrow">04 — The process</p><h2>From a rough thought to something polished.</h2><ol>{process.map((step, index) => <li key={step}><span>0{index + 1}</span>{step}</li>)}</ol></section>
 
-      <section className="future panel"><p className="eyebrow">05 — What’s next</p><h2>The story is still being built.</h2><p>I’m not interested in presenting a finished version of myself. I’m interested in building what comes next — and making it exceptional.</p><a className="cta" href="/#/app/today">Explore XIO <span>→</span></a></section>
+      <section className="future panel"><p className="eyebrow">05 — What’s next</p><h2>The story is still being built.</h2><p>I’m not interested in presenting a finished version of myself. I’m interested in building what comes next — and making it exceptional.</p><Link className="cta" href="/#/app/today">Explore XIO <span>→</span></Link></section>
       <footer><Link href="/">XIO</Link><span>Independent creation, in motion.</span></footer>
       <style>{`
         :global(*) { box-sizing: border-box; } :global(body) { margin: 0; background: #06060e; color: #f1f1f8; font-family: Arial, sans-serif; }

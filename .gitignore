@@ -5,3 +5,7 @@ node_modules/
 .wrangler/
 .dev.vars*
 dist/
+
+# Build/type artifacts
+next-env.d.ts
+*.tsbuildinfo
