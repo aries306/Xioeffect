@@ -1,5 +1,9 @@
 -- Sanctum contextual evaluation and explicit memory relations.
 -- Derived relationships never mutate a source memory silently.
+alter table memory_events drop constraint if exists memory_events_event_type_check;
+alter table memory_events add constraint memory_events_event_type_check
+  check (event_type in ('created','retrieved','evaluated','confirmed','rejected','reinforced','feedback','reactivated','superseded','edited'));
+
 create table if not exists memory_relations (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null references workspaces(id) on delete cascade,
