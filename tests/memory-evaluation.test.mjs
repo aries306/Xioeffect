@@ -11,6 +11,7 @@ const base = {
   updatedAt: "2026-10-01T00:00:00.000Z",
   lastConfirmedAt: "2026-10-01T00:00:00.000Z",
   text: "Goal: build a cognitive system",
+  category: "goal",
 };
 
 test("eligible memory carries provenance and context", () => {
