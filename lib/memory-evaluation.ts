@@ -7,6 +7,7 @@ export type MemoryEvaluationInput = {
   updatedAt: string;
   lastConfirmedAt?: string | null;
   text: string;
+  category?: string;
 };
 
 export type MemoryEvaluation = {
@@ -80,6 +81,6 @@ export function findContradictionCandidates(
     if (candidate.text.toLowerCase() === memory.text.toLowerCase()) return false;
     const candidateTokens = candidate.text.toLowerCase().split(/\W+/).filter((t) => t.length > 3);
     const overlap = candidateTokens.filter((t) => tokens.has(t)).length;
-    return overlap >= 2 && candidate.category === (memory as any).category;
+    return overlap >= 2 && candidate.category === memory.category;
   });
 }
