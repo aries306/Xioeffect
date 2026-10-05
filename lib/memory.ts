@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { getAuthorizedWorkspace } from "@/lib/workspace";
 import { scoreContextualMemory } from "@/lib/memory-ranking";
+import { evaluateMemoryForContext } from "@/lib/memory-evaluation";
 
 export type MemoryScope = { workspace?: string; contexts?: string[]; tags?: string[]; [key: string]: unknown };
 export type MemoryLifecycleState = "active" | "dormant" | "review" | "superseded" | "invalidated" | "archived" | "rejected";
@@ -10,12 +11,13 @@ function rowToMemory(row: Record<string, unknown>): MemoryRecord { return { id: 
 export async function retrieveContextualMemories(workspaceId: string, query: string, context: Record<string, unknown> = {}, limit = 8) {
   const { userId, workspace } = await getAuthorizedWorkspace(workspaceId, "viewer"); const sql = db();
   const rows = await sql`select id,text,category,confidence,relevance,lifecycle_state,confirmed,scope,provenance,source,created_at,updated_at,last_confirmed_at,last_retrieved_at from memories where workspace_id=${workspace.id} and user_id=${userId} and lifecycle_state in ('active','dormant','review') and active=true and confidence >= 5 order by updated_at desc limit 80`;
-  const scored = rows.map((row) => ({ row, score: scoreContextualMemory({ text: String(row.text), scope: row.scope ?? {}, lifecycleState: String(row.lifecycle_state) as "active" | "dormant" | "review", confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at) }, query, context) })).filter((item) => item.score >= (item.row.lifecycle_state === 'active' ? 1.5 : 2)).sort((a, b) => b.score - a.score).slice(0, Math.max(1, Math.min(limit, 20)));
+  const evaluated = rows.map((row) => ({ row, evaluation: evaluateMemoryForContext({ text: String(row.text), scope: (row.scope ?? {}) as Record<string, unknown>, provenance: (row.provenance ?? {}) as Record<string, unknown>, lifecycleState: String(row.lifecycle_state), confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at), lastConfirmedAt: row.last_confirmed_at ? String(row.last_confirmed_at) : null }, context) }));
+  const scored = evaluated.filter(({ evaluation }) => evaluation.eligible).map(({ row, evaluation }) => ({ row, evaluation, score: scoreContextualMemory({ text: String(row.text), scope: row.scope ?? {}, lifecycleState: String(row.lifecycle_state) as "active" | "dormant" | "review", confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at) }, query, context) * evaluation.influenceWeight })).filter((item) => item.score >= 1).sort((a, b) => b.score - a.score).slice(0, Math.max(1, Math.min(limit, 20)));
   await Promise.all(scored.map(async ({ row, score }) => {
     await sql`update memories set last_retrieved_at=now() where id=${row.id} and workspace_id=${workspace.id}`;
     await sql`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata) values (${row.id},${workspace.id},${userId},'retrieved',${row.confidence},${row.confidence},${row.relevance},${row.relevance},${row.lifecycle_state},${row.lifecycle_state},'contextual-retrieval',${JSON.stringify({ score: Number(score.toFixed(3)) })}::jsonb)`;
   }));
-  return scored.map(({ row, score }) => ({ ...rowToMemory(row as Record<string, unknown>), retrievalScore: Number(score.toFixed(3)) }));
+  return scored.map(({ row, score, evaluation }) => ({ ...rowToMemory(row as Record<string, unknown>), retrievalScore: Number(score.toFixed(3)), evaluation }));
 }
 
 export async function createMemory(input: { workspaceId: string; text: string; category?: string; confidence?: number; relevance?: number; source?: string; scope?: MemoryScope; provenance?: Record<string, unknown>; confirmed?: boolean }) {
