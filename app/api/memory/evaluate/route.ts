@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     await sql`update memories set last_evaluated_at=now(), evaluation=${JSON.stringify(evaluation)}::jsonb where id=${row.id} and workspace_id=${workspace.id}`;
     await sql`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata)
-      values (${row.id},${workspace.id},${userId},'retrieved',${row.confidence},${row.confidence},${row.relevance},${row.relevance},${row.lifecycle_state},${row.lifecycle_state},'contextual-evaluation',${JSON.stringify({ evaluation })}::jsonb)`;
+      values (${row.id},${workspace.id},${userId},'evaluated',${row.confidence},${row.confidence},${row.relevance},${row.relevance},${row.lifecycle_state},${row.lifecycle_state},'contextual-evaluation',${JSON.stringify({ evaluation })}::jsonb)`;
     return Response.json({ memoryId: row.id, evaluation });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to evaluate memory";
