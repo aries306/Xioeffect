@@ -3,7 +3,7 @@ import { generateAiResponse } from "@/lib/ai";
 import { retrieveContextualMemories, type MemoryRecord } from "@/lib/memory";
 import { getAuthorizedWorkspace, readWorkspaceState } from "@/lib/workspace";
 
-export type VeyronContext = { workspaceId: string; userMessage: string; conversationId?: string };
+export type VeyronContext = { workspaceId: string; userMessage: string; conversationId?: string; context?: Record<string, unknown> };
 
 export async function runAvenne(input: VeyronContext) {
   const started = Date.now();
@@ -12,7 +12,7 @@ export async function runAvenne(input: VeyronContext) {
   const memories = await retrieveContextualMemories(
     workspace.id,
     input.userMessage,
-    { workspaceName: workspace.name, goals: workspaceState.goals.map((goal) => goal.title) },
+    { workspaceName: workspace.name, goals: workspaceState.goals.map((goal) => goal.title), ...(input.context ?? {}) },
     8,
   );
   const sql = db();
@@ -28,7 +28,7 @@ export async function runAvenne(input: VeyronContext) {
   const evidence = memories.map((memory) => ({
     id: memory.id, text: memory.text, category: memory.category, confidence: memory.confidence,
     relevance: memory.relevance, lifecycleState: memory.lifecycleState, scope: memory.scope,
-    provenance: memory.provenance, retrievalScore: memory.retrievalScore,
+    provenance: memory.provenance, retrievalScore: memory.retrievalScore, evaluation: memory.evaluation,
   }));
   const system = `You are Avenne, the conversational intelligence inside Veyron.
 
