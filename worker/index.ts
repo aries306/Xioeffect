@@ -5,8 +5,6 @@ type ExecutionContextLike = {
   passThroughOnException(): void;
 };
 
-export default worker;
-
 type WorkerEnv = {
   HYPERDRIVE?: {
     connectionString: string;
@@ -25,3 +23,5 @@ const worker = {
     return (handler.fetch as unknown as (request: Request, env: WorkerEnv, ctx: ExecutionContextLike) => Promise<Response>)(request, env, ctx);
   },
 };
+
+export default worker;
