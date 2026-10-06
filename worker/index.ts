@@ -5,13 +5,15 @@ type ExecutionContextLike = {
   passThroughOnException(): void;
 };
 
+export default worker;
+
 type WorkerEnv = {
   HYPERDRIVE?: {
     connectionString: string;
   };
 };
 
-export default {
+const worker = {
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContextLike): Promise<Response> {
     // Keep the existing application data layer intact while routing its DATABASE_URL
     // through Cloudflare Hyperdrive in production. Local development can continue to
