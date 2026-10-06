@@ -1,6 +1,11 @@
 import handler from "vinext/server/app-router-entry";
 
-type ExecutionContextLike = {\n  waitUntil(promise: Promise<unknown>): void;\n  passThroughOnException(): void;\n};\n\ntype WorkerEnv = {
+type ExecutionContextLike = {
+  waitUntil(promise: Promise<unknown>): void;
+  passThroughOnException(): void;
+};
+
+type WorkerEnv = {
   HYPERDRIVE?: {
     connectionString: string;
   };
