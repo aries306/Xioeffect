@@ -1,13 +1,13 @@
 import handler from "vinext/server/app-router-entry";
 
-type WorkerEnv = {
+type ExecutionContextLike = {\n  waitUntil(promise: Promise<unknown>): void;\n  passThroughOnException(): void;\n};\n\ntype WorkerEnv = {
   HYPERDRIVE?: {
     connectionString: string;
   };
 };
 
 export default {
-  async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContextLike): Promise<Response> {
     // Keep the existing application data layer intact while routing its DATABASE_URL
     // through Cloudflare Hyperdrive in production. Local development can continue to
     // use DATABASE_URL directly.
@@ -15,6 +15,6 @@ export default {
       process.env.DATABASE_URL = env.HYPERDRIVE.connectionString;
     }
 
-    return handler.fetch(request, env, ctx);
+    return (handler.fetch as unknown as (request: Request, env: WorkerEnv, ctx: ExecutionContextLike) => Promise<Response>)(request, env, ctx);
   },
 };
