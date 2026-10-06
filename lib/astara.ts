@@ -54,7 +54,7 @@ When appropriate, provide a clear recommendation. If you do, put it on its own l
     conversationId,
     answer,
     recommendation,
-    evidence: evidence as Array<MemoryRecord & { retrievalScore: number }>,
+    evidence,
     diagnostics: { memoryCount: memories.length, durationMs: Date.now() - started },
   };
 }
