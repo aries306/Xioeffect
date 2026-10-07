@@ -5,3 +5,6 @@ node_modules/
 
 # clerk configuration (can include secrets)
 /.clerk/
+.wrangler/
+.dev.vars*
+dist/

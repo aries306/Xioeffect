@@ -582,9 +582,10 @@
             <div class="toggle-row"><div><h4>Ask before remembering</h4><p class="muted small">Every memory requires your confirmation.</p></div><button class="bt-switch on" id="set-ask"><span class="bt-knob"></span></button></div>
             <div class="row" style="margin-top:14px;gap:10px;flex-wrap:wrap">
               <button class="btn btn-ghost btn-sm" id="set-export">Export all my data (JSON)</button>
-              <button class="btn btn-danger btn-sm" id="set-reset">Reset XIO completely</button>
+              <button class="btn btn-danger btn-sm" id="set-reset">Reset local XIO</button>
+              <button class="btn btn-danger btn-sm" id="set-delete">Delete all XIO data</button>
             </div>
-            <p class="muted tiny" style="margin-top:12px">This demo stores everything locally in your browser — nothing leaves your device. The production architecture (in README) keeps the same privacy contract with per-user encrypted memory.</p>
+            <p class="muted tiny" style="margin-top:12px">Local demo state stays in your browser. Signed-in XIO data is stored server-side under your authenticated workspace and can be exported or permanently deleted.</p>
           </div>
         </div>
       </section>
