@@ -1,52 +1,110 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const PILLARS = ["Memory","Learning","Projects","Intelligence","Agents","Knowledge","Insights","Trust"];
+const ZUNA_WELCOME = "I am Zuna. I am here to understand what matters to you, remember only what you authorize, and help your world become more coherent over time.";
 
 function wordsFrom(text: string) {
   return Array.from(new Set(text.toLowerCase().replace(/[^a-z0-9\s'-]/g," ").split(/\s+/).filter(w=>w.length>3))).slice(0,12);
 }
+function pickVoice(voices: SpeechSynthesisVoice[]) {
+  const preferred=["Samantha","Ava","Jenny","Victoria","Karen","Google UK English Female","Microsoft Jenny","Microsoft Ava"];
+  return voices.find(v=>preferred.some(n=>v.name.toLowerCase().includes(n.toLowerCase()))) ??
+    voices.find(v=>/^en-CA/i.test(v.lang)) ?? voices.find(v=>/^en(-|_)/i.test(v.lang)) ?? voices[0];
+}
 
-export default function SanctumExperience({ signedIn }: { signedIn: boolean }) {
-  const router = useRouter();
+export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
+  const router=useRouter();
   const [goal,setGoal]=useState("");
   const [saved,setSaved]=useState(false);
+  const [speaking,setSpeaking]=useState(false);
+  const [voiceReady,setVoiceReady]=useState(false);
   const concepts=useMemo(()=>wordsFrom(goal),[goal]);
 
+  useEffect(()=>{
+    if(!("speechSynthesis" in window)) return;
+    const load=()=>setVoiceReady(window.speechSynthesis.getVoices().length>0);
+    load(); window.speechSynthesis.addEventListener("voiceschanged",load);
+    return()=>window.speechSynthesis.removeEventListener("voiceschanged",load);
+  },[]);
+
+  function speak(text:string) {
+    if(!("speechSynthesis" in window)||!text.trim()) return;
+    window.speechSynthesis.cancel();
+    const utterance=new SpeechSynthesisUtterance(text.trim());
+    utterance.lang="en-CA"; utterance.rate=.92; utterance.pitch=1.06;
+    const voice=pickVoice(window.speechSynthesis.getVoices()); if(voice) utterance.voice=voice;
+    utterance.onstart=()=>setSpeaking(true); utterance.onend=()=>setSpeaking(false); utterance.onerror=()=>setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  }
+  function stopSpeaking(){ window.speechSynthesis?.cancel(); setSpeaking(false); }
+
   async function remember() {
-    if (!signedIn) { router.push("/sign-up?redirect_url=/sanctum"); return; }
-    try {
+    if(!signedIn){ router.push("/sign-up?redirect_url=/sanctum"); return; }
+    try{
       const workspaceResponse=await fetch("/api/workspace");
-      if (!workspaceResponse.ok) throw new Error("workspace");
-      const { workspace }=await workspaceResponse.json();
+      if(!workspaceResponse.ok) throw new Error("workspace");
+      const {workspace}=await workspaceResponse.json();
       const response=await fetch("/api/memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         workspaceId:workspace.id,text:goal.trim(),category:"goal",confidence:70,relevance:80,confirmed:true,
         source:"sanctum-arrival",scope:{contexts:["personal"],arrival:true},
         provenance:{type:"sanctum-arrival",source:"user-confirmed",capturedAt:new Date().toISOString()}
       })});
-      if (!response.ok) throw new Error("memory");
-      setSaved(true);
-    } catch { setSaved(false); }
+      if(!response.ok) throw new Error("memory");
+      setSaved(true); speak(`Remembered with your permission. ${goal.trim()}`);
+    }catch{ setSaved(false); }
   }
 
   return <main className="sanctum">
-    <header className="sanctum-header"><span className="sanctum-brand"><i/>Zuna · Sanctum</span><button className="sanctum-ghost" onClick={()=>router.push("/")}>Return</button></header>
-    <div className="sanctum-field" aria-hidden="true"><div className="sanctum-core"/>{PILLARS.map((p,i)=><span key={p} className="sanctum-node" style={{"--i":i} as React.CSSProperties}>{p}</span>)}{concepts.map((c,i)=><span key={c} className="sanctum-concept" style={{"--i":i} as React.CSSProperties}>{c}</span>)}</div>
+    <div className="sanctum-backdrop" aria-hidden="true">
+      <div className="sanctum-nebula sanctum-nebula-one"/><div className="sanctum-nebula sanctum-nebula-two"/>
+      <div className="sanctum-world sanctum-world-one"/><div className="sanctum-world sanctum-world-two"/>
+      <div className="sanctum-ring sanctum-ring-one"/><div className="sanctum-ring sanctum-ring-two"/><div className="sanctum-ring sanctum-ring-three"/>
+      <div className="sanctum-star sanctum-star-one"/><div className="sanctum-star sanctum-star-two"/><div className="sanctum-star sanctum-star-three"/>
+    </div>
+    <header className="sanctum-header">
+      <button className="sanctum-brand" onClick={()=>router.push("/")} aria-label="Return to Zuna home"><span className="sanctum-brand-mark">Z</span><span>ZUNOVERSE</span></button>
+      <div className="sanctum-header-right"><span className="sanctum-status"><i/> cognitive field online</span><button className="sanctum-ghost" onClick={()=>router.push("/")}>Return</button></div>
+    </header>
+    <div className="sanctum-field" aria-hidden="true">
+      <div className="sanctum-core"><div className="sanctum-core-inner"/></div>
+      {PILLARS.map((p,i)=><span key={p} className="sanctum-node" style={{"--i":i} as React.CSSProperties}>{p}</span>)}
+      {concepts.map((c,i)=><span key={c} className="sanctum-concept" style={{"--i":i} as React.CSSProperties}>{c}</span>)}
+    </div>
     <section className="sanctum-content">
       <div className="sanctum-stage">
-        <div className="sanctum-eyebrow">Vea · provenance-first intelligence</div>
-        <h1>What do you want to make possible?</h1>
-        <p>Give Zuna one intention. It becomes a user-confirmed starting point—not an invisible assumption.</p>
-        <textarea value={goal} onChange={e=>setGoal(e.target.value)} autoFocus placeholder="I want to…"/>
-        <div className="sanctum-actions">
-          {!saved ? <button className="sanctum-button" disabled={!goal.trim()} onClick={remember}>{signedIn ? "Remember this" : "Sign in to remember this"} →</button> : <span className="sanctum-confirmed">✓ Remembered with your permission</span>}
-          <button className="sanctum-ghost" onClick={()=>router.push(signedIn?"/app":"/sign-up?redirect_url=/app")}>Enter Zuna →</button>
+        <div className="sanctum-kicker">YOUR MIND · OUR UNIVERSE</div>
+        <div className="sanctum-z-mark" aria-hidden="true">Z</div>
+        <div className="sanctum-eyebrow">Zuna · provenance-first intelligence</div>
+        <h1>Enter the space where your context becomes coherent.</h1>
+        <p className="sanctum-lede">Zuna learns with you—not ahead of you. Give her one intention, and she will treat it as <strong>user-authorized context</strong>, not an invisible assumption.</p>
+        <div className="sanctum-voice">
+          <button className={`sanctum-voice-button${speaking?" is-speaking":""}`} onClick={()=>speaking?stopSpeaking():speak(ZUNA_WELCOME)} disabled={!voiceReady&&!("speechSynthesis" in window)} aria-label={speaking?"Stop Zuna voice":"Hear Zuna"}>
+            <span className="sanctum-voice-orb"><i/><i/><i/></span><span>{speaking?"Zuna is speaking":"Hear Zuna"}</span>
+          </button>
+          <span className="sanctum-voice-note">{voiceReady?"Browser voice ready · en-CA":"Voice will appear when your browser exposes a voice"}</span>
         </div>
-        {goal && <div className="sanctum-quote">“{goal.trim()}”</div>}
+        <div className="sanctum-input-shell">
+          <span className="sanctum-input-label">Your first intention</span>
+          <textarea value={goal} onChange={e=>{setGoal(e.target.value);setSaved(false)}} autoFocus placeholder="I want to make possible…" aria-label="Your first intention"/>
+          <span className="sanctum-input-glow"/>
+        </div>
+        <div className="sanctum-actions">
+          {!saved?<button className="sanctum-button" disabled={!goal.trim()} onClick={remember}>{signedIn?"Remember this":"Sign in to remember this"} <span>→</span></button>:<span className="sanctum-confirmed">✓ Remembered with your permission</span>}
+          {goal.trim()&&<button className="sanctum-speak-intention" onClick={()=>speaking?stopSpeaking():speak(goal)}>{speaking?"Stop voice":"Let Zuna say it"}</button>}
+          <button className="sanctum-ghost sanctum-enter" onClick={()=>router.push(signedIn?"/app":"/sign-up?redirect_url=/app")}>Enter Zuna <span>↗</span></button>
+        </div>
+        {goal&&<div className="sanctum-quote">“{goal.trim()}”</div>}
       </div>
     </section>
-    <div className="sanctum-caption">Context becomes part of the world only when you authorize it.</div>
+    <section className="sanctum-manifest" aria-label="Zuna principles">
+      <div><span>01</span><strong>Remember</strong><small>with permission</small></div>
+      <div><span>02</span><strong>Understand</strong><small>through context</small></div>
+      <div><span>03</span><strong>Re-evaluate</strong><small>before influence</small></div>
+      <div><span>04</span><strong>Evolve</strong><small>without losing provenance</small></div>
+    </section>
+    <div className="sanctum-caption">Memory has lineage. Context has gravity. Nothing becomes truth by accident.</div>
   </main>;
 }
