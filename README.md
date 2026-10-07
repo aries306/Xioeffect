@@ -2,6 +2,14 @@
 
 XIO is a Next.js server-backed SaaS application with a browser-first experience. The existing Living System remains the visual front door while authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities run through server-side routes.
 
+## Runtime
+
+XIO uses **Vinext on Cloudflare Workers** as its default development, production-build,
+and production-serving runtime. This is the deployment target configured in
+`wrangler.jsonc`, and it builds the full App Router surface successfully. The legacy
+Next.js scripts remain available as `dev:next`, `build:next`, and `start:next` for
+local compatibility checks.
+
 ## Current state
 
 - `/` embeds the existing demo unchanged

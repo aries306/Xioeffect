@@ -7,6 +7,13 @@
     "node": "24.x"
   },
   "scripts": {
+    "dev": "vinext dev",
+    "build": "vinext build",
+    "start": "vinext start",
+    "dev:next": "next dev",
+    "build:next": "next build",
+    "start:next": "next start",
+    "deploy:cloudflare": "npx @vinext/cloudflare deploy",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -16,7 +23,7 @@
     "preview:cloudflare": "npm run build:vinext && npx wrangler dev",
     "deploy:cloudflare": "npm run build:vinext && npx wrangler deploy",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "rm -rf .next && tsc --noEmit",
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
