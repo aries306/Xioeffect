@@ -50,7 +50,7 @@ Generate the token-encryption key as a base64-encoded 32-byte value. Register th
 
 ## Database
 
-Apply migrations in order: `001_xio_core.sql`, `002_github_nexus.sql`, `003_memory_fabric_workspace.sql`, `004_memory_lifecycle_controls.sql`, then `005_memory_feedback_lifecycle_controls.sql`. The GitHub migration is upgrade-safe for the integration tables and adds encrypted token lifecycle fields, repository selection/sync state, provenance indexes, and NEXUS event deduplication.
+Apply migrations in order: `001_xio_core.sql`, `002_github_nexus.sql`, `003_memory_fabric_workspace.sql`, `004_memory_lifecycle_controls.sql`, then `005_memory_feedback_lifecycle_controls.sql`, then `006_memory_relations_evaluation.sql`. The GitHub migration is upgrade-safe for the integration tables and adds encrypted token lifecycle fields, repository selection/sync state, provenance indexes, and NEXUS event deduplication.
 
 Every user-owned query must be scoped by the verified Clerk user ID. The GitHub integration uses text `user_id` values because Clerk user IDs are strings.
 
@@ -71,6 +71,8 @@ Before merging/deploying the GitHub branch:
 - push a new commit and confirm only changed blobs are re-indexed
 - test access-token refresh and expired/invalid refresh-token failure handling
 - verify account export excludes encrypted GitHub token material\n- verify account data deletion requires explicit confirmation and removes internal XIO data plus GitHub connection data through the same ownership boundary
+- verify contextual memory retrieval blocks missing provenance, scope mismatches, stale memories, and low-confidence memories before they influence AI responses
+- verify evaluation state and explicit memory relations are persisted with provenance
 
 ## Data model and privacy
 

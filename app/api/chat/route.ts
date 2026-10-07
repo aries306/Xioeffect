@@ -9,13 +9,13 @@ export async function POST(request: Request) {
   try {
     const parsed = chatRequestSchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return Response.json({ error: "Invalid chat request" }, { status: 400 });
-    const { message, workspaceId, conversationId } = parsed.data;
+    const { message, workspaceId, conversationId, context } = parsed.data;
     const { userId, workspace } = await getAuthorizedWorkspace(workspaceId, "editor");
     const sql = db();
     const preferences = await sql`select learning_enabled, ask_before_memory from preferences where user_id=${userId} limit 1`;
     const learningEnabled = preferences[0]?.learning_enabled ?? true;
     const askBeforeMemory = preferences[0]?.ask_before_memory ?? true;
-    const result = await runAvenne({ workspaceId: String(workspace.id), userMessage: message, conversationId });
+    const result = await runAvenne({ workspaceId: String(workspace.id), userMessage: message, conversationId, context });
     const candidates = learningEnabled ? extractMemoryCandidates(message) : [];
     const persisted = [];
     if (learningEnabled && !askBeforeMemory) for (const candidate of candidates) persisted.push(await createMemory({
