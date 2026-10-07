@@ -20,11 +20,13 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
   const [goal,setGoal]=useState("");
   const [saved,setSaved]=useState(false);
   const [speaking,setSpeaking]=useState(false);
-  const [voiceReady,setVoiceReady]=useState(false);\n  const [voiceSupported,setVoiceSupported]=useState(false);
+  const [voiceReady,setVoiceReady]=useState(false);
+  const [voiceSupported,setVoiceSupported]=useState(false);
   const concepts=useMemo(()=>wordsFrom(goal),[goal]);
 
   useEffect(()=>{
-    if(!("speechSynthesis" in window)) return;\n    setVoiceSupported(true);
+    if(!("speechSynthesis" in window)) return;
+    setVoiceSupported(true);
     const load=()=>setVoiceReady(window.speechSynthesis.getVoices().length>0);
     load(); window.speechSynthesis.addEventListener("voiceschanged",load);
     return()=>window.speechSynthesis.removeEventListener("voiceschanged",load);
