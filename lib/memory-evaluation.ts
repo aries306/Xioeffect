@@ -45,6 +45,13 @@ export function evaluateMemoryForContext(
     return rejected("out_of_scope", "lifecycle_state_not_eligible");
   }
 
+  if (!Number.isFinite(now)) return rejected("stale", "invalid_evaluation_time");
+  if (!Number.isFinite(memory.confidence) || memory.confidence < 0 || memory.confidence > 100) {
+    return rejected("review", "invalid_confidence");
+  }
+  if (!Number.isFinite(memory.relevance) || memory.relevance < 0 || memory.relevance > 100) {
+    return rejected("review", "invalid_relevance");
+  }
   if (!hasUsableProvenance(memory.provenance)) {
     return rejected("insufficient_provenance", "missing_provenance_or_unverified_timestamp");
   }
