@@ -31,7 +31,8 @@ function hasUsableProvenance(p: Record<string, unknown> | null | undefined): boo
     return (typeof value === "string" && !!value.trim()) || (typeof value === "number" && Number.isFinite(value));
   });
   const capturedAt = typeof p.capturedAt === "string" ? Date.parse(p.capturedAt) : Number.NaN;
-  return hasId || (typeof p.source === "string" && !!p.source.trim() && Number.isFinite(capturedAt));
+  const hasVerifiedTimestamp = Number.isFinite(capturedAt);
+  return hasVerifiedTimestamp && (hasId || (typeof p.source === "string" && !!p.source.trim()));
 }
 
 
@@ -45,7 +46,7 @@ export function evaluateMemoryForContext(
   }
 
   if (!hasUsableProvenance(memory.provenance)) {
-    return rejected("insufficient_provenance", "missing_or_incomplete_provenance");
+    return rejected("insufficient_provenance", "missing_provenance_or_unverified_timestamp");
   }
 
   const scope = memory.scope ?? {};
