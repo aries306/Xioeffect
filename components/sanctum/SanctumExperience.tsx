@@ -89,7 +89,7 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
       const {workspace}=await workspaceResponse.json();
       const response=await fetch("/api/memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         workspaceId:workspace.id,text:goal.trim(),category:"goal",confidence:70,relevance:80,confirmed:true,
-        source:"sanctum-arrival",scope:{contexts:["personal"],arrival:true},
+        source:"sanctum-arrival",scope:{originContext:"personal",arrival:true},
         provenance:{type:"sanctum-arrival",source:"user-confirmed",capturedAt:new Date().toISOString()}
       })});
       if(!response.ok) throw new Error("memory");
