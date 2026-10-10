@@ -8,7 +8,7 @@ const validMemory = (overrides = {}) => ({
   confidence: 85,
   relevance: 90,
   scope: {},
-  provenance: { type: "conversation", userId: "user-1", conversationId: "conversation-1" },
+  provenance: { type: "conversation", userId: "user-1", conversationId: "conversation-1", capturedAt: "2026-10-09T12:00:00.000Z" },
   updatedAt: "2026-10-09T12:00:00.000Z",
   lastConfirmedAt: "2026-10-09T12:00:00.000Z",
   text: "User prefers concise strategic planning.",
