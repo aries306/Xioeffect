@@ -116,32 +116,104 @@ test("Health and privacy endpoints are implemented instead of stubs", async () =
   assert.match(deleteRoute, /confirm !== "DELETE"/);
 });
 
-test("Live authenticated loop exercises the real server when test credentials are supplied", async (t) => {
+test("Live authenticated Memory Fabric context-switch and contradiction acceptance flow", async (t) => {
   const baseUrl = process.env.XIO_TEST_BASE_URL;
   const cookie = process.env.XIO_TEST_COOKIE;
-  if (!baseUrl || !cookie) { t.skip("Set XIO_TEST_BASE_URL and XIO_TEST_COOKIE to run the real authenticated integration loop"); return; }
+  if (!baseUrl || !cookie) {
+    t.skip("Set XIO_TEST_BASE_URL and XIO_TEST_COOKIE to run the real authenticated integration loop");
+    return;
+  }
+
+  const headers = { Cookie: cookie, "Content-Type": "application/json" };
   const anonymous = await fetch(`${baseUrl}/api/workspace`, { redirect: "manual" });
   assert.notEqual(anonymous.status, 200);
-  const headers = { Cookie: cookie, "Content-Type": "application/json" };
-  const workspace = await fetch(`${baseUrl}/api/workspace`, { headers });
-  assert.equal(workspace.status, 200);
-  const workspaceBody = await workspace.json();
-  assert.ok(workspaceBody.workspace?.id);
-  const chat = await fetch(`${baseUrl}/api/chat`, { method: "POST", headers, body: JSON.stringify({ workspaceId: workspaceBody.workspace.id, message: "I am working toward finishing ZIO this week." }) });
-  assert.equal(chat.status, 200);
-  const chatBody = await chat.json();
-  assert.ok(chatBody.conversationId);
-  assert.ok(chatBody.answer);
-  if (chatBody.memoryProposals?.length) {
-    const memory = await fetch(`${baseUrl}/api/memory`, { method: "POST", headers, body: JSON.stringify({ workspaceId: workspaceBody.workspace.id, ...chatBody.memoryProposals[0], confirmed: true, provenance: { type: "integration-test", conversationId: chatBody.conversationId } }) });
-    assert.equal(memory.status, 201);
-    const memoryBody = await memory.json();
-    assert.ok(memoryBody.memory?.id);
-    const feedback = await fetch(`${baseUrl}/api/feedback`, { method: "POST", headers, body: JSON.stringify({ workspaceId: workspaceBody.workspace.id, memoryId: memoryBody.memory.id, signal: "useful", note: "Integration test feedback" }) });
+  const workspaceResponse = await fetch(`${baseUrl}/api/workspace`, { headers });
+  assert.equal(workspaceResponse.status, 200);
+  const { workspace } = await workspaceResponse.json();
+  assert.ok(workspace?.id);
+
+  const nonce = `acceptance-${Date.now()}`;
+  const createdIds = [];
+  const createMemory = async (text) => {
+    const response = await fetch(`${baseUrl}/api/memory`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        workspaceId: workspace.id,
+        text,
+        category: "preference",
+        confidence: 85,
+        relevance: 95,
+        confirmed: true,
+        scope: { originContext: "project-alpha" },
+        provenance: { type: "acceptance-test", source: "user-confirmed", capturedAt: new Date().toISOString(), context: "project-alpha" },
+      }),
+    });
+    assert.equal(response.status, 201);
+    const body = await response.json();
+    assert.ok(body.memory?.id);
+    createdIds.push(body.memory.id);
+    return body.memory;
+  };
+
+  try {
+    const first = await createMemory(`[${nonce}] For launch planning, preferred deployment region is Canada Central.`);
+    const second = await createMemory(`[${nonce}] For launch planning, preferred deployment region is US East.`);
+
+    // Return in a different context. The origin context is provenance, not a
+    // hard fence: the candidate must be re-evaluated before it can influence.
+    const retrieval = await fetch(
+      `${baseUrl}/api/memory?workspaceId=${workspace.id}&context=project-beta&q=${encodeURIComponent(nonce + " launch planning preferred deployment region")}`,
+      { headers },
+    );
+    assert.equal(retrieval.status, 200);
+    const retrievalBody = await retrieval.json();
+    assert.ok(retrievalBody.memories?.some((item) => item.id === first.id));
+    const retrieved = retrievalBody.memories.find((item) => item.id === first.id);
+    assert.ok(retrieved.provenance?.capturedAt);
+    assert.equal(retrieved.evaluation?.eligible, true);
+
+    const evaluationResponse = await fetch(`${baseUrl}/api/memory/evaluate`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ workspaceId: workspace.id, memoryId: first.id, context: { context: "project-beta" } }),
+    });
+    assert.equal(evaluationResponse.status, 200);
+    const evaluationBody = await evaluationResponse.json();
+    assert.equal(evaluationBody.evaluation?.eligible, true);
+    assert.ok(evaluationBody.potentialConflicts?.some((item) => item.id === second.id));
+    assert.equal(evaluationBody.conflictDetection, "lexical_candidates_require_user_review");
+
+    const feedback = await fetch(`${baseUrl}/api/feedback`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        workspaceId: workspace.id,
+        memoryId: first.id,
+        signal: "contradict",
+        contradictsMemoryId: second.id,
+        note: "Acceptance test: user confirms these records conflict.",
+      }),
+    });
     assert.equal(feedback.status, 200);
-    const retrieved = await fetch(`${baseUrl}/api/memory?workspaceId=${workspaceBody.workspace.id}&q=finishing%20ZIO`, { headers });
-    assert.equal(retrieved.status, 200);
-    const retrievedBody = await retrieved.json();
-    assert.ok(retrievedBody.memories?.some((item) => item.id === memoryBody.memory.id));
+
+    for (const memoryId of [first.id, second.id]) {
+      const response = await fetch(`${baseUrl}/api/memory/evaluate`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ workspaceId: workspace.id, memoryId, context: { context: "project-beta" } }),
+      });
+      assert.equal(response.status, 200);
+      const body = await response.json();
+      assert.equal(body.evaluation?.eligible, false);
+      assert.equal(body.evaluation?.status, "review");
+      assert.equal(body.evaluation?.influenceWeight, 0);
+    }
+  } finally {
+    await Promise.all(createdIds.map((memoryId) => fetch(`${baseUrl}/api/memory`, {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({ workspaceId: workspace.id, memoryId }),
+    })));
   }
 });
