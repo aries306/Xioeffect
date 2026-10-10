@@ -46,6 +46,24 @@ test("future-dated provenance and confirmation fail closed", () => {
   assert.equal(evaluateMemoryForContext(memory({ lastConfirmedAt: future }), {}, NOW).eligible, false);
 });
 
+test("non-finite and out-of-range scores fail closed", () => {
+  for (const overrides of [
+    { confidence: Number.NaN },
+    { confidence: Number.POSITIVE_INFINITY },
+    { confidence: -1 },
+    { confidence: 101 },
+    { relevance: Number.NaN },
+    { relevance: Number.NEGATIVE_INFINITY },
+    { relevance: -1 },
+    { relevance: 101 },
+  ]) {
+    const result = evaluateMemoryForContext(memory(overrides), {}, NOW);
+    assert.equal(result.eligible, false);
+    assert.equal(result.influenceWeight, 0);
+  }
+  assert.equal(evaluateMemoryForContext(memory(), {}, Number.NaN).eligible, false);
+});
+
 test("stale confirmations are not treated as fresh", () => {
   const result = evaluateMemoryForContext(memory({ lastConfirmedAt: "2025-01-01T00:00:00.000Z" }), {}, NOW);
   assert.equal(result.status, "stale");
