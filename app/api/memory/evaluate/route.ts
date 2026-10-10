@@ -32,7 +32,12 @@ export async function POST(request: Request) {
     }, parsed.data.context);
 
     await sql`update memories set last_evaluated_at=now(), evaluation=${JSON.stringify(evaluation)}::jsonb where id=${row.id} and workspace_id=${workspace.id}`;
-    const candidateRows = await sql`select id,text,category,confidence,relevance,lifecycle_state,scope,provenance,created_at,updated_at,last_confirmed_at from memories where workspace_id=${workspace.id} and user_id=${userId} and id<> ${row.id} and category=${row.category} and active=true and lifecycle_state in ('active','dormant','review') order by updated_at desc limit 40`;
+    const candidateRows = await sql`select id,text,category,confidence,relevance,lifecycle_state,scope,provenance,created_at,updated_at,last_confirmed_at from memories where workspace_id=${workspace.id} and user_id=${userId} and id<> ${row.id} and category=${row.category} and active=true and lifecycle_state in ('active','dormant','review') and not exists (
+      select 1 from memory_relations relation
+      where relation.relation_type='contradicts'
+        and ((relation.source_memory_id=memories.id and relation.target_memory_id=${row.id})
+          or (relation.target_memory_id=memories.id and relation.source_memory_id=${row.id}))
+    ) order by updated_at desc limit 40`;
     const candidateInputs = candidateRows.map((candidate) => ({
       id: String(candidate.id),
       text: String(candidate.text),
