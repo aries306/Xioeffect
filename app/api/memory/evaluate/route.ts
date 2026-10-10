@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   try {
     const parsed = schema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) return Response.json({ error: "Invalid memory evaluation request" }, { status: 400 });
-    const { userId, workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId, "viewer");
+    const { userId, workspace } = await getAuthorizedWorkspace(parsed.data.workspaceId, "editor");
     const sql = db();
     const rows = await sql`select * from memories where id=${parsed.data.memoryId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`;
     if (!rows[0]) return Response.json({ error: "Memory not found" }, { status: 404 });
