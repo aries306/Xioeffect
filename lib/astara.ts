@@ -12,7 +12,12 @@ export async function runAvenne(input: VeyronContext) {
   const memories = await retrieveContextualMemories(
     workspace.id,
     input.userMessage,
-    { workspaceName: workspace.name, goals: workspaceState.goals.map((goal) => goal.title), ...(input.context ?? {}) },
+    {
+      context: typeof input.context?.context === "string" ? input.context.context : "personal",
+      workspaceName: workspace.name,
+      goals: workspaceState.goals.map((goal) => goal.title),
+      ...(input.context ?? {}),
+    },
     8,
   );
   const sql = db();
