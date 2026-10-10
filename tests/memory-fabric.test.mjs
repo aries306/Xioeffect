@@ -68,7 +68,7 @@ test("Sanctum displays the actual evaluated Memory Fabric state", async () => {
   const evaluator = await read("app/api/memory/evaluate/route.ts");
   assert.match(sanctum, /\/api\/memory\/evaluate/);
   assert.match(sanctum, /context:\{context:"personal"\}/);
-  assert.match(sanctum, /evaluation\.eligible/);
+  assert.match(sanctum, /evaluation\??\.eligible/);
   assert.match(sanctum, /influenceWeight/);
   assert.match(sanctum, /not a belief, pattern, insight, or recommendation/);
   assert.match(evaluator, /evaluateMemoryForContext/);
