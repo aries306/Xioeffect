@@ -68,6 +68,8 @@ test("Health and privacy endpoints are implemented instead of stubs", async () =
   const exportRoute = await read("app/api/account/export/route.ts");
   const deleteRoute = await read("app/api/account/delete/route.ts");
   assert.match(health, /database/);
+  assert.match(health, /memoryFabric/);
+  assert.match(health, /memory_relations/);
   assert.match(health, /Cache-Control/);
   assert.doesNotMatch(exportRoute, /not configured/);
   assert.match(exportRoute, /token material|github_connections/);
