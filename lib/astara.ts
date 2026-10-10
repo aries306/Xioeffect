@@ -13,10 +13,10 @@ export async function runAvenne(input: VeyronContext) {
     workspace.id,
     input.userMessage,
     {
-      context: typeof input.context?.context === "string" ? input.context.context : "personal",
+      ...(input.context ?? {}),
+      context: typeof input.context?.context === "string" && input.context.context.trim() ? input.context.context.trim() : "personal",
       workspaceName: workspace.name,
       goals: workspaceState.goals.map((goal) => goal.title),
-      ...(input.context ?? {}),
     },
     8,
   );
