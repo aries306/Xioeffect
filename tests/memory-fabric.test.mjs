@@ -74,6 +74,18 @@ test("Sanctum displays the actual evaluated Memory Fabric state", async () => {
   assert.match(evaluator, /evaluateMemoryForContext/);
   assert.match(evaluator, /last_evaluated_at/);
   assert.match(evaluator, /'evaluated'/);
+  assert.match(evaluator, /findContradictionCandidates/);
+  assert.match(evaluator, /potentialConflicts/);
+  assert.match(sanctum, /Confirm contradiction/);
+});
+
+test("Explicit contradiction feedback is atomic and quarantines both memories", async () => {
+  const memory = await read("lib/memory.ts");
+  assert.match(memory, /sql\.begin\(async \(tx\)/);
+  assert.match(memory, /lifecycle = "review"/);
+  assert.match(memory, /lifecycle_state='review',active=true/);
+  assert.match(memory, /'contradicts'/);
+  assert.match(memory, /A memory cannot contradict itself/);
 });
 
 test("Chat memory writes and search preserve semantic context scope", async () => {
