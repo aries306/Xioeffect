@@ -19,9 +19,10 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const workspaceId = url.searchParams.get("workspaceId") ?? undefined;
     const query = url.searchParams.get("q") ?? "";
+    const context = url.searchParams.get("context")?.trim() || "personal";
     const lifecycle = url.searchParams.get("lifecycle");
     const { userId, workspace } = await getAuthorizedWorkspace(workspaceId);
-    if (query) return Response.json({ memories: await retrieveContextualMemories(String(workspace.id), query, {}, 20) });
+    if (query) return Response.json({ memories: await retrieveContextualMemories(String(workspace.id), query, { context }, 20) });
     const sql = db();
     const memories = await sql`
       select id, text, category, confidence, relevance, lifecycle_state, confirmed, scope, provenance, source, created_at, updated_at, last_confirmed_at, last_retrieved_at

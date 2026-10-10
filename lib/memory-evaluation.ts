@@ -18,46 +18,96 @@ export type MemoryEvaluation = {
 };
 
 const ACTIVE_STATES = new Set(["active", "dormant", "review"]);
+const DAY_MS = 86400000;
+const MAX_MEMORY_AGE_DAYS = 180;
+const LINEAGE_KEYS = ["userId", "conversationId", "messageId", "sourceId", "documentId", "eventId", "uri"] as const;
+function rejected(status: MemoryEvaluation["status"], reason: string): MemoryEvaluation {
+  return { eligible: false, status, reasons: [reason], influenceWeight: 0 };
+}
+function hasUsableProvenance(p: Record<string, unknown> | null | undefined): boolean {
+  if (!p || typeof p !== "object" || Array.isArray(p) || typeof p.type !== "string" || !p.type.trim()) return false;
+  const hasId = LINEAGE_KEYS.some((key) => {
+    const value = p[key];
+    return (typeof value === "string" && !!value.trim()) || (typeof value === "number" && Number.isFinite(value));
+  });
+  const capturedAt = typeof p.capturedAt === "string" ? Date.parse(p.capturedAt) : Number.NaN;
+  const hasVerifiedTimestamp = Number.isFinite(capturedAt);
+  return hasVerifiedTimestamp && (hasId || (typeof p.source === "string" && !!p.source.trim()));
+}
+
 
 export function evaluateMemoryForContext(
   memory: MemoryEvaluationInput,
   context: Record<string, unknown>,
   now = Date.now(),
 ): MemoryEvaluation {
-  const reasons: string[] = [];
   if (!ACTIVE_STATES.has(memory.lifecycleState)) {
-    return { eligible: false, status: "out_of_scope", reasons: ["lifecycle_state_not_eligible"], influenceWeight: 0 };
+    return rejected("out_of_scope", "lifecycle_state_not_eligible");
   }
 
-  const provenanceKeys = Object.keys(memory.provenance ?? {});
-  if (provenanceKeys.length === 0) {
-    reasons.push("missing_provenance");
+  if (!Number.isFinite(now)) return rejected("stale", "invalid_evaluation_time");
+  if (!Number.isFinite(memory.confidence) || memory.confidence < 0 || memory.confidence > 100) {
+    return rejected("review", "invalid_confidence");
+  }
+  if (!Number.isFinite(memory.relevance) || memory.relevance < 0 || memory.relevance > 100) {
+    return rejected("review", "invalid_relevance");
+  }
+  if (!hasUsableProvenance(memory.provenance)) {
+    return rejected("insufficient_provenance", "missing_provenance_or_unverified_timestamp");
+  }
+  const capturedAtMs = Date.parse(String(memory.provenance.capturedAt));
+  if (capturedAtMs > now + 300000) {
+    return rejected("insufficient_provenance", "future_provenance_timestamp");
   }
 
   const scope = memory.scope ?? {};
-  const scopedContexts = Array.isArray(scope.contexts) ? scope.contexts.map(String) : [];
-  const contextName = typeof context.context === "string" ? context.context : undefined;
-  if (scopedContexts.length > 0 && contextName && !scopedContexts.includes(contextName)) {
-    return { eligible: false, status: "out_of_scope", reasons: ["context_scope_mismatch"], influenceWeight: 0 };
+  const scopedContexts = Array.isArray(scope.contexts)
+    ? scope.contexts.filter((item): item is string => typeof item === "string" && item.length > 0)
+    : [];
+  const contextName = typeof context.context === "string" && context.context.trim()
+    ? context.context.trim()
+    : undefined;
+
+  if (scopedContexts.length > 0) {
+    if (!contextName) return rejected("out_of_scope", "context_required_for_scoped_memory");
+    if (!scopedContexts.includes(contextName)) {
+      return rejected("out_of_scope", "context_scope_mismatch");
+    }
   }
 
-  const ageDays = Math.max(0, (now - new Date(memory.updatedAt).getTime()) / 86400000);
-  const stale = ageDays > 180 && !memory.lastConfirmedAt;
-  if (stale) reasons.push("stale_without_recent_confirmation");
+  const updatedAtMs = Date.parse(memory.updatedAt);
+  if (!Number.isFinite(updatedAtMs)) {
+    return rejected("stale", "invalid_updated_at");
+  }
+  if (updatedAtMs > now + 300000) return rejected("stale", "future_updated_at");
 
+  const confirmationValue = memory.lastConfirmedAt;
+  const hasConfirmation = typeof confirmationValue === "string" && confirmationValue.trim().length > 0;
+  const confirmedAtMs = hasConfirmation ? Date.parse(confirmationValue!) : Number.NaN;
+  if (hasConfirmation && !Number.isFinite(confirmedAtMs)) {
+    return rejected("stale", "invalid_last_confirmed_at");
+  }
+  if (hasConfirmation && confirmedAtMs > now + 300000) {
+    return rejected("stale", "future_last_confirmed_at");
+  }
+
+  const freshnessTimestamp = hasConfirmation ? confirmedAtMs : updatedAtMs;
+  const ageDays = Math.max(0, (now - freshnessTimestamp) / DAY_MS);
+  const stale = ageDays > MAX_MEMORY_AGE_DAYS;
+  const reasons: string[] = [];
+  if (stale) reasons.push("stale_without_recent_confirmation");
   if (memory.confidence < 25) reasons.push("low_confidence");
   if (memory.relevance < 25) reasons.push("low_relevance");
 
-  if (reasons.includes("missing_provenance")) {
-    return { eligible: false, status: "insufficient_provenance", reasons, influenceWeight: 0 };
-  }
-
-  if (stale) {
-    return { eligible: false, status: "stale", reasons, influenceWeight: 0 };
-  }
+  if (stale) return { eligible: false, status: "stale", reasons, influenceWeight: 0 };
 
   if (memory.lifecycleState === "review" || memory.confidence < 40 || memory.relevance < 40) {
-    return { eligible: false, status: "review", reasons: reasons.length ? reasons : ["explicit_review_required"], influenceWeight: 0.25 };
+    return {
+      eligible: false,
+      status: "review",
+      reasons: reasons.length ? reasons : ["explicit_review_required"],
+      influenceWeight: 0,
+    };
   }
 
   const lifecycleWeight = memory.lifecycleState === "active" ? 1 : 0.75;
@@ -75,12 +125,12 @@ export function findContradictionCandidates(
   memory: MemoryEvaluationInput,
   candidates: MemoryEvaluationInput[],
 ): MemoryEvaluationInput[] {
-  const tokens = new Set(memory.text.toLowerCase().split(/\W+/).filter((t) => t.length > 3));
+  const tokens = new Set(memory.text.toLowerCase().split(/\W+/).filter((token) => token.length > 3));
   if (tokens.size === 0) return [];
   return candidates.filter((candidate) => {
     if (candidate.text.toLowerCase() === memory.text.toLowerCase()) return false;
-    const candidateTokens = candidate.text.toLowerCase().split(/\W+/).filter((t) => t.length > 3);
-    const overlap = candidateTokens.filter((t) => tokens.has(t)).length;
+    const candidateTokens = candidate.text.toLowerCase().split(/\W+/).filter((token) => token.length > 3);
+    const overlap = candidateTokens.filter((token) => tokens.has(token)).length;
     return overlap >= 2 && candidate.category === memory.category;
   });
 }

@@ -18,11 +18,12 @@ export async function POST(request: Request) {
     const result = await runAvenne({ workspaceId: String(workspace.id), userMessage: message, conversationId, context });
     const candidates = learningEnabled ? extractMemoryCandidates(message) : [];
     const persisted = [];
+    const memoryContext = typeof context?.context === "string" && context.context.trim() ? context.context.trim() : "personal";
     if (learningEnabled && !askBeforeMemory) for (const candidate of candidates) persisted.push(await createMemory({
       workspaceId: String(workspace.id), text: candidate.text, category: candidate.category,
       confidence: candidate.confidence, relevance: candidate.relevance, source: candidate.source,
-      provenance: { type: "conversation", conversationId: result.conversationId, userId },
-      scope: { conversationId: result.conversationId }, confirmed: false,
+      provenance: { type: "conversation", conversationId: result.conversationId, userId, originContext: memoryContext },
+      scope: { originContext: memoryContext }, confirmed: false,
     }));
     console.info(JSON.stringify({ event: "avenne.chat.completed", userId, workspaceId: workspace.id, conversationId: result.conversationId, memoryCount: result.evidence.length, candidateCount: candidates.length, persistedMemoryCount: persisted.length, durationMs: result.diagnostics.durationMs }));
     return Response.json({ ...result, memoryProposals: askBeforeMemory ? candidates : [], persistedMemoryIds: persisted.map((memory) => memory.id), evidenceMemoryIds: result.evidence.map((memory) => memory.id) });

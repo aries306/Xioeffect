@@ -5,13 +5,21 @@ import { evaluateMemoryForContext } from "@/lib/memory-evaluation";
 
 export type MemoryScope = { workspace?: string; contexts?: string[]; tags?: string[]; [key: string]: unknown };
 export type MemoryLifecycleState = "active" | "dormant" | "review" | "superseded" | "invalidated" | "archived" | "rejected";
-export type MemoryRecord = { id: string; text: string; category: string; confidence: number; relevance: number; lifecycleState: MemoryLifecycleState; confirmed: boolean; scope: MemoryScope; provenance: Record<string, unknown>; source: string; createdAt: string; updatedAt: string; lastConfirmedAt: string; lastRetrievedAt: string | null };
-function rowToMemory(row: Record<string, unknown>): MemoryRecord { return { id: String(row.id), text: String(row.text), category: String(row.category), confidence: Number(row.confidence), relevance: Number(row.relevance), lifecycleState: String(row.lifecycle_state) as MemoryRecord["lifecycleState"], confirmed: Boolean(row.confirmed), scope: (row.scope ?? {}) as MemoryScope, provenance: (row.provenance ?? {}) as Record<string, unknown>, source: String(row.source), createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString(), lastConfirmedAt: new Date(String(row.last_confirmed_at)).toISOString(), lastRetrievedAt: row.last_retrieved_at ? new Date(String(row.last_retrieved_at)).toISOString() : null }; }
+export type MemoryRecord = { id: string; text: string; category: string; confidence: number; relevance: number; lifecycleState: MemoryLifecycleState; confirmed: boolean; scope: MemoryScope; provenance: Record<string, unknown>; source: string; createdAt: string; updatedAt: string; lastConfirmedAt: string | null; lastRetrievedAt: string | null };
+function rowToMemory(row: Record<string, unknown>): MemoryRecord { return { id: String(row.id), text: String(row.text), category: String(row.category), confidence: Number(row.confidence), relevance: Number(row.relevance), lifecycleState: String(row.lifecycle_state) as MemoryRecord["lifecycleState"], confirmed: Boolean(row.confirmed), scope: (row.scope ?? {}) as MemoryScope, provenance: (row.provenance ?? {}) as Record<string, unknown>, source: String(row.source), createdAt: new Date(String(row.created_at)).toISOString(), updatedAt: new Date(String(row.updated_at)).toISOString(), lastConfirmedAt: row.last_confirmed_at ? new Date(String(row.last_confirmed_at)).toISOString() : null, lastRetrievedAt: row.last_retrieved_at ? new Date(String(row.last_retrieved_at)).toISOString() : null }; }
 
 export async function retrieveContextualMemories(workspaceId: string, query: string, context: Record<string, unknown> = {}, limit = 8) {
   const { userId, workspace } = await getAuthorizedWorkspace(workspaceId, "viewer"); const sql = db();
   const rows = await sql`select id,text,category,confidence,relevance,lifecycle_state,confirmed,scope,provenance,source,created_at,updated_at,last_confirmed_at,last_retrieved_at from memories where workspace_id=${workspace.id} and user_id=${userId} and lifecycle_state in ('active','dormant','review') and active=true and confidence >= 5 order by updated_at desc limit 80`;
-  const evaluated = rows.map((row) => ({ row, evaluation: evaluateMemoryForContext({ text: String(row.text), scope: (row.scope ?? {}) as Record<string, unknown>, provenance: (row.provenance ?? {}) as Record<string, unknown>, lifecycleState: String(row.lifecycle_state), confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at), lastConfirmedAt: row.last_confirmed_at ? String(row.last_confirmed_at) : null }, context) }));
+  const evaluated = rows.map((row) => {
+    const storedProvenance = (row.provenance ?? {}) as Record<string, unknown>;
+    // Legacy records use their immutable database creation timestamp only when no
+    // capture timestamp exists. A malformed explicit timestamp still fails closed.
+    const provenance = Object.prototype.hasOwnProperty.call(storedProvenance, "capturedAt")
+      ? storedProvenance
+      : { ...storedProvenance, capturedAt: String(row.created_at) };
+    return { row, evaluation: evaluateMemoryForContext({ text: String(row.text), scope: (row.scope ?? {}) as Record<string, unknown>, provenance, lifecycleState: String(row.lifecycle_state), confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at), lastConfirmedAt: row.last_confirmed_at ? String(row.last_confirmed_at) : null }, context) };
+  });
   const scored = evaluated.filter(({ evaluation }) => evaluation.eligible).map(({ row, evaluation }) => ({ row, evaluation, score: scoreContextualMemory({ text: String(row.text), scope: row.scope ?? {}, lifecycleState: String(row.lifecycle_state) as "active" | "dormant" | "review", confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at) }, query, context) * evaluation.influenceWeight })).filter((item) => item.score >= 1).sort((a, b) => b.score - a.score).slice(0, Math.max(1, Math.min(limit, 20)));
   await Promise.all(scored.map(async ({ row, score, evaluation }) => {
     await sql`update memories set last_retrieved_at=now(),last_evaluated_at=now(),evaluation=${JSON.stringify(evaluation)}::jsonb where id=${row.id} and workspace_id=${workspace.id}`;
@@ -30,37 +38,69 @@ export async function createMemory(input: { workspaceId: string; text: string; c
     return rowToMemory(updated[0] as Record<string, unknown>);
   }
   const confidence = Math.max(5, Math.min(100, Math.round(input.confidence ?? 60))), relevance = Math.max(0, Math.min(100, Math.round(input.relevance ?? 50)));
-  const inserted = await sql`insert into memories (user_id,workspace_id,text,category,confidence,source,confirmed,active,last_confirmed_at,provenance,scope,relevance,lifecycle_state,updated_at) values (${userId},${workspace.id},${text},${input.category ?? 'other'},${confidence},${input.source ?? 'conversation'},${Boolean(input.confirmed)},true,now(),${JSON.stringify(input.provenance ?? { type: 'conversation', userId })}::jsonb,${JSON.stringify({ ...(input.scope ?? {}), workspace: workspace.id })}::jsonb,${relevance},'active',now()) returning *`;
+  const suppliedProvenance = input.provenance ?? { type: "conversation", userId };
+  const provenance = Object.prototype.hasOwnProperty.call(suppliedProvenance, "capturedAt")
+    ? suppliedProvenance
+    : { ...suppliedProvenance, capturedAt: new Date().toISOString() };
+  const inserted = await sql`insert into memories (user_id,workspace_id,text,category,confidence,source,confirmed,active,last_confirmed_at,provenance,scope,relevance,lifecycle_state,updated_at) values (${userId},${workspace.id},${text},${input.category ?? 'other'},${confidence},${input.source ?? 'conversation'},${Boolean(input.confirmed)},true,now(),${JSON.stringify(provenance)}::jsonb,${JSON.stringify({ ...(input.scope ?? {}), workspace: workspace.id })}::jsonb,${relevance},'active',now()) returning *`;
   const memory = rowToMemory(inserted[0] as Record<string, unknown>);
   await sql`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source) values (${memory.id},${workspace.id},${userId},'created',null,${confidence},null,${relevance},null,'active',${input.source ?? 'conversation'})`;
   return memory;
 }
 
 export async function applyMemoryFeedback(input: { workspaceId: string; memoryId: string; signal: "confirm" | "contradict" | "useful" | "not_useful" | "reactivate" | "supersede" | "review" | "invalidate" | "archive" | "dismiss"; note?: string; recommendationOutcomeId?: string; contradictsMemoryId?: string }) {
-  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId, "editor"); const sql = db();
-  const rows = await sql`select * from memories where id=${input.memoryId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`; if (!rows[0]) throw new Error("Memory not found");
-  const before = rows[0]; const confidenceBefore = Number(before.confidence), relevanceBefore = Number(before.relevance); let confidence = confidenceBefore, relevance = relevanceBefore, lifecycle = String(before.lifecycle_state);
-  let eventType: "confirmed" | "rejected" | "feedback" | "reactivated" | "superseded" | "edited" = "feedback";
-  if (input.signal === "confirm" || input.signal === "useful") { confidence = Math.min(99, confidence + 12); relevance = Math.min(100, relevance + 8); lifecycle = "active"; eventType = input.signal === "confirm" ? "confirmed" : "feedback"; }
-  else if (input.signal === "contradict") { confidence = Math.max(5, confidence - 25); relevance = Math.max(0, relevance - 10); lifecycle = confidence <= 25 ? "dormant" : "active"; }
-  else if (input.signal === "not_useful") relevance = Math.max(0, relevance - 20);
-  else if (input.signal === "reactivate") { lifecycle = "active"; relevance = Math.max(relevance, 60); eventType = "reactivated"; }
-  else if (input.signal === "review") lifecycle = "review";
-  else if (input.signal === "invalidate") lifecycle = "invalidated";
-  else if (input.signal === "archive") lifecycle = "archived";
-  else if (input.signal === "dismiss") { lifecycle = "rejected"; eventType = "rejected"; }
-  else if (input.signal === "supersede") { lifecycle = "superseded"; eventType = "superseded"; }
-  const updated = await sql`update memories set confidence=${confidence},relevance=${relevance},lifecycle_state=${lifecycle},active=${lifecycle === 'active' || lifecycle === 'dormant' || lifecycle === 'review'},updated_at=now(),last_confirmed_at=case when ${input.signal === 'confirm' || input.signal === 'useful'} then now() else last_confirmed_at end where id=${input.memoryId} and workspace_id=${workspace.id} and user_id=${userId} returning *`;
-  if (input.signal === "contradict" && input.contradictsMemoryId) {
-    const target = await sql`select id from memories where id=${input.contradictsMemoryId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`;
-    if (!target[0]) throw new Error("Contradiction target not found");
-    await sql`insert into memory_relations (workspace_id,user_id,source_memory_id,target_memory_id,relation_type,confidence,provenance)
-      values (${workspace.id},${userId},${input.memoryId},${input.contradictsMemoryId},'contradicts',90,${JSON.stringify({ type: "user-feedback", sourceMemoryId: input.memoryId, targetMemoryId: input.contradictsMemoryId })}::jsonb)
-      on conflict (source_memory_id,target_memory_id,relation_type) do update set confidence=excluded.confidence,provenance=excluded.provenance`;
-  }
-  await sql`insert into memory_feedback (memory_id,recommendation_outcome_id,workspace_id,user_id,signal,note) values (${input.memoryId},${input.recommendationOutcomeId ?? null},${workspace.id},${userId},${input.signal},${input.note ?? null})`;
-  await sql`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata) values (${input.memoryId},${workspace.id},${userId},${eventType},${confidenceBefore},${confidence},${relevanceBefore},${relevance},${before.lifecycle_state},${lifecycle},'user-feedback',${JSON.stringify({ signal: input.signal, note: input.note ?? null })}::jsonb)`;
-  return rowToMemory(updated[0] as Record<string, unknown>);
+  const { userId, workspace } = await getAuthorizedWorkspace(input.workspaceId, "editor");
+  const sql = db();
+  return await sql.begin(async (tx) => {
+    const rows = await tx`select * from memories where id=${input.memoryId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`;
+    if (!rows[0]) throw new Error("Memory not found");
+    if (input.signal === "contradict" && input.contradictsMemoryId === input.memoryId) {
+      throw new Error("A memory cannot contradict itself");
+    }
+    const target = input.signal === "contradict" && input.contradictsMemoryId
+      ? (await tx`select id,lifecycle_state,confidence,relevance from memories where id=${input.contradictsMemoryId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`)[0]
+      : null;
+    if (input.signal === "contradict" && input.contradictsMemoryId && !target) {
+      throw new Error("Contradiction target not found");
+    }
+
+    const before = rows[0];
+    const confidenceBefore = Number(before.confidence), relevanceBefore = Number(before.relevance);
+    let confidence = confidenceBefore, relevance = relevanceBefore, lifecycle = String(before.lifecycle_state);
+    let eventType: "confirmed" | "rejected" | "feedback" | "reactivated" | "superseded" | "edited" = "feedback";
+    if (input.signal === "confirm" || input.signal === "useful") {
+      confidence = Math.min(99, confidence + 12);
+      relevance = Math.min(100, relevance + 8);
+      lifecycle = "active";
+      eventType = input.signal === "confirm" ? "confirmed" : "feedback";
+    } else if (input.signal === "contradict") {
+      confidence = Math.max(5, confidence - 25);
+      relevance = Math.max(0, relevance - 10);
+      lifecycle = "review";
+    } else if (input.signal === "not_useful") relevance = Math.max(0, relevance - 20);
+    else if (input.signal === "reactivate") { lifecycle = "active"; relevance = Math.max(relevance, 60); eventType = "reactivated"; }
+    else if (input.signal === "review") lifecycle = "review";
+    else if (input.signal === "invalidate") lifecycle = "invalidated";
+    else if (input.signal === "archive") lifecycle = "archived";
+    else if (input.signal === "dismiss") { lifecycle = "rejected"; eventType = "rejected"; }
+    else if (input.signal === "supersede") { lifecycle = "superseded"; eventType = "superseded"; }
+
+    const updated = await tx`update memories set confidence=${confidence},relevance=${relevance},lifecycle_state=${lifecycle},active=${lifecycle === "active" || lifecycle === "dormant" || lifecycle === "review"},updated_at=now(),last_confirmed_at=case when ${input.signal === "confirm" || input.signal === "useful"} then now() else last_confirmed_at end where id=${input.memoryId} and workspace_id=${workspace.id} and user_id=${userId} returning *`;
+
+    if (input.signal === "contradict" && input.contradictsMemoryId && target) {
+      await tx`update memories set lifecycle_state='review',active=true where id=${input.contradictsMemoryId} and workspace_id=${workspace.id} and user_id=${userId}`;
+      await tx`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata)
+        values (${input.contradictsMemoryId},${workspace.id},${userId},'feedback',${target.confidence},${target.confidence},${target.relevance},${target.relevance},${target.lifecycle_state},'review','user-feedback',${JSON.stringify({ signal: "contradiction-review", sourceMemoryId: input.memoryId })}::jsonb)`;
+      await tx`insert into memory_relations (workspace_id,user_id,source_memory_id,target_memory_id,relation_type,confidence,provenance)
+        values (${workspace.id},${userId},${input.memoryId},${input.contradictsMemoryId},'contradicts',90,${JSON.stringify({ type: "user-feedback", sourceMemoryId: input.memoryId, targetMemoryId: input.contradictsMemoryId })}::jsonb)
+        on conflict (source_memory_id,target_memory_id,relation_type) do update set confidence=excluded.confidence,provenance=excluded.provenance`;
+    }
+
+    await tx`insert into memory_feedback (memory_id,recommendation_outcome_id,workspace_id,user_id,signal,note) values (${input.memoryId},${input.recommendationOutcomeId ?? null},${workspace.id},${userId},${input.signal},${input.note ?? null})`;
+    await tx`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata)
+      values (${input.memoryId},${workspace.id},${userId},${eventType},${confidenceBefore},${confidence},${relevanceBefore},${relevance},${before.lifecycle_state},${lifecycle},'user-feedback',${JSON.stringify({ signal: input.signal, note: input.note ?? null })}::jsonb)`;
+    return rowToMemory(updated[0] as Record<string, unknown>);
+  });
 }
 
 export async function updateMemory(input: { workspaceId: string; memoryId: string; text?: string; category?: string; scope?: MemoryScope; provenance?: Record<string, unknown> }) {

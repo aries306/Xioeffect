@@ -21,6 +21,11 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
   const [saved,setSaved]=useState(false);
   const [speaking,setSpeaking]=useState(false);
   const [voiceReady,setVoiceReady]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const [saveError,setSaveError]=useState(false);
+  const [memoryStates,setMemoryStates]=useState<Array<{id:string;text:string;category:string;lifecycleState:string;evaluation:{eligible:boolean;status:string;reasons:string[];influenceWeight:number}|null;potentialConflicts:Array<{id:string;text:string;category:string}>}>>([]);
+  const [memoryLoading,setMemoryLoading]=useState(false);
+  const [conflictBusy,setConflictBusy]=useState<string|null>(null);
   const concepts=useMemo(()=>wordsFrom(goal),[goal]);
 
   useEffect(()=>{
@@ -29,6 +34,40 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
     load(); window.speechSynthesis.addEventListener("voiceschanged",load);
     return()=>window.speechSynthesis.removeEventListener("voiceschanged",load);
   },[]);
+
+  useEffect(()=>{
+    if(!signedIn) return;
+    let cancelled=false;
+    async function loadMemoryState(){
+      setMemoryLoading(true);
+      try{
+        const workspaceResponse=await fetch("/api/workspace");
+        if(!workspaceResponse.ok) return;
+        const {workspace}=await workspaceResponse.json();
+        const response=await fetch(`/api/memory?workspaceId=${encodeURIComponent(workspace.id)}`);
+        if(!response.ok) return;
+        const payload=await response.json();
+        const recent=Array.isArray(payload.memories)?payload.memories.slice(0,4):[];
+        const evaluated=await Promise.all(recent.map(async (memory:{id:string;text:string;category?:string;lifecycle_state?:string;lifecycleState?:string})=>{
+          try{
+            const result=await fetch("/api/memory/evaluate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({workspaceId:workspace.id,memoryId:memory.id,context:{context:"personal"}})});
+            if(!result.ok) return {id:memory.id,text:memory.text,category:memory.category??"other",lifecycleState:memory.lifecycleState??memory.lifecycle_state??"unknown",evaluation:null,potentialConflicts:[]};
+            const evaluatedPayload=await result.json();
+            return {id:memory.id,text:memory.text,category:memory.category??"other",lifecycleState:memory.lifecycleState??memory.lifecycle_state??"unknown",evaluation:evaluatedPayload.evaluation??null,potentialConflicts:evaluatedPayload.potentialConflicts??[]};
+          }catch{
+            return {id:memory.id,text:memory.text,category:memory.category??"other",lifecycleState:memory.lifecycleState??memory.lifecycle_state??"unknown",evaluation:null,potentialConflicts:[]};
+          }
+        }));
+        if(!cancelled) setMemoryStates(evaluated);
+      }catch{
+        if(!cancelled) setMemoryStates([]);
+      }finally{
+        if(!cancelled) setMemoryLoading(false);
+      }
+    }
+    void loadMemoryState();
+    return()=>{cancelled=true};
+  },[signedIn]);
 
   function speak(text:string) {
     if(!("speechSynthesis" in window)||!text.trim()) return;
@@ -41,20 +80,62 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
   }
   function stopSpeaking(){ window.speechSynthesis?.cancel(); setSpeaking(false); }
 
+  async function confirmConflict(memoryId:string,targetMemoryId:string) {
+    const actionKey=`${memoryId}:${targetMemoryId}`;
+    if(conflictBusy) return;
+    setConflictBusy(actionKey); setSaveError(false);
+    try{
+      const workspaceResponse=await fetch("/api/workspace");
+      if(!workspaceResponse.ok) throw new Error("workspace");
+      const {workspace}=await workspaceResponse.json();
+      const response=await fetch("/api/feedback",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+        workspaceId:workspace.id,memoryId,signal:"contradict",contradictsMemoryId:targetMemoryId,
+        note:"User confirmed a potential contradiction in Sanctum."
+      })});
+      if(!response.ok) throw new Error("feedback");
+      const evaluate=async(id:string)=>{
+        const result=await fetch("/api/memory/evaluate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({workspaceId:workspace.id,memoryId:id,context:{context:"personal"}})});
+        return result.ok?await result.json():null;
+      };
+      const [sourceState,targetState]=await Promise.all([evaluate(memoryId),evaluate(targetMemoryId)]);
+      setMemoryStates(current=>current.map(item=>{
+        if(item.id===memoryId) return {...item,evaluation:sourceState?.evaluation??null,potentialConflicts:sourceState?.potentialConflicts??[]};
+        if(item.id===targetMemoryId) return {...item,evaluation:targetState?.evaluation??null,potentialConflicts:targetState?.potentialConflicts??[]};
+        return item;
+      }));
+    }catch{setSaveError(true);}
+    finally{setConflictBusy(null);}
+  }
+
   async function remember() {
     if(!signedIn){ router.push("/sign-up?redirect_url=/sanctum"); return; }
+    if(!goal.trim()||saving) return;
+    setSaving(true); setSaveError(false);
     try{
       const workspaceResponse=await fetch("/api/workspace");
       if(!workspaceResponse.ok) throw new Error("workspace");
       const {workspace}=await workspaceResponse.json();
       const response=await fetch("/api/memory",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         workspaceId:workspace.id,text:goal.trim(),category:"goal",confidence:70,relevance:80,confirmed:true,
-        source:"sanctum-arrival",scope:{contexts:["personal"],arrival:true},
+        source:"sanctum-arrival",scope:{originContext:"personal",arrival:true},
         provenance:{type:"sanctum-arrival",source:"user-confirmed",capturedAt:new Date().toISOString()}
       })});
       if(!response.ok) throw new Error("memory");
+      const {memory}=await response.json();
+      let evaluation=null;
+      let potentialConflicts:Array<{id:string;text:string;category:string}>=[];
+      if(memory?.id){
+        const evaluatedResponse=await fetch("/api/memory/evaluate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({workspaceId:workspace.id,memoryId:memory.id,context:{context:"personal"}})});
+        if(evaluatedResponse.ok){
+          const evaluatedPayload=await evaluatedResponse.json();
+          evaluation=evaluatedPayload.evaluation??null;
+          potentialConflicts=evaluatedPayload.potentialConflicts??[];
+        }
+        setMemoryStates(current=>[{id:memory.id,text:memory.text,category:memory.category??"goal",lifecycleState:memory.lifecycleState??"active",evaluation,potentialConflicts},...current.filter(item=>item.id!==memory.id)].slice(0,4));
+      }
       setSaved(true); speak(`Remembered with your permission. ${goal.trim()}`);
-    }catch{ setSaved(false); }
+    }catch{ setSaved(false); setSaveError(true); }
+    finally{ setSaving(false); }
   }
 
   return <main className="sanctum">
@@ -92,11 +173,29 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
           <span className="sanctum-input-glow"/>
         </div>
         <div className="sanctum-actions">
-          {!saved?<button className="sanctum-button" disabled={!goal.trim()} onClick={remember}>{signedIn?"Remember this":"Sign in to remember this"} <span>→</span></button>:<span className="sanctum-confirmed">✓ Remembered with your permission</span>}
+          {!saved?<button className="sanctum-button" disabled={!goal.trim()||saving} onClick={remember}>{saving?"Saving memory…":signedIn?"Remember this":"Sign in to remember this"} <span>→</span></button>:<span className="sanctum-confirmed">✓ Remembered with your permission</span>}
           {goal.trim()&&<button className="sanctum-speak-intention" onClick={()=>speaking?stopSpeaking():speak(goal)}>{speaking?"Stop voice":"Let Zuna say it"}</button>}
           <button className="sanctum-ghost sanctum-enter" onClick={()=>router.push(signedIn?"/app":"/sign-up?redirect_url=/app")}>Enter Zuna <span>↗</span></button>
         </div>
+        {saveError&&<p className="sanctum-error" role="alert">The memory could not be saved. Please check your session and try again.</p>}
         {goal&&<div className="sanctum-quote">“{goal.trim()}”</div>}
+        {signedIn&&<section className="sanctum-memory-panel" aria-label="Validated memory state">
+          <div className="sanctum-memory-heading"><span>MEMORY FABRIC</span><strong>Validated state</strong><small>Context: personal</small></div>
+          {memoryLoading?<p className="sanctum-memory-empty">Evaluating recent memories before influence…</p>:memoryStates.length===0?<p className="sanctum-memory-empty">No saved memories to evaluate yet.</p>:<div className="sanctum-memory-list">
+            {memoryStates.map(item=><article className="sanctum-memory-row" key={item.id}>
+              <div className="sanctum-memory-copy"><strong>{item.category}</strong><span>{item.text}</span></div>
+              <div className={`sanctum-memory-status ${item.evaluation?.eligible?"is-eligible":"is-blocked"}`}>
+                <strong>{item.evaluation?.status??"not evaluated"}</strong>
+                <small>{item.evaluation?.eligible?`influence weight ${item.evaluation.influenceWeight.toFixed(3)}`:item.evaluation?.reasons?.[0]??item.lifecycleState}</small>
+              </div>
+              {item.potentialConflicts.map(conflict=><div className="sanctum-memory-conflict" key={conflict.id}>
+                <span><strong>Possible conflict</strong> · lexical overlap only; review before acting: {conflict.text}</span>
+                <button type="button" disabled={Boolean(conflictBusy)} onClick={()=>void confirmConflict(item.id,conflict.id)}>{conflictBusy===`${item.id}:${conflict.id}`?"Saving review…":"Confirm contradiction"}</button>
+              </div>)}
+            </article>)}
+          </div>}
+          <p className="sanctum-memory-footnote">Only eligible memories may influence responses. A memory status is not a belief, pattern, insight, or recommendation.</p>
+        </section>}
       </div>
     </section>
     <section className="sanctum-manifest" aria-label="Zuna principles">
