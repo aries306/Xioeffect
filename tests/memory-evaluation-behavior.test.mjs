@@ -18,6 +18,9 @@ const validMemory = (overrides = {}) => ({
 
 test("eligible memory requires usable provenance with a type and lineage", () => {
   assert.equal(evaluateMemoryForContext(validMemory(), {}, NOW).eligible, true);
+  assert.equal(evaluateMemoryForContext(validMemory({
+    provenance: { type: "sanctum-arrival", source: "user-confirmed", capturedAt: "2026-10-10T11:00:00.000Z" },
+  }), {}, NOW).eligible, true);
   for (const provenance of [{}, { type: "conversation" }, { userId: "user-1" }, { type: " " , userId: "user-1" }]) {
     const result = evaluateMemoryForContext(validMemory({ provenance }), {}, NOW);
     assert.equal(result.eligible, false);
