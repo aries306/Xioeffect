@@ -110,6 +110,8 @@ test("Health and privacy endpoints are implemented instead of stubs", async () =
   assert.match(health, /Cache-Control/);
   assert.doesNotMatch(exportRoute, /not configured/);
   assert.match(exportRoute, /token material|github_connections/);
+  assert.match(exportRoute, /memoryFabric: \{ events: memoryEvents, feedback: memoryFeedback, relations: memoryRelations \}/);
+  assert.match(exportRoute, /last_evaluated_at, evaluation from memories/);
   assert.doesNotMatch(deleteRoute, /not configured/);
   assert.match(deleteRoute, /confirm !== "DELETE"/);
 });
