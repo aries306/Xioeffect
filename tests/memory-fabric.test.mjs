@@ -80,10 +80,11 @@ test("Chat memory writes and search preserve semantic context scope", async () =
   const chat = await read("app/api/chat/route.ts");
   const memoryRoute = await read("app/api/memory/route.ts");
   const browserChat = await read("public/js/chat.js");
-  assert.match(chat, /scope: \{ contexts: \[memoryContext\] \}/);
+  assert.match(chat, /scope: \{ originContext: memoryContext \}/);
+  assert.match(chat, /originContext: memoryContext/);
   assert.match(memoryRoute, /url\.searchParams\.get\("context"\)/);
   assert.match(memoryRoute, /retrieveContextualMemories\(String\(workspace\.id\), query, \{ context \}/);
-  assert.match(browserChat, /scope:\{contexts:\["personal"\]\}/);
+  assert.match(browserChat, /scope:\{originContext:"personal"\}/);
 });
 
 test("Health and privacy endpoints are implemented instead of stubs", async () => {
