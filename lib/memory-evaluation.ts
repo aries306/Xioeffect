@@ -18,6 +18,23 @@ export type MemoryEvaluation = {
 };
 
 const ACTIVE_STATES = new Set(["active", "dormant", "review"]);
+const DAY_MS = 86400000;
+const MAX_MEMORY_AGE_DAYS = 180;
+const LINEAGE_KEYS = ["userId", "conversationId", "messageId", "sourceId", "documentId", "eventId", "uri"] as const;
+function rejected(status: MemoryEvaluation["status"], reason: string): MemoryEvaluation {
+  return { eligible: false, status, reasons: [reason], influenceWeight: 0 };
+}
+function hasUsableProvenance(p: Record<string, unknown> | null | undefined): boolean {
+  if (!p || typeof p !== "object" || Array.isArray(p) || typeof p.type !== "string" || !p.type.trim()) return false;
+  const hasId = LINEAGE_KEYS.some((key) => {
+    const value = p[key];
+    return (typeof value === "string" && !!value.trim()) || (typeof value === "number" && Number.isFinite(value));
+  });
+  const capturedAt = typeof p.capturedAt === "string" ? Date.parse(p.capturedAt) : Number.NaN;
+  return hasId || (typeof p.source === "string" && !!p.source.trim() && Number.isFinite(capturedAt));
+}
+
+
 export function evaluateMemoryForContext(
   memory: MemoryEvaluationInput,
   context: Record<string, unknown>,
