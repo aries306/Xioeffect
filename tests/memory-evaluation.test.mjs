@@ -38,6 +38,14 @@ test("invalid update and confirmation timestamps fail closed", () => {
   assert.equal(evaluateMemoryForContext(memory({ lastConfirmedAt: "bad-date" }), {}, NOW).eligible, false);
 });
 
+test("future-dated provenance and confirmation fail closed", () => {
+  const future = "2026-10-10T12:10:00.000Z";
+  assert.equal(evaluateMemoryForContext(memory({
+    provenance: { type: "conversation", userId: "u-1", capturedAt: future },
+  }), {}, NOW).eligible, false);
+  assert.equal(evaluateMemoryForContext(memory({ lastConfirmedAt: future }), {}, NOW).eligible, false);
+});
+
 test("stale confirmations are not treated as fresh", () => {
   const result = evaluateMemoryForContext(memory({ lastConfirmedAt: "2025-01-01T00:00:00.000Z" }), {}, NOW);
   assert.equal(result.status, "stale");
