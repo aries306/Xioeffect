@@ -21,12 +21,10 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
   const [saved,setSaved]=useState(false);
   const [speaking,setSpeaking]=useState(false);
   const [voiceReady,setVoiceReady]=useState(false);
-  const [voiceSupported,setVoiceSupported]=useState(false);
   const concepts=useMemo(()=>wordsFrom(goal),[goal]);
 
   useEffect(()=>{
     if(!("speechSynthesis" in window)) return;
-    setVoiceSupported(true);
     const load=()=>setVoiceReady(window.speechSynthesis.getVoices().length>0);
     load(); window.speechSynthesis.addEventListener("voiceschanged",load);
     return()=>window.speechSynthesis.removeEventListener("voiceschanged",load);
@@ -83,7 +81,7 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
         <h1>Enter the space where your context becomes coherent.</h1>
         <p className="sanctum-lede">Zuna learns with you—not ahead of you. Give her one intention, and she will treat it as <strong>user-authorized context</strong>, not an invisible assumption.</p>
         <div className="sanctum-voice">
-          <button className={`sanctum-voice-button${speaking?" is-speaking":""}`} onClick={()=>speaking?stopSpeaking():speak(ZUNA_WELCOME)} disabled={!voiceSupported} aria-label={speaking?"Stop Zuna voice":"Hear Zuna"}>
+          <button className={`sanctum-voice-button${speaking?" is-speaking":""}`} onClick={()=>speaking?stopSpeaking():speak(ZUNA_WELCOME)} disabled={!voiceReady} aria-label={speaking?"Stop Zuna voice":"Hear Zuna"}>
             <span className="sanctum-voice-orb"><i/><i/><i/></span><span>{speaking?"Zuna is speaking":"Hear Zuna"}</span>
           </button>
           <span className="sanctum-voice-note">{voiceReady?"Browser voice ready · en-CA":"Voice will appear when your browser exposes a voice"}</span>

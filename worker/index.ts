@@ -1,8 +1,5 @@
 import handler from "vinext/server/app-router-entry";
 
-const worker = {
-  async fetch(...args: Parameters<typeof handler.fetch>): Promise<Response> {
-    return handler.fetch(...args);
 type ExecutionContextLike = {
   waitUntil(promise: Promise<unknown>): void;
   passThroughOnException(): void;
