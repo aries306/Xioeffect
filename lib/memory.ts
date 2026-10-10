@@ -54,7 +54,7 @@ export async function applyMemoryFeedback(input: { workspaceId: string; memoryId
   const before = rows[0]; const confidenceBefore = Number(before.confidence), relevanceBefore = Number(before.relevance); let confidence = confidenceBefore, relevance = relevanceBefore, lifecycle = String(before.lifecycle_state);
   let eventType: "confirmed" | "rejected" | "feedback" | "reactivated" | "superseded" | "edited" = "feedback";
   if (input.signal === "confirm" || input.signal === "useful") { confidence = Math.min(99, confidence + 12); relevance = Math.min(100, relevance + 8); lifecycle = "active"; eventType = input.signal === "confirm" ? "confirmed" : "feedback"; }
-  else if (input.signal === "contradict") { confidence = Math.max(5, confidence - 25); relevance = Math.max(0, relevance - 10); lifecycle = confidence <= 25 ? "dormant" : "active"; }
+  else if (input.signal === "contradict") { confidence = Math.max(5, confidence - 25); relevance = Math.max(0, relevance - 10); lifecycle = "review"; }
   else if (input.signal === "not_useful") relevance = Math.max(0, relevance - 20);
   else if (input.signal === "reactivate") { lifecycle = "active"; relevance = Math.max(relevance, 60); eventType = "reactivated"; }
   else if (input.signal === "review") lifecycle = "review";
@@ -64,8 +64,12 @@ export async function applyMemoryFeedback(input: { workspaceId: string; memoryId
   else if (input.signal === "supersede") { lifecycle = "superseded"; eventType = "superseded"; }
   const updated = await sql`update memories set confidence=${confidence},relevance=${relevance},lifecycle_state=${lifecycle},active=${lifecycle === 'active' || lifecycle === 'dormant' || lifecycle === 'review'},updated_at=now(),last_confirmed_at=case when ${input.signal === 'confirm' || input.signal === 'useful'} then now() else last_confirmed_at end where id=${input.memoryId} and workspace_id=${workspace.id} and user_id=${userId} returning *`;
   if (input.signal === "contradict" && input.contradictsMemoryId) {
-    const target = await sql`select id from memories where id=${input.contradictsMemoryId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`;
+    if (input.contradictsMemoryId === input.memoryId) throw new Error("A memory cannot contradict itself");
+    const target = await sql`select id,lifecycle_state,confidence,relevance from memories where id=${input.contradictsMemoryId} and workspace_id=${workspace.id} and user_id=${userId} limit 1`;
     if (!target[0]) throw new Error("Contradiction target not found");
+    await sql`update memories set lifecycle_state='review',active=true where id=${input.contradictsMemoryId} and workspace_id=${workspace.id} and user_id=${userId}`;
+    await sql`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata)
+      values (${input.contradictsMemoryId},${workspace.id},${userId},'feedback',${target[0].confidence},${target[0].confidence},${target[0].relevance},${target[0].relevance},${target[0].lifecycle_state},'review','user-feedback',${JSON.stringify({ signal: "contradiction-review", sourceMemoryId: input.memoryId })}::jsonb)`;
     await sql`insert into memory_relations (workspace_id,user_id,source_memory_id,target_memory_id,relation_type,confidence,provenance)
       values (${workspace.id},${userId},${input.memoryId},${input.contradictsMemoryId},'contradicts',90,${JSON.stringify({ type: "user-feedback", sourceMemoryId: input.memoryId, targetMemoryId: input.contradictsMemoryId })}::jsonb)
       on conflict (source_memory_id,target_memory_id,relation_type) do update set confidence=excluded.confidence,provenance=excluded.provenance`;
