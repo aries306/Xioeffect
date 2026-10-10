@@ -71,6 +71,7 @@ test("Sanctum displays the actual evaluated Memory Fabric state", async () => {
   assert.match(sanctum, /evaluation\??\.eligible/);
   assert.match(sanctum, /influenceWeight/);
   assert.match(sanctum, /not a belief, pattern, insight, or recommendation/);
+  assert.match(evaluator, /getAuthorizedWorkspace\(parsed\.data\.workspaceId, "editor"\)/);
   assert.match(evaluator, /evaluateMemoryForContext/);
   assert.match(evaluator, /last_evaluated_at/);
   assert.match(evaluator, /'evaluated'/);
