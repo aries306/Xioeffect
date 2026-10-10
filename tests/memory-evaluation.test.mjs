@@ -59,6 +59,12 @@ test("scoped memories require a matching context", () => {
   assert.equal(evaluateMemoryForContext(scoped, { context: "project-alpha" }, NOW).eligible, true);
 });
 
+test("origin context is retained without blocking related-context re-evaluation", () => {
+  const contextual = memory({ scope: { originContext: "personal" } });
+  assert.equal(evaluateMemoryForContext(contextual, { context: "personal" }, NOW).eligible, true);
+  assert.equal(evaluateMemoryForContext(contextual, { context: "project-alpha" }, NOW).eligible, true);
+});
+
 test("review, low-confidence, low-relevance, and inactive memories cannot influence", () => {
   for (const overrides of [
     { lifecycleState: "review" },
