@@ -20,6 +20,25 @@ export type MemoryEvaluation = {
 const ACTIVE_STATES = new Set(["active", "dormant", "review"]);
 const MAX_MEMORY_AGE_DAYS = 180;
 const DAY_MS = 86400000;
+const PROVENANCE_LINEAGE_KEYS = ["userId", "conversationId", "messageId", "sourceId", "documentId", "eventId", "uri"] as const;
+
+function rejected(status: MemoryEvaluation["status"], reason: string): MemoryEvaluation {
+  return { eligible: false, status, reasons: [reason], influenceWeight: 0 };
+}
+
+function hasUsableProvenance(provenance: Record<string, unknown> | null | undefined): boolean {
+  if (!provenance || typeof provenance !== "object" || Array.isArray(provenance)) return false;
+  if (typeof provenance.type !== "string" || provenance.type.trim().length === 0) return false;
+  const hasLineageId = PROVENANCE_LINEAGE_KEYS.some((key) => {
+    const value = provenance[key];
+    return (typeof value === "string" && value.trim().length > 0)
+      || (typeof value === "number" && Number.isFinite(value));
+  });
+  const capturedAt = typeof provenance.capturedAt === "string" ? Date.parse(provenance.capturedAt) : Number.NaN;
+  return hasLineageId || (typeof provenance.source === "string" && provenance.source.trim().length > 0 && Number.isFinite(capturedAt));
+}
+const MAX_MEMORY_AGE_DAYS = 180;
+const DAY_MS = 86400000;
 const PROVENANCE_LINEAGE_KEYS = [
   "userId",
   "conversationId",
