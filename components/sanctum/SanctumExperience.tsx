@@ -23,8 +23,9 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
   const [voiceReady,setVoiceReady]=useState(false);
   const [saving,setSaving]=useState(false);
   const [saveError,setSaveError]=useState(false);
-  const [memoryStates,setMemoryStates]=useState<Array<{id:string;text:string;category:string;lifecycleState:string;evaluation:{eligible:boolean;status:string;reasons:string[];influenceWeight:number}|null}>>([]);
+  const [memoryStates,setMemoryStates]=useState<Array<{id:string;text:string;category:string;lifecycleState:string;evaluation:{eligible:boolean;status:string;reasons:string[];influenceWeight:number}|null;potentialConflicts:Array<{id:string;text:string;category:string}>}>>([]);
   const [memoryLoading,setMemoryLoading]=useState(false);
+  const [conflictBusy,setConflictBusy]=useState<string|null>(null);
   const concepts=useMemo(()=>wordsFrom(goal),[goal]);
 
   useEffect(()=>{
@@ -50,11 +51,11 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
         const evaluated=await Promise.all(recent.map(async (memory:{id:string;text:string;category?:string;lifecycle_state?:string;lifecycleState?:string})=>{
           try{
             const result=await fetch("/api/memory/evaluate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({workspaceId:workspace.id,memoryId:memory.id,context:{context:"personal"}})});
-            if(!result.ok) return {id:memory.id,text:memory.text,category:memory.category??"other",lifecycleState:memory.lifecycleState??memory.lifecycle_state??"unknown",evaluation:null};
+            if(!result.ok) return {id:memory.id,text:memory.text,category:memory.category??"other",lifecycleState:memory.lifecycleState??memory.lifecycle_state??"unknown",evaluation:null,potentialConflicts:[]};
             const evaluatedPayload=await result.json();
-            return {id:memory.id,text:memory.text,category:memory.category??"other",lifecycleState:memory.lifecycleState??memory.lifecycle_state??"unknown",evaluation:evaluatedPayload.evaluation??null};
+            return {id:memory.id,text:memory.text,category:memory.category??"other",lifecycleState:memory.lifecycleState??memory.lifecycle_state??"unknown",evaluation:evaluatedPayload.evaluation??null,potentialConflicts:evaluatedPayload.potentialConflicts??[]};
           }catch{
-            return {id:memory.id,text:memory.text,category:memory.category??"other",lifecycleState:memory.lifecycleState??memory.lifecycle_state??"unknown",evaluation:null};
+            return {id:memory.id,text:memory.text,category:memory.category??"other",lifecycleState:memory.lifecycleState??memory.lifecycle_state??"unknown",evaluation:null,potentialConflicts:[]};
           }
         }));
         if(!cancelled) setMemoryStates(evaluated);
@@ -79,6 +80,33 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
   }
   function stopSpeaking(){ window.speechSynthesis?.cancel(); setSpeaking(false); }
 
+  async function confirmConflict(memoryId:string,targetMemoryId:string) {
+    const actionKey=`${memoryId}:${targetMemoryId}`;
+    if(conflictBusy) return;
+    setConflictBusy(actionKey); setSaveError(false);
+    try{
+      const workspaceResponse=await fetch("/api/workspace");
+      if(!workspaceResponse.ok) throw new Error("workspace");
+      const {workspace}=await workspaceResponse.json();
+      const response=await fetch("/api/feedback",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+        workspaceId:workspace.id,memoryId,signal:"contradict",contradictsMemoryId:targetMemoryId,
+        note:"User confirmed a potential contradiction in Sanctum."
+      })});
+      if(!response.ok) throw new Error("feedback");
+      const evaluate=async(id:string)=>{
+        const result=await fetch("/api/memory/evaluate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({workspaceId:workspace.id,memoryId:id,context:{context:"personal"}})});
+        return result.ok?await result.json():null;
+      };
+      const [sourceState,targetState]=await Promise.all([evaluate(memoryId),evaluate(targetMemoryId)]);
+      setMemoryStates(current=>current.map(item=>{
+        if(item.id===memoryId) return {...item,evaluation:sourceState?.evaluation??null,potentialConflicts:sourceState?.potentialConflicts??[]};
+        if(item.id===targetMemoryId) return {...item,evaluation:targetState?.evaluation??null,potentialConflicts:targetState?.potentialConflicts??[]};
+        return item;
+      }));
+    }catch{setSaveError(true);}
+    finally{setConflictBusy(null);}
+  }
+
   async function remember() {
     if(!signedIn){ router.push("/sign-up?redirect_url=/sanctum"); return; }
     if(!goal.trim()||saving) return;
@@ -95,10 +123,15 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
       if(!response.ok) throw new Error("memory");
       const {memory}=await response.json();
       let evaluation=null;
+      let potentialConflicts:Array<{id:string;text:string;category:string}>=[];
       if(memory?.id){
         const evaluatedResponse=await fetch("/api/memory/evaluate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({workspaceId:workspace.id,memoryId:memory.id,context:{context:"personal"}})});
-        if(evaluatedResponse.ok) evaluation=(await evaluatedResponse.json()).evaluation??null;
-        setMemoryStates(current=>[{id:memory.id,text:memory.text,category:memory.category??"goal",lifecycleState:memory.lifecycleState??"active",evaluation},...current.filter(item=>item.id!==memory.id)].slice(0,4));
+        if(evaluatedResponse.ok){
+          const evaluatedPayload=await evaluatedResponse.json();
+          evaluation=evaluatedPayload.evaluation??null;
+          potentialConflicts=evaluatedPayload.potentialConflicts??[];
+        }
+        setMemoryStates(current=>[{id:memory.id,text:memory.text,category:memory.category??"goal",lifecycleState:memory.lifecycleState??"active",evaluation,potentialConflicts},...current.filter(item=>item.id!==memory.id)].slice(0,4));
       }
       setSaved(true); speak(`Remembered with your permission. ${goal.trim()}`);
     }catch{ setSaved(false); setSaveError(true); }
@@ -155,6 +188,10 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
                 <strong>{item.evaluation?.status??"not evaluated"}</strong>
                 <small>{item.evaluation?.eligible?`influence weight ${item.evaluation.influenceWeight.toFixed(3)}`:item.evaluation?.reasons?.[0]??item.lifecycleState}</small>
               </div>
+              {item.potentialConflicts.map(conflict=><div className="sanctum-memory-conflict" key={conflict.id}>
+                <span><strong>Possible conflict</strong> · lexical overlap only; review before acting: {conflict.text}</span>
+                <button type="button" disabled={Boolean(conflictBusy)} onClick={()=>void confirmConflict(item.id,conflict.id)}>{conflictBusy===`${item.id}:${conflict.id}`?"Saving review…":"Confirm contradiction"}</button>
+              </div>)}
             </article>)}
           </div>}
           <p className="sanctum-memory-footnote">Only eligible memories may influence responses. A memory status is not a belief, pattern, insight, or recommendation.</p>
