@@ -11,7 +11,15 @@ function rowToMemory(row: Record<string, unknown>): MemoryRecord { return { id: 
 export async function retrieveContextualMemories(workspaceId: string, query: string, context: Record<string, unknown> = {}, limit = 8) {
   const { userId, workspace } = await getAuthorizedWorkspace(workspaceId, "viewer"); const sql = db();
   const rows = await sql`select id,text,category,confidence,relevance,lifecycle_state,confirmed,scope,provenance,source,created_at,updated_at,last_confirmed_at,last_retrieved_at from memories where workspace_id=${workspace.id} and user_id=${userId} and lifecycle_state in ('active','dormant','review') and active=true and confidence >= 5 order by updated_at desc limit 80`;
-  const evaluated = rows.map((row) => ({ row, evaluation: evaluateMemoryForContext({ text: String(row.text), scope: (row.scope ?? {}) as Record<string, unknown>, provenance: (row.provenance ?? {}) as Record<string, unknown>, lifecycleState: String(row.lifecycle_state), confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at), lastConfirmedAt: row.last_confirmed_at ? String(row.last_confirmed_at) : null }, context) }));
+  const evaluated = rows.map((row) => {
+    const storedProvenance = (row.provenance ?? {}) as Record<string, unknown>;
+    // Legacy records use their immutable database creation timestamp only when no
+    // capture timestamp exists. A malformed explicit timestamp still fails closed.
+    const provenance = Object.prototype.hasOwnProperty.call(storedProvenance, "capturedAt")
+      ? storedProvenance
+      : { ...storedProvenance, capturedAt: String(row.created_at) };
+    return { row, evaluation: evaluateMemoryForContext({ text: String(row.text), scope: (row.scope ?? {}) as Record<string, unknown>, provenance, lifecycleState: String(row.lifecycle_state), confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at), lastConfirmedAt: row.last_confirmed_at ? String(row.last_confirmed_at) : null }, context) };
+  });
   const scored = evaluated.filter(({ evaluation }) => evaluation.eligible).map(({ row, evaluation }) => ({ row, evaluation, score: scoreContextualMemory({ text: String(row.text), scope: row.scope ?? {}, lifecycleState: String(row.lifecycle_state) as "active" | "dormant" | "review", confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at) }, query, context) * evaluation.influenceWeight })).filter((item) => item.score >= 1).sort((a, b) => b.score - a.score).slice(0, Math.max(1, Math.min(limit, 20)));
   await Promise.all(scored.map(async ({ row, score, evaluation }) => {
     await sql`update memories set last_retrieved_at=now(),last_evaluated_at=now(),evaluation=${JSON.stringify(evaluation)}::jsonb where id=${row.id} and workspace_id=${workspace.id}`;
@@ -30,7 +38,11 @@ export async function createMemory(input: { workspaceId: string; text: string; c
     return rowToMemory(updated[0] as Record<string, unknown>);
   }
   const confidence = Math.max(5, Math.min(100, Math.round(input.confidence ?? 60))), relevance = Math.max(0, Math.min(100, Math.round(input.relevance ?? 50)));
-  const inserted = await sql`insert into memories (user_id,workspace_id,text,category,confidence,source,confirmed,active,last_confirmed_at,provenance,scope,relevance,lifecycle_state,updated_at) values (${userId},${workspace.id},${text},${input.category ?? 'other'},${confidence},${input.source ?? 'conversation'},${Boolean(input.confirmed)},true,now(),${JSON.stringify(input.provenance ?? { type: 'conversation', userId })}::jsonb,${JSON.stringify({ ...(input.scope ?? {}), workspace: workspace.id })}::jsonb,${relevance},'active',now()) returning *`;
+  const suppliedProvenance = input.provenance ?? { type: "conversation", userId };
+  const provenance = Object.prototype.hasOwnProperty.call(suppliedProvenance, "capturedAt")
+    ? suppliedProvenance
+    : { ...suppliedProvenance, capturedAt: new Date().toISOString() };
+  const inserted = await sql`insert into memories (user_id,workspace_id,text,category,confidence,source,confirmed,active,last_confirmed_at,provenance,scope,relevance,lifecycle_state,updated_at) values (${userId},${workspace.id},${text},${input.category ?? 'other'},${confidence},${input.source ?? 'conversation'},${Boolean(input.confirmed)},true,now(),${JSON.stringify(provenance)}::jsonb,${JSON.stringify({ ...(input.scope ?? {}), workspace: workspace.id })}::jsonb,${relevance},'active',now()) returning *`;
   const memory = rowToMemory(inserted[0] as Record<string, unknown>);
   await sql`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source) values (${memory.id},${workspace.id},${userId},'created',null,${confidence},null,${relevance},null,'active',${input.source ?? 'conversation'})`;
   return memory;
