@@ -48,6 +48,10 @@ export function evaluateMemoryForContext(
   if (!hasUsableProvenance(memory.provenance)) {
     return rejected("insufficient_provenance", "missing_provenance_or_unverified_timestamp");
   }
+  const capturedAtMs = Date.parse(String(memory.provenance.capturedAt));
+  if (capturedAtMs > now + 300000) {
+    return rejected("insufficient_provenance", "future_provenance_timestamp");
+  }
 
   const scope = memory.scope ?? {};
   const scopedContexts = Array.isArray(scope.contexts)
@@ -68,12 +72,16 @@ export function evaluateMemoryForContext(
   if (!Number.isFinite(updatedAtMs)) {
     return rejected("stale", "invalid_updated_at");
   }
+  if (updatedAtMs > now + 300000) return rejected("stale", "future_updated_at");
 
   const confirmationValue = memory.lastConfirmedAt;
   const hasConfirmation = typeof confirmationValue === "string" && confirmationValue.trim().length > 0;
   const confirmedAtMs = hasConfirmation ? Date.parse(confirmationValue!) : Number.NaN;
   if (hasConfirmation && !Number.isFinite(confirmedAtMs)) {
     return rejected("stale", "invalid_last_confirmed_at");
+  }
+  if (hasConfirmation && confirmedAtMs > now + 300000) {
+    return rejected("stale", "future_last_confirmed_at");
   }
 
   const freshnessTimestamp = hasConfirmation ? confirmedAtMs : updatedAtMs;
