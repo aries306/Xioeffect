@@ -21,7 +21,9 @@ export async function POST(request: Request) {
     const evaluation = evaluateMemoryForContext({
       text: String(row.text),
       scope: (row.scope ?? {}) as Record<string, unknown>,
-      provenance: (row.provenance ?? {}) as Record<string, unknown>,
+      provenance: Object.prototype.hasOwnProperty.call((row.provenance ?? {}) as Record<string, unknown>, "capturedAt")
+        ? (row.provenance ?? {}) as Record<string, unknown>
+        : { ...((row.provenance ?? {}) as Record<string, unknown>), capturedAt: String(row.created_at) },
       lifecycleState: String(row.lifecycle_state),
       confidence: Number(row.confidence),
       relevance: Number(row.relevance),
