@@ -63,6 +63,29 @@ test("Memory lifecycle supports contextual re-evaluation and explicit archive/ed
   assert.match(feedbackMigration, /\x27archive\x27/);
 });
 
+test("Sanctum displays the actual evaluated Memory Fabric state", async () => {
+  const sanctum = await read("components/sanctum/SanctumExperience.tsx");
+  const evaluator = await read("app/api/memory/evaluate/route.ts");
+  assert.match(sanctum, /\/api\/memory\/evaluate/);
+  assert.match(sanctum, /context:\{context:"personal"\}/);
+  assert.match(sanctum, /evaluation\.eligible/);
+  assert.match(sanctum, /influenceWeight/);
+  assert.match(sanctum, /not a belief, pattern, insight, or recommendation/);
+  assert.match(evaluator, /evaluateMemoryForContext/);
+  assert.match(evaluator, /last_evaluated_at/);
+  assert.match(evaluator, /'evaluated'/);
+});
+
+test("Chat memory writes and search preserve semantic context scope", async () => {
+  const chat = await read("app/api/chat/route.ts");
+  const memoryRoute = await read("app/api/memory/route.ts");
+  const browserChat = await read("public/js/chat.js");
+  assert.match(chat, /scope: \{ contexts: \[memoryContext\] \}/);
+  assert.match(memoryRoute, /url\.searchParams\.get\("context"\)/);
+  assert.match(memoryRoute, /retrieveContextualMemories\(String\(workspace\.id\), query, \{ context \}/);
+  assert.match(browserChat, /scope:\{contexts:\["personal"\]\}/);
+});
+
 test("Health and privacy endpoints are implemented instead of stubs", async () => {
   const health = await read("app/api/health/route.ts");
   const exportRoute = await read("app/api/account/export/route.ts");
