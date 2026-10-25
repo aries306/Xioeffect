@@ -14,6 +14,7 @@
     "build:vinext": "vinext build",
     "start:vinext": "vinext start",
     "preview:cloudflare": "npm run build:vinext && npx wrangler dev",
+    "preview": "bash scripts/preview.sh",
     "deploy:cloudflare": "npm run build:vinext && npx wrangler deploy",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
