@@ -8,6 +8,7 @@ type WorkspacePayload = {
   goals?: Array<{ id: string; title: string; progress?: number; status?: string }>;
 };
 type ChatPayload = { answer?: string; conversationId?: string; recommendation?: string | null; evidence?: Array<{ id: string; text: string; category?: string; confidence?: number; provenance?: unknown }>; error?: string };
+type ResearchRecord = { id: string; title: string; summary?: string | null; source_type?: string; confidence?: number; status?: string };
 
 const constellation = [
   { id: "focus", label: "Current focus", hint: "What matters now", x: 50, y: 28, tone: "core" },
@@ -23,6 +24,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
   const [message, setMessage] = useState("");
   const [workspace, setWorkspace] = useState<WorkspacePayload["workspace"]>();
   const [goals, setGoals] = useState<WorkspacePayload["goals"]>([]);
+  const [researchRecords, setResearchRecords] = useState<ResearchRecord[]>([]);
   const [selectedNode, setSelectedNode] = useState("focus");
   const [answer, setAnswer] = useState("");
   const [recommendation, setRecommendation] = useState("");
@@ -99,6 +101,17 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
       })
       .catch(() => {
         if (active) setNotice("Your universe is visible, but the workspace connection needs attention.");
+      });
+    fetch("/api/nexus/research", { credentials: "same-origin" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Research records could not be loaded.");
+        return response.json() as Promise<{ records?: ResearchRecord[] }>;
+      })
+      .then((data) => {
+        if (active) setResearchRecords(data.records ?? []);
+      })
+      .catch(() => {
+        // Research is an optional surface; keep the rest of the workspace available.
       });
     return () => { active = false; };
   }, [authenticated]);
@@ -200,6 +213,10 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
           <h2>{selected.label}</h2>
           <p>{selected.id === "focus" ? (answer ? "Your latest thought is here, ready to explore." : "Start with whatever is on your mind. The universe will take shape around it.") : selected.hint + ". This area becomes meaningful as your workspace builds context."}</p>
           {selected.id === "memory" && authenticated && <div className="genesis-card-stat"><strong>{evidence?.length ?? 0}</strong><span>context items in latest response</span></div>}
+          {selected.id === "research" && authenticated && <>
+            <div className="genesis-card-stat"><strong>{researchRecords.length}</strong><span>saved research records</span></div>
+            {researchRecords.slice(0, 1).map((record) => <p className="genesis-research-preview" key={record.id}><strong>{record.title}</strong>{record.summary ? <span>{record.summary}</span> : null}</p>)}
+          </>}
           {selected.id === "outcomes" && authenticated && <div className="genesis-card-stat"><strong>{goals?.length ?? 0}</strong><span>goals in your workspace</span></div>}
         </aside>
 
