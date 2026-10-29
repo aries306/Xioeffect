@@ -77,10 +77,10 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
       }
       if (!reducedMotion) frame = window.requestAnimationFrame(draw);
     };
+    window.addEventListener("resize", resize);
     resize();
     draw();
     if (reducedMotion) return () => window.removeEventListener("resize", resize);
-    window.addEventListener("resize", resize);
     frame = window.requestAnimationFrame(draw);
     return () => {
       window.cancelAnimationFrame(frame);
