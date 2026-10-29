@@ -10,6 +10,7 @@ test("Genesis front door is a native experience, not an iframe wrapper", async (
   assert.match(experience, /Bring me the thought/);
   assert.match(experience, /\/api\/chat/);
   assert.match(experience, /\/api\/workspace/);
+  assert.match(experience, /\/api\/nexus\/research/);
   assert.match(experience, /prefers-reduced-motion/);
 });
 
