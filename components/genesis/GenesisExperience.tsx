@@ -120,8 +120,12 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
     event.preventDefault();
     const thought = message.trim();
     if (!thought || busy) return;
-    if (!authenticated || !workspace?.id) {
+    if (!authenticated) {
       setNotice("Sign in to connect your thought to your private intelligence workspace.");
+      return;
+    }
+    if (!workspace?.id) {
+      setNotice("Your workspace is still connecting. Please try again in a moment.");
       return;
     }
     setBusy(true);
