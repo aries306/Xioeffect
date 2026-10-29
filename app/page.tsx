@@ -1,28 +1,14 @@
-"use client";
+import { auth } from "@clerk/nextjs/server";
+import GenesisExperience from "@/components/genesis/GenesisExperience";
 
-import { useCallback, useRef } from "react";
+export default async function Home() {
+  let authenticated = false;
+  try {
+    const session = await auth();
+    authenticated = Boolean(session.userId);
+  } catch {
+    // Keep the public Genesis landing experience available when auth is not configured locally.
+  }
 
-export default function Home() {
-  const frame = useRef<HTMLIFrameElement>(null);
-  const enhance = useCallback(() => {
-    const doc = frame.current?.contentDocument;
-    if (!doc || doc.getElementById("xyoverse-enhancer-loader")) return;
-    const script = doc.createElement("script");
-    script.id = "xyoverse-enhancer-loader";
-    script.src = "/xyoverse-enhancer.js";
-    script.async = true;
-    doc.body.appendChild(script);
-  }, []);
-
-  return (
-    <main style={{ minHeight: "100vh", background: "#02030a" }}>
-      <iframe
-        ref={frame}
-        title="Xyoverse · your intelligent universe"
-        src="/living.html"
-        onLoad={enhance}
-        style={{ border: 0, width: "100%", minHeight: "100vh", display: "block" }}
-      />
-    </main>
-  );
+  return <GenesisExperience authenticated={authenticated} />;
 }
