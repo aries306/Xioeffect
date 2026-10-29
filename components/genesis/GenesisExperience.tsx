@@ -9,6 +9,7 @@ type WorkspacePayload = {
 };
 type ChatPayload = { answer?: string; conversationId?: string; recommendation?: string | null; evidence?: Array<{ id: string; text: string; category?: string; confidence?: number; provenance?: unknown }>; error?: string };
 type ResearchRecord = { id: string; title: string; summary?: string | null; source_type?: string; confidence?: number; status?: string };
+type MemoryRecord = { id: string; text: string; category?: string; confidence?: number; relevance?: number; lifecycle_state?: string; confirmed?: boolean; source?: string };
 
 const constellation = [
   { id: "focus", label: "Current focus", hint: "What matters now", x: 50, y: 28, tone: "core" },
@@ -25,6 +26,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
   const [workspace, setWorkspace] = useState<WorkspacePayload["workspace"]>();
   const [goals, setGoals] = useState<WorkspacePayload["goals"]>([]);
   const [researchRecords, setResearchRecords] = useState<ResearchRecord[]>([]);
+  const [memories, setMemories] = useState<MemoryRecord[]>([]);
   const [selectedNode, setSelectedNode] = useState("focus");
   const [answer, setAnswer] = useState("");
   const [recommendation, setRecommendation] = useState("");
@@ -112,6 +114,17 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
       })
       .catch(() => {
         // Research is an optional surface; keep the rest of the workspace available.
+      });
+    fetch("/api/memory", { credentials: "same-origin" })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Memory records could not be loaded.");
+        return response.json() as Promise<{ memories?: MemoryRecord[] }>;
+      })
+      .then((data) => {
+        if (active) setMemories(data.memories ?? []);
+      })
+      .catch(() => {
+        // Memory is optional to the first response; keep chat usable if it is unavailable.
       });
     return () => { active = false; };
   }, [authenticated]);
@@ -216,12 +229,29 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
           <p className="genesis-eyebrow">CURRENT FOCUS</p>
           <h2>{selected.label}</h2>
           <p>{selected.id === "focus" ? (answer ? "Your latest thought is here, ready to explore." : "Start with whatever is on your mind. The universe will take shape around it.") : selected.hint + ". This area becomes meaningful as your workspace builds context."}</p>
-          {selected.id === "memory" && authenticated && <div className="genesis-card-stat"><strong>{evidence?.length ?? 0}</strong><span>context items in latest response</span></div>}
+          {selected.id === "memory" && authenticated && <>
+            <div className="genesis-card-stat"><strong>{memories.length}</strong><span>saved memories in your workspace</span></div>
+            {memories.slice(0, 2).map((memory) => <div className="genesis-memory-preview" key={memory.id}><strong>{memory.category ?? "Memory"}</strong><span>{memory.text}</span></div>)}
+            {evidence && evidence.length > 0 && <p className="genesis-context-note">{evidence.length} supporting context item{evidence.length === 1 ? "" : "s"} in the latest response</p>}
+          </>}
           {selected.id === "research" && authenticated && <>
             <div className="genesis-card-stat"><strong>{researchRecords.length}</strong><span>saved research records</span></div>
-            {researchRecords.slice(0, 1).map((record) => <p className="genesis-research-preview" key={record.id}><strong>{record.title}</strong>{record.summary ? <span>{record.summary}</span> : null}</p>)}
+            {researchRecords.length > 0 && <div className="genesis-research-status">
+              <span>{researchRecords.filter((record) => /complete|ready|published|done/i.test(record.status ?? "")).length} ready</span>
+              <span>{researchRecords.filter((record) => /progress|pending|running|queued/i.test(record.status ?? "")).length} in motion</span>
+            </div>}
+            {researchRecords.slice(0, 3).map((record) => <div className="genesis-research-preview" key={record.id}>
+              <strong>{record.title}</strong>
+              {record.summary ? <span>{record.summary}</span> : null}
+              <small>{record.status ? record.status.replace(/[_-]/g, " ") : "Saved"}{typeof record.confidence === "number" ? ` · ${record.confidence}% confidence` : ""}</small>
+            </div>)}
+            {researchRecords.length === 0 && <p className="genesis-context-note">Your research will gather here as discoveries are saved.</p>}
           </>}
-          {selected.id === "outcomes" && authenticated && <div className="genesis-card-stat"><strong>{goals?.length ?? 0}</strong><span>goals in your workspace</span></div>}
+          {selected.id === "outcomes" && authenticated && <>
+            <div className="genesis-card-stat"><strong>{goals?.length ?? 0}</strong><span>goals in your workspace</span></div>
+            {goals?.slice(0, 2).map((goal) => <div className="genesis-memory-preview" key={goal.id}><strong>{goal.title}</strong><span>{goal.status ? goal.status.replace(/[_-]/g, " ") : "Active"}{typeof goal.progress === "number" ? ` · ${goal.progress}%` : ""}</span></div>)}
+            {(!goals || goals.length === 0) && <p className="genesis-context-note">Your next outcomes will appear here as goals take shape.</p>}
+          </>}
         </aside>
 
         <div className="genesis-input-dock">
