@@ -122,7 +122,7 @@ export default function SanctumExperience({ signedIn }: { signedIn:boolean }) {
       })});
       if(!response.ok) throw new Error("memory");
       const {memory}=await response.json();
-      let evaluation=null;
+      let evaluation: {eligible:boolean;status:string;reasons:string[];influenceWeight:number}|null=null;
       let potentialConflicts:Array<{id:string;text:string;category:string}>=[];
       if(memory?.id){
         const evaluatedResponse=await fetch("/api/memory/evaluate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({workspaceId:workspace.id,memoryId:memory.id,context:{context:"personal"}})});

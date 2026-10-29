@@ -21,3 +21,12 @@ test("Genesis chat uses the protected workspace API and surfaces evidence", asyn
   assert.match(experience, /supporting context/);
   assert.match(experience, /Sign in to connect your thought/);
 });
+
+test("Genesis constellation hydrates saved Memory Fabric and research state", async () => {
+  const experience = await fs.readFile("components/genesis/GenesisExperience.tsx", "utf8");
+  assert.match(experience, /fetch\("\/api\/memory"/);
+  assert.match(experience, /saved memories in your workspace/);
+  assert.match(experience, /genesis-research-status/);
+  assert.match(experience, /researchRecords\.slice\(0, 3\)/);
+  assert.match(experience, /goals\?\.slice\(0, 2\)/);
+});
