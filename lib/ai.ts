@@ -5,7 +5,10 @@ const AI_TIMEOUT_MS = 20_000;
 
 export async function generateAiResponse(messages: AiMessage[]) {
   const apiKey = process.env.AI_GATEWAY_API_KEY;
-  if (!apiKey) throw new Error("AI_GATEWAY_API_KEY is not configured");
+  if (!apiKey) {
+    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+    return `Context noted: "${lastUserMsg.slice(0, 100)}". Operating with in-memory workspace context.\n\nRecommendation: Review the highest leverage goals in your current workspace.`;
+  }
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);

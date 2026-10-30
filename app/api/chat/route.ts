@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const askBeforeMemory = preferences[0]?.ask_before_memory ?? true;
     const result = await runAvenne({ workspaceId: String(workspace.id), userMessage: message, conversationId, context });
     const candidates = learningEnabled ? extractMemoryCandidates(message) : [];
-    const persisted = [];
+    const persisted: Array<{ id: string }> = [];
     const memoryContext = typeof context?.context === "string" && context.context.trim() ? context.context.trim() : "personal";
     if (learningEnabled && !askBeforeMemory) for (const candidate of candidates) persisted.push(await createMemory({
       workspaceId: String(workspace.id), text: candidate.text, category: candidate.category,
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       scope: { originContext: memoryContext }, confirmed: false,
     }));
     console.info(JSON.stringify({ event: "avenne.chat.completed", userId, workspaceId: workspace.id, conversationId: result.conversationId, memoryCount: result.evidence.length, candidateCount: candidates.length, persistedMemoryCount: persisted.length, durationMs: result.diagnostics.durationMs }));
-    return Response.json({ ...result, memoryProposals: askBeforeMemory ? candidates : [], persistedMemoryIds: persisted.map((memory) => memory.id), evidenceMemoryIds: result.evidence.map((memory) => memory.id) });
+    return Response.json({ ...result, memoryProposals: askBeforeMemory ? candidates : [], persistedMemoryIds: persisted.map((memory: { id: string }) => memory.id), evidenceMemoryIds: result.evidence.map((memory: { id: string }) => memory.id) });
   } catch (error) {
     console.error("avenne.chat.failed", error instanceof Error ? error.message : "unknown error");
     const message = error instanceof Error ? error.message : "Unable to process chat";

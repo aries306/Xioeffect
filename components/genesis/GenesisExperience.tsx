@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 
 type GenesisExperienceProps = { authenticated?: boolean };
 type WorkspacePayload = {
@@ -169,7 +170,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
     } finally {
       setBusy(false);
     }
-  }, [authenticated, busy, conversationId, message, workspace?.id]);
+  }, [authenticated, busy, conversationId, message, workspace]);
 
   const selected = constellation.find((node) => node.id === selectedNode) ?? constellation[0];
 
@@ -179,13 +180,13 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
       <div className="genesis-nebula" aria-hidden="true" />
       <div className="genesis-vignette" aria-hidden="true" />
       <header className="genesis-topbar">
-        <a className="genesis-brand" href="/" aria-label="ZIO Genesis home">
+        <Link className="genesis-brand" href="/" aria-label="ZIO Genesis home">
           <span className="genesis-mark" aria-hidden="true"><i /></span>
           <span><strong>ZIO</strong><small>GENESIS</small></span>
-        </a>
+        </Link>
         <div className="genesis-top-status"><span className="genesis-status-dot" /> {authenticated ? (workspace?.name ?? "Private universe") : "A living intelligent reality"}</div>
         <nav className="genesis-nav" aria-label="Account">
-          {authenticated ? <a className="genesis-nav-link" href="/app">Enter universe <span aria-hidden="true">↗</span></a> : <><a className="genesis-nav-link" href="/sign-in">Sign in</a><a className="genesis-nav-cta" href="/sign-up">Begin</a></>}
+          {authenticated ? <Link className="genesis-nav-link" href="/app">Enter universe <span aria-hidden="true">↗</span></Link> : <><Link className="genesis-nav-link" href="/sign-in">Sign in</Link><Link className="genesis-nav-cta" href="/sign-up">Begin</Link></>}
         </nav>
       </header>
 
@@ -277,7 +278,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
             <button className="genesis-send" type="submit" disabled={busy || !message.trim()} aria-label="Send thought">{busy ? <span className="genesis-spinner" /> : <span aria-hidden="true">↗</span>}</button>
           </form>
           <div className="genesis-dock-footer"><span>{authenticated ? "Private workspace · contextual intelligence" : "A space for your next possibility"}</span><span>ENTER TO SEND · SHIFT + ENTER FOR A NEW LINE</span></div>
-          {notice && <p className="genesis-notice" role="status">{notice}{!authenticated && notice.startsWith("Sign in") ? <> <a href="/sign-in">Sign in →</a></> : null}</p>}
+          {notice && <p className="genesis-notice" role="status">{notice}{!authenticated && notice.startsWith("Sign in") ? <> <Link href="/sign-in">Sign in →</Link></> : null}</p>}
         </div>
       </section>
       <footer className="genesis-footer"><span>INTELLIGENCE, IN MOTION</span><span>Memory · Research · Connection · Possibility</span></footer>
