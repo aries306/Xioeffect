@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
 type GenesisExperienceProps = { authenticated?: boolean };
@@ -169,7 +170,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
     } finally {
       setBusy(false);
     }
-  }, [authenticated, busy, conversationId, message, workspace?.id]);
+  }, [authenticated, busy, conversationId, message, workspace]);
 
   const selected = constellation.find((node) => node.id === selectedNode) ?? constellation[0];
 
@@ -179,13 +180,13 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
       <div className="genesis-nebula" aria-hidden="true" />
       <div className="genesis-vignette" aria-hidden="true" />
       <header className="genesis-topbar">
-        <a className="genesis-brand" href="/" aria-label="ZIO Genesis home">
+        <Link className="genesis-brand" href="/" aria-label="ZIO Genesis home">
           <span className="genesis-mark" aria-hidden="true"><i /></span>
           <span><strong>ZIO</strong><small>GENESIS</small></span>
-        </a>
+        </Link>
         <div className="genesis-top-status"><span className="genesis-status-dot" /> {authenticated ? (workspace?.name ?? "Private universe") : "A living intelligent reality"}</div>
         <nav className="genesis-nav" aria-label="Account">
-          {authenticated ? <a className="genesis-nav-link" href="/app">Enter universe <span aria-hidden="true">↗</span></a> : <><a className="genesis-nav-link" href="/sign-in">Sign in</a><a className="genesis-nav-cta" href="/sign-up">Begin</a></>}
+          {authenticated ? <Link className="genesis-nav-link" href="/app">Enter universe <span aria-hidden="true">↗</span></Link> : <><Link className="genesis-nav-link" href="/sign-in">Sign in</Link><Link className="genesis-nav-cta" href="/sign-up">Begin</Link></>}
         </nav>
       </header>
 
