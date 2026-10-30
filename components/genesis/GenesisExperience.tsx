@@ -278,7 +278,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
             <button className="genesis-send" type="submit" disabled={busy || !message.trim()} aria-label="Send thought">{busy ? <span className="genesis-spinner" /> : <span aria-hidden="true">↗</span>}</button>
           </form>
           <div className="genesis-dock-footer"><span>{authenticated ? "Private workspace · contextual intelligence" : "A space for your next possibility"}</span><span>ENTER TO SEND · SHIFT + ENTER FOR A NEW LINE</span></div>
-          {notice && <p className="genesis-notice" role="status">{notice}{!authenticated && notice.startsWith("Sign in") ? <> <a href="/sign-in">Sign in →</a></> : null}</p>}
+          {notice && <p className="genesis-notice" role="status">{notice}{!authenticated && notice.startsWith("Sign in") ? <> <Link href="/sign-in">Sign in →</Link></> : null}</p>}
         </div>
       </section>
       <footer className="genesis-footer"><span>INTELLIGENCE, IN MOTION</span><span>Memory · Research · Connection · Possibility</span></footer>
