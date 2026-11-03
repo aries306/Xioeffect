@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
 import { env } from "cloudflare:workers";
-import { env } from "cloudflare:workers";
 
 export const dynamic = "force-dynamic";
 
