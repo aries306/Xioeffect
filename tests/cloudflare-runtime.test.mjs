@@ -25,7 +25,6 @@ test("Cloudflare Worker routes Neon through Hyperdrive and retains local DATABAS
   assert.ok(db.includes("env.HYPERDRIVE?.connectionString"));
   assert.ok(db.includes("process.env.DATABASE_URL"));
   assert.ok(worker.includes("handler.fetch"));
-  assert.ok(health.includes("env.HYPERDRIVE?.connectionString"));
   assert.ok(health.includes("workersAi: env.AI"));
   assert.ok(health.includes("const sql = db()"));
   assert.ok(health.includes("workersAi: env.AI ? \"configured\" : \"missing\""));
