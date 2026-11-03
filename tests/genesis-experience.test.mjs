@@ -2,31 +2,39 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
-test("Genesis front door is a native experience, not an iframe wrapper", async () => {
+test("Zuna front door is a native bright 3D arrival experience", async () => {
   const home = await fs.readFile("app/page.tsx", "utf8");
-  const experience = await fs.readFile("components/genesis/GenesisExperience.tsx", "utf8");
-  assert.match(home, /GenesisExperience/);
+  const experience = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
+  const styles = await fs.readFile("app/zuna-arrival.css", "utf8");
+  assert.match(home, /ZunaArrivalExperience/);
+  assert.match(home, /force-static/);
+  assert.doesNotMatch(home, /auth\(/);
   assert.doesNotMatch(home, /iframe|living\.html|xyoverse-enhancer/);
-  assert.match(experience, /Bring me the thought/);
+  assert.match(experience, /YOUR FIRST FIVE MINUTES/);
+  assert.match(experience, /zuna-onboarding-draft/);
+  assert.match(experience, /Create private space & save/);
+  assert.match(experience, /Oh… there you are/);
   assert.match(experience, /\/api\/chat/);
   assert.match(experience, /\/api\/workspace/);
-  assert.match(experience, /\/api\/nexus\/research/);
+  assert.match(experience, /\/api\/memory/);
   assert.match(experience, /prefers-reduced-motion/);
+  assert.match(styles, /perspective/);
+  assert.match(styles, /color-scheme:light/);
 });
 
-test("Genesis chat uses the protected workspace API and surfaces evidence", async () => {
-  const experience = await fs.readFile("components/genesis/GenesisExperience.tsx", "utf8");
-  assert.match(experience, /workspaceId/);
+test("Five-minute onboarding persists user-provided context with provenance", async () => {
+  const experience = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
+  assert.match(experience, /explicit-user-submission/);
+  assert.match(experience, /zuna-five-minute-onboarding/);
+  assert.match(experience, /category: "personal_context"/);
+  assert.match(experience, /category: "goal"/);
+  assert.match(experience, /workspaceId: workspace.id/);
   assert.match(experience, /credentials: "same-origin"/);
-  assert.match(experience, /supporting context/);
-  assert.match(experience, /Sign in to connect your thought/);
+  assert.match(experience, /memoryCount: memoryResults.length/);
 });
 
-test("Genesis constellation hydrates saved Memory Fabric and research state", async () => {
-  const experience = await fs.readFile("components/genesis/GenesisExperience.tsx", "utf8");
-  assert.match(experience, /fetch\("\/api\/memory"/);
-  assert.match(experience, /saved memories in your workspace/);
-  assert.match(experience, /genesis-research-status/);
-  assert.match(experience, /researchRecords\.slice\(0, 3\)/);
-  assert.match(experience, /goals\?\.slice\(0, 2\)/);
+test("The onboarding concept field is derived from visitor-provided words", async () => {
+  const experience = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
+  assert.match(experience, /extractConcepts\(introduction\)/);
+  assert.match(experience, /Concepts from your introduction/);
 });

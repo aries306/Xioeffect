@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { env } from "cloudflare:workers";
 
 let sqlClient: any = null;
 
@@ -105,8 +106,12 @@ function createMockSql() {
 }
 
 export function db(): ReturnType<typeof postgres> {
-  const url = process.env.DATABASE_URL;
+  const hyperdriveUrl = env.HYPERDRIVE?.connectionString;
+  const url = hyperdriveUrl || process.env.DATABASE_URL;
   if (!url) {
+    if (process.env.APP_ENV === "production") {
+      throw new Error("Production database is not configured. Bind Neon through Cloudflare Hyperdrive before serving authenticated requests.");
+    }
     if (!sqlClient) {
       sqlClient = createMockSql();
     }
@@ -114,11 +119,17 @@ export function db(): ReturnType<typeof postgres> {
   }
 
   try {
-    return postgres(url, {
-      max: 5,
-      fetch_types: false,
-      prepare: true,
-    });
+    if (!sqlClient) {
+      sqlClient = postgres(url, {
+        max: 5,
+        fetch_types: false,
+        prepare: true,
+        connection: {
+          application_name: hyperdriveUrl ? "Cloudflare Hyperdrive" : "Zuna",
+        },
+      });
+    }
+    return sqlClient as ReturnType<typeof postgres>;
   } catch (error) {
     console.warn("[AI Studio] Database connection error — using mock:", error);
     if (!sqlClient) {

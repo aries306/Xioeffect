@@ -1,6 +1,6 @@
 # XIO
 
-XIO is a Next.js server-backed SaaS application with a browser-first experience. The existing Living System remains the visual front door while authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities run through server-side routes.
+Zuna (formerly XIO) is a server-backed application with a browser-first experience. Its front door is a bright, spatial 3D five-minute arrival, with authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities running through server-side routes.
 
 ## Runtime
 
@@ -12,9 +12,9 @@ local compatibility checks.
 
 ## Current state
 
-- `/` embeds the existing demo unchanged
+- `/` serves the bright 3D Zuna arrival and five-minute onboarding
 - `/api/health` is a deployment health endpoint
-- `/api/chat` validates input, authorizes the workspace, retrieves contextual Memory Fabric evidence, calls the server-side AI Gateway, and persists the conversation
+- `/api/chat` validates input, authorizes the workspace, retrieves contextual Memory Fabric evidence, calls Cloudflare Workers AI through the `AI` binding, and persists the conversation
 - GitHub integration lives on `main` behind authenticated server routes; `feat/github-nexus` is a historical branch and is not the deployment baseline
 
 ## GitHub → Research → NEXUS
@@ -47,7 +47,7 @@ Required server-side variables:
 ```text
 CLERK_SECRET_KEY=
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-DATABASE_URL=
+DATABASE_URL= # local development fallback only; production uses the HYPERDRIVE binding
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 GITHUB_REDIRECT_URI=
@@ -62,7 +62,13 @@ Apply migrations in order: `001_xio_core.sql`, `002_github_nexus.sql`, `003_memo
 
 Every user-owned query must be scoped by the verified Clerk user ID. The GitHub integration uses text `user_id` values because Clerk user IDs are strings.
 
-## Deployment architecture\n\nNext.js is the primary application runtime. The repository also contains a Vinext/Cloudflare deployment path; it is an alternate target and should not be mixed into the primary Vercel deployment configuration. Vercel AI Gateway is called server-side from `lib/ai.ts`.\n\n## Production verification
+## Deployment architecture
+
+Cloudflare Workers is the production application platform. Vinext runs the App Router on the Worker, Wrangler manages deployment, and the Worker exposes the `AI` binding for Cloudflare Workers AI and the optional `HYPERDRIVE` binding for the existing Neon PostgreSQL database. Vercel is not part of the application deployment or inference path.
+
+The production Worker is named `zuna`. Cloudflare Workers Builds will connect the GitHub repository and deploy on pushes after the Cloudflare GitHub App is authorized. The production Worker must have a Neon Hyperdrive binding before authenticated data operations are enabled.
+
+## Production verification
 
 Before merging/deploying the GitHub branch:
 
@@ -90,7 +96,7 @@ The product must retain the demo's privacy controls: consent before memory creat
 
 ## Billing and AI configuration
 
-Subscription changes must originate with Stripe Checkout and be applied only from verified Stripe webhook events. The checkout and webhook routes are intentionally fail-closed until Stripe credentials, price IDs, and webhook signing verification are installed. AI requests must be executed server-side through Vercel AI Gateway only after authentication, entitlement checks, rate limits, and consented-memory retrieval are enabled.
+Subscription changes must originate with Stripe Checkout and be applied only from verified Stripe webhook events. The checkout and webhook routes are intentionally fail-closed until Stripe credentials, price IDs, and webhook signing verification are installed. AI requests run server-side through the Cloudflare Workers AI `AI` binding using `@cf/zai-org/glm-4.7-flash`. Requests must remain behind authentication, entitlement checks, rate limits, and consented-memory retrieval.
 
 ## Authentication
 
