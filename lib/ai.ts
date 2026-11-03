@@ -1,11 +1,20 @@
-import { env } from "cloudflare:workers";
-
 export type AiMessage = { role: "system" | "user" | "assistant"; content: string };
+
+type WorkersAiBinding = {
+  run(
+    model: string,
+    input: {
+      messages: AiMessage[];
+      temperature?: number;
+      max_tokens?: number;
+    },
+  ): Promise<{ response?: string }>;
+};
 
 const WORKERS_AI_MODEL = "@cf/zai-org/glm-4.7-flash";
 
 export async function generateAiResponse(messages: AiMessage[]) {
-  const binding = env.AI;
+  const binding = (globalThis as typeof globalThis & { __ZUNA_AI?: WorkersAiBinding }).__ZUNA_AI;
   if (!binding) {
     throw new Error("Cloudflare Workers AI binding is not configured for this deployment.");
   }
