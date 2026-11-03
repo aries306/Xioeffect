@@ -12,6 +12,7 @@ import fs from "node:fs/promises";
   assert.ok(pkg.scripts["deploy:cloudflare"].includes("@vinext/cloudflare deploy"));
   assert.equal(worker.name, "zuna");
   assert.equal(worker.ai.binding, "AI");
+  assert.equal(worker.vars.APP_ENV, "production");
   assert.ok(ai.includes("@cf/zai-org/glm-4.7-flash"));
   assert.ok(!ai.includes("vercel.sh") && !ai.includes("AI_GATEWAY_API_KEY"));
   assert.ok(!nextConfig.includes("living.html") && !nextConfig.includes("standalone"));
