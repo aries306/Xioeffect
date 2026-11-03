@@ -38,3 +38,12 @@ test("The onboarding concept field is derived from visitor-provided words", asyn
   assert.match(experience, /extractConcepts\(introduction\)/);
   assert.match(experience, /Concepts from your introduction/);
 });
+
+test("the arrival names EXelta as the user-facing intelligence", async () => {
+  const experience = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
+  const atlas = await fs.readFile("components/atlas/ZunaAtlasExperience.tsx", "utf8");
+  assert.match(experience, /EXelta/);
+  assert.match(experience, /EXELTA IS HERE/);
+  assert.match(atlas, /Talk to EXelta/);
+  assert.doesNotMatch(experience, /\bVea\b/);
+});
