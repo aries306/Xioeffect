@@ -9,7 +9,7 @@ import fs from "node:fs/promises";
   const nextConfig = await fs.readFile("next.config.ts", "utf8");
   assert.equal(pkg.scripts.dev, "vinext dev");
   assert.equal(pkg.scripts.build, "vinext build");
-  assert.ok(pkg.scripts["deploy:cloudflare"].includes("@vinext/cloudflare deploy"));
+  assert.ok(pkg.scripts["deploy:cloudflare"].includes("wrangler deploy"));
   assert.equal(worker.name, "zuna");
   assert.equal(worker.ai.binding, "AI");
   assert.equal(worker.vars.APP_ENV, "production");
@@ -21,7 +21,7 @@ import fs from "node:fs/promises";
 test("Cloudflare Worker routes Neon through Hyperdrive and retains local DATABASE_URL support", async () => {
   const db = await fs.readFile("lib/db.ts", "utf8");
   const worker = await fs.readFile("worker/index.ts", "utf8");
+  assert.ok(db.includes("env.HYPERDRIVE?.connectionString"));
   assert.ok(db.includes("process.env.DATABASE_URL"));
-  assert.ok(worker.includes("env.HYPERDRIVE?.connectionString"));
-  assert.ok(worker.includes("Cloudflare Hyperdrive"));
+  assert.ok(worker.includes("handler.fetch"));
 });
