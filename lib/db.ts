@@ -109,6 +109,9 @@ export function db(): ReturnType<typeof postgres> {
   const hyperdriveUrl = env.HYPERDRIVE?.connectionString;
   const url = hyperdriveUrl || process.env.DATABASE_URL;
   if (!url) {
+    if (process.env.APP_ENV === "production") {
+      throw new Error("Production database is not configured. Bind Neon through Cloudflare Hyperdrive before serving authenticated requests.");
+    }
     if (!sqlClient) {
       sqlClient = createMockSql();
     }
