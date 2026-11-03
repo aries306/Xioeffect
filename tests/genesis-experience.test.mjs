@@ -4,15 +4,15 @@ import fs from "node:fs/promises";
 
 test("Exelta front door is a native bright 3D arrival experience", async () => {
   const home = await fs.readFile("app/page.tsx", "utf8");
-  const experience = await fs.readFile("components/genesis/ExeltaArrivalExperience.tsx", "utf8");
+  const experience = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
   const styles = await fs.readFile("app/zuna-arrival.css", "utf8");
-  assert.match(home, /ExeltaArrivalExperience/);
+  assert.match(home, /ZunaArrivalExperience/);
   assert.match(home, /force-static/);
   assert.doesNotMatch(home, /auth\(/);
   assert.doesNotMatch(home, /iframe|living\.html|xyoverse-enhancer/);
   assert.match(experience, /YOUR FIRST FIVE MINUTES/);
-  assert.match(experience, /zuna-onboarding-draft/);
-  assert.match(experience, /Create private space & save/);
+  assert.match(experience, /zuna-onboarding-draft/); // compatibility key; not user-facing
+  assert.match(experience, /Create your Exelta space & save/);
   assert.match(experience, /Oh… there you are/);
   assert.match(experience, /\/api\/chat/);
   assert.match(experience, /\/api\/workspace/);
@@ -23,7 +23,7 @@ test("Exelta front door is a native bright 3D arrival experience", async () => {
 });
 
 test("Five-minute onboarding persists user-provided context with provenance", async () => {
-  const experience = await fs.readFile("components/genesis/ExeltaArrivalExperience.tsx", "utf8");
+  const experience = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
   assert.match(experience, /explicit-user-submission/);
   assert.match(experience, /zuna-five-minute-onboarding/);
   assert.match(experience, /category: "personal_context"/);
@@ -34,19 +34,22 @@ test("Five-minute onboarding persists user-provided context with provenance", as
 });
 
 test("The onboarding concept field is derived from visitor-provided words", async () => {
-  const experience = await fs.readFile("components/genesis/ExeltaArrivalExperience.tsx", "utf8");
+  const experience = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
   assert.match(experience, /extractConcepts\(introduction\)/);
   assert.match(experience, /Concepts from your introduction/);
 });
 
-test("the arrival names Exelta as the user-facing intelligence", async () => {
-  const experience = await fs.readFile("components/genesis/ExeltaArrivalExperience.tsx", "utf8");
-  const atlas = await fs.readFile("components/atlas/ExeltaAtlasExperience.tsx", "utf8");
+test("both Exelta experiences use the unified identity", async () => {
+  const arrival = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
+  const atlas = await fs.readFile("components/atlas/ZunaAtlasExperience.tsx", "utf8");
   const workspace = await fs.readFile("components/genesis/GenesisExperience.tsx", "utf8");
-  assert.match(experience, /Exelta/);
-  assert.match(experience, /EXELTA IS HERE/);
-  assert.match(atlas, /Talk to Exelta/);
+  assert.match(arrival, /EXELTA IS HERE/);
+  assert.match(arrival, /I'm Exelta/);
+  assert.match(atlas, /Talk to EXelta/i);
+  assert.match(atlas, /EXELTA SYSTEM ATLAS/);
   assert.match(workspace, /RESPONSE FROM EXELTA/);
   assert.match(workspace, /Exelta living universe/);
-  assert.doesNotMatch(experience, /\bVea\b/);
+  assert.doesNotMatch(atlas, /<strong>XIO|XIO SYSTEM ATLAS|XIO’s cognitive|XIO intelligence|XIO home/);
+  assert.doesNotMatch(workspace, /<strong>XIO|XIO Genesis home|XIO living universe/);
+  assert.doesNotMatch(arrival, /\bVea\b/);
 });
