@@ -101,3 +101,17 @@ Subscription changes must originate with Stripe Checkout and be applied only fro
 ## Authentication
 
 Clerk is connected to the application. `/sign-up` and `/sign-in` provide hosted account creation and login; `/app` and sensitive API routes are protected by verified Clerk sessions. The existing browser demo remains isolated from personal cloud data until the Neon-backed data layer is implemented.
+
+
+## Product identity
+
+- **XIO** is the product environment and the recovered XIO 2.0 experience.
+- **Zioren** is the companion personal-intelligence ecosystem; the two experiences share the same architectural principles without being collapsed into one product.
+- **EXelta** is the named user-facing AI across both experiences.
+- **Intelligence Layer** is the shared underlying architecture for context assembly, retrieval, reasoning, orchestration, governance, and outcome verification.
+- **Memory Fabric** preserves contextual scope, provenance, confidence, lifecycle, and user control. Research evidence is not automatically promoted into memory.
+- **NEXUS** connects and processes eligible evidence and work items while keeping memory, beliefs, patterns, insights, and recommendations distinct.
+- **Shadow** represents alternative possibilities and scenarios, not asserted facts.
+- **Zio Effect** is the compounding advantage produced when relevant context, learning, and verified outcomes improve future work.
+
+The visual experience is spatial and immersive rather than a conventional dashboard or chatbot. Motion must correspond to real system state; it must not imply retrieval, reasoning, verification, or learning that did not occur.
