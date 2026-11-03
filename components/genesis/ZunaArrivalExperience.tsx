@@ -347,8 +347,6 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
   }
 
   const phaseIndex = PHASES.indexOf(phase);
-  const activeTarget = phase === "name" ? "name" : phase === "story" ? "story" : "intention";
-  const activeValue = phase === "name" ? name : phase === "story" ? introduction : intention;
   const conceptsToShow = concepts.length ? concepts : extractConcepts(`${introduction} ${intention}`);
 
   return (
