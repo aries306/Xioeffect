@@ -31,7 +31,7 @@ declare global {
 const PHASES: Phase[] = ["arrival", "name", "story", "intention", "reveal"];
 const GREETINGS = [
   "Oh… there you are. I've been waiting for you.",
-  "I'm Vea. I'm happy you've arrived.",
+  "I'm EXelta. I'm happy you've arrived.",
   "Let's make this space mean something.",
 ];
 
@@ -369,7 +369,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
       }
       setSaved(true);
       sessionStorage.removeItem("zuna-onboarding-draft");
-      setNotice("Your introduction and intention are now saved with their source and context. Vea is connecting the first thread.");
+      setNotice("Your introduction and intention are now saved with their source and context. EXelta is connecting the first thread.");
       try {
         const chatResponse = await fetch("/api/chat", {
           method: "POST",
@@ -405,11 +405,11 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
       <div className="zuna-light-wash" aria-hidden="true" />
       <div className="zuna-depth-rings" aria-hidden="true"><i /><i /><i /></div>
       <header className="zuna-arrival-header">
-        <Link href="/" className="zuna-arrival-brand" aria-label="Zuna home">
+        <Link href="/" className="zuna-arrival-brand" aria-label="XIO home">
           <span className="zuna-brand-glyph">Z</span>
-          <span><strong>ZUNA</strong><small>A LIVING INTELLIGENCE</small></span>
+          <span><strong>XIO</strong><small>A LIVING INTELLIGENCE</small></span>
         </Link>
-        <div className="zuna-header-center"><span className="zuna-online-dot" /> VEA IS HERE</div>
+        <div className="zuna-header-center"><span className="zuna-online-dot" /> EXELTA IS HERE</div>
         <nav className="zuna-header-links">
           {isAuthenticated ? <Link href="/atlas">Explore system ↗</Link> : <Link href="/sign-in">Sign in</Link>}
         </nav>
@@ -418,7 +418,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
       <section className={`zuna-arrival-stage phase-${phase}`}>
         <div className="zuna-stage-orb" aria-hidden="true">
           <div className="zuna-orb-halo" />
-          <div className="zuna-orb-shell"><i /><i /><i /><span>V</span></div>
+          <div className="zuna-orb-shell"><i /><i /><i /><span>E</span></div>
           <div className="zuna-orb-shadow" />
         </div>
 
@@ -435,10 +435,10 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
             <p className="zuna-kicker">A DIFFERENT KIND OF BEGINNING</p>
             <h1>Oh… there you are.</h1>
             <p className="zuna-subtitle">I've been waiting for you.</p>
-            <p className="zuna-body">I'm Vea. This is the beginning of your own living intelligence space. In the next few minutes, we'll give it a shape around what matters to you.</p>
-            <button className="zuna-primary-button" type="button" onClick={begin}>{isAuthenticated ? "Meet Vea" : "Begin the five-minute experience"} <span>↗</span></button>
+            <p className="zuna-body">I'm EXelta. This is the beginning of your own living intelligence space. In the next few minutes, we'll give it a shape around what matters to you.</p>
+            <button className="zuna-primary-button" type="button" onClick={begin}>{isAuthenticated ? "Meet EXelta" : "Begin the five-minute experience"} <span>↗</span></button>
             {!isAuthenticated && <p className="zuna-privacy-note">You can explore first. Your details are saved only after you create a private space and confirm consent.</p>}
-            <button className="zuna-voice-link" type="button" onClick={() => say(GREETINGS.join(" "))} disabled={!voiceSupported}>{speaking ? "Vea is speaking…" : "Hear Vea speak"}</button>
+            <button className="zuna-voice-link" type="button" onClick={() => say(GREETINGS.join(" "))} disabled={!voiceSupported}>{speaking ? "EXelta is speaking…" : "Hear EXelta speak"}</button>
           </div>}
 
           {phase === "name" && <div className="zuna-phase-content">
@@ -472,8 +472,8 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
             <form className="zuna-entry-form" onSubmit={submitIntention}>
               <label htmlFor="zuna-intention">YOUR FIRST INTENTION</label>
               <textarea id="zuna-intention" value={intention} onChange={(event) => setIntention(event.target.value)} maxLength={2000} rows={3} placeholder="I want to…" autoFocus />
-              <label className="zuna-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Save my name, introduction, and intention to my private Zuna Memory Fabric. I can review or change them later.</span></label>
-              <button className="zuna-primary-button" type="submit" disabled={!intention.trim() || !consent || busy || (isAuthenticated && !workspace?.id)}>{busy ? "Connecting your context…" : isAuthenticated ? "Bring Zuna to life" : "Create private space & save"} <span>✦</span></button>
+              <label className="zuna-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Save my name, introduction, and intention to my private XIO Memory Fabric. I can review or change them later.</span></label>
+              <button className="zuna-primary-button" type="submit" disabled={!intention.trim() || !consent || busy || (isAuthenticated && !workspace?.id)}>{busy ? "Connecting your context…" : isAuthenticated ? "Enter XIO" : "Create private space & save"} <span>✦</span></button>
             </form>
             {voiceSupported && <button className="zuna-voice-link" type="button" onClick={() => startListening("intention")}>{listening ? "Stop listening" : "Speak your intention"}</button>}
             {!isAuthenticated && <p className="zuna-privacy-note">Your details remain in this browser until you sign in and confirm saving.</p>}{isAuthenticated && !workspace?.id && <p className="zuna-privacy-note">Connecting your private workspace before saving…</p>}
@@ -487,11 +487,11 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
               {conceptsToShow.map((concept, index) => <span key={concept} style={{ "--concept-index": index } as React.CSSProperties}>{concept}</span>)}
             </div>
             <div className="zuna-first-insight">
-              <span>VEA'S FIRST RESPONSE</span>
+              <span>EXELTA'S FIRST RESPONSE</span>
               <p>{answer || "Your context is saved. Open your workspace to continue the conversation and develop your first insight."}</p>
             </div>
             <div className="zuna-reveal-actions">
-              <Link className="zuna-primary-button" href="/app">Enter your Zuna space <span>↗</span></Link>
+              <Link className="zuna-primary-button" href="/app">Enter XIO <span>↗</span></Link>
               <Link className="zuna-secondary-button" href="/atlas">Explore the system</Link>
             </div>
             <p className="zuna-privacy-note">{saved ? "3 context records saved · workspace context updated" : "Your private context is ready"}</p>
