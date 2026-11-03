@@ -7,8 +7,12 @@ test("Zuna front door is a native bright 3D arrival experience", async () => {
   const experience = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
   const styles = await fs.readFile("app/zuna-arrival.css", "utf8");
   assert.match(home, /ZunaArrivalExperience/);
+  assert.match(home, /force-static/);
+  assert.doesNotMatch(home, /auth\(/);
   assert.doesNotMatch(home, /iframe|living\.html|xyoverse-enhancer/);
   assert.match(experience, /YOUR FIRST FIVE MINUTES/);
+  assert.match(experience, /zuna-onboarding-draft/);
+  assert.match(experience, /Create private space & save/);
   assert.match(experience, /Oh… there you are/);
   assert.match(experience, /\/api\/chat/);
   assert.match(experience, /\/api\/workspace/);
