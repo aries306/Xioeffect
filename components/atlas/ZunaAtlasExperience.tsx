@@ -64,7 +64,7 @@ function pickVoice(voices: SpeechSynthesisVoice[]) {
     ?? voices[0];
 }
 
-export default function ZunaAtlasExperience({ authenticated }: { authenticated: boolean }) {
+export default function XIOAtlasExperience({ authenticated }: { authenticated: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
@@ -272,7 +272,7 @@ export default function ZunaAtlasExperience({ authenticated }: { authenticated: 
       return;
     }
     setBusy(true);
-    setNotice("Zuna is considering your thought…");
+    setNotice("EXelta is considering your thought…");
     setMessages((current) => [...current, { role: "user", text }]);
     setDraft("");
     try {
@@ -288,7 +288,7 @@ export default function ZunaAtlasExperience({ authenticated }: { authenticated: 
         }),
       });
       const payload = await response.json() as { answer?: string; conversationId?: string; error?: string; recommendation?: string | null };
-      if (!response.ok) throw new Error(payload.error ?? "Zuna could not complete that request.");
+      if (!response.ok) throw new Error(payload.error ?? "EXelta could not complete that request.");
       const answer = payload.answer ?? "I received your thought.";
       setConversationId(payload.conversationId);
       setMessages((current) => [...current, { role: "assistant", text: answer }]);
@@ -306,7 +306,7 @@ export default function ZunaAtlasExperience({ authenticated }: { authenticated: 
   const startListening = useCallback(() => {
     const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!Recognition) {
-      setNotice("Voice input is not supported in this browser. You can still type to Zuna.");
+      setNotice("Voice input is not supported in this browser. You can still type to EXelta.");
       return;
     }
     if (!authenticated) {
@@ -359,9 +359,9 @@ export default function ZunaAtlasExperience({ authenticated }: { authenticated: 
   return (
     <main className="zuna-atlas">
       <header className="atlas-topbar">
-        <Link href="/" className="atlas-brand" aria-label="Zuna home">
+        <Link href="/" className="atlas-brand" aria-label="XIO home">
           <span className="atlas-brand-mark">Z</span>
-          <span><strong>ZUNA</strong><small>INTELLIGENCE ENVIRONMENT</small></span>
+          <span><strong>XIO</strong><small>INTELLIGENCE ENVIRONMENT</small></span>
         </Link>
         <div className="atlas-top-center"><span className="atlas-live-dot" /> SYSTEM ATLAS <span className="atlas-top-divider">/</span> SPATIAL PREVIEW</div>
         <nav className="atlas-top-nav" aria-label="Main navigation">
@@ -375,7 +375,7 @@ export default function ZunaAtlasExperience({ authenticated }: { authenticated: 
           <p className="atlas-eyebrow">A MAP OF THE LIVING SYSTEM</p>
           <h1>Everything connected.<br /><em>Nothing assumed.</em></h1>
         </div>
-        <p className="atlas-heading-copy">Explore Zuna’s cognitive architecture, see what is connected, and speak with the intelligence layer. This map separates live application surfaces from foundations and future architecture.</p>
+        <p className="atlas-heading-copy">Explore XIO’s cognitive architecture, see what is connected, and speak with the intelligence layer. This map separates live application surfaces from foundations and future architecture.</p>
       </section>
 
       <section className="atlas-grid">
@@ -435,11 +435,11 @@ export default function ZunaAtlasExperience({ authenticated }: { authenticated: 
         </aside>
       </section>
 
-      <section className="atlas-voice-section" aria-label="Voice conversation with Zuna">
+      <section className="atlas-voice-section" aria-label="Voice conversation with XIO">
         <div className="atlas-voice-intro">
           <p className="atlas-eyebrow">VOICE-TO-VOICE INTERFACE</p>
-          <h2>Talk to Zuna.<br /><em>Hear the response.</em></h2>
-          <p>Speak into your microphone and Zuna will send the transcript through the authenticated chat API, then speak the response aloud when voice mode is enabled. Text remains available as a fallback.</p>
+          <h2>Talk to EXelta.<br /><em>Hear the response.</em></h2>
+          <p>Speak into your microphone and EXelta will send the transcript through the authenticated chat API, then speak the response aloud when voice mode is enabled. Text remains available as a fallback.</p>
           <div className="atlas-voice-controls">
             <button type="button" className={`atlas-mic-button ${listening ? "is-listening" : ""}`} onClick={startListening} disabled={busy || !voiceSupported}>
               <span>{listening ? "Ⅱ" : "◉"}</span>{listening ? "Stop listening" : "Start speaking"}
@@ -454,19 +454,19 @@ export default function ZunaAtlasExperience({ authenticated }: { authenticated: 
         <div className="atlas-chat-card">
           <div className="atlas-chat-head">
             <div className={`atlas-chat-orb ${listening || speaking ? "is-active" : ""}`}><span /></div>
-            <div><strong>Vea · Zuna intelligence</strong><small>{listening ? "Listening to you" : speaking ? "Speaking response" : busy ? "Thinking" : "Ready for conversation"}</small></div>
+            <div><strong>EXelta · XIO intelligence</strong><small>{listening ? "Listening to you" : speaking ? "Speaking response" : busy ? "Thinking" : "Ready for conversation"}</small></div>
             {speaking && <button type="button" className="atlas-stop-button" onClick={stopSpeaking}>Stop audio</button>}
           </div>
           <div className="atlas-chat-messages" aria-live="polite">
             {messages.slice(-5).map((message, index) => (
               <article className={`atlas-message message-${message.role}`} key={`${index}-${message.text.slice(0, 18)}`}>
-                <span>{message.role === "assistant" ? "VEA" : "YOU"}</span><p>{message.text}</p>
+                <span>{message.role === "assistant" ? "EXELTA" : "YOU"}</span><p>{message.text}</p>
               </article>
             ))}
-            {busy && <div className="atlas-thinking"><i /><i /><i /> Zuna is considering…</div>}
+            {busy && <div className="atlas-thinking"><i /><i /><i /> EXelta is considering…</div>}
           </div>
           <form className="atlas-chat-form" onSubmit={submit}>
-            <label className="atlas-sr-only" htmlFor="atlas-draft">Message Zuna</label>
+            <label className="atlas-sr-only" htmlFor="atlas-draft">Message EXelta</label>
             <textarea id="atlas-draft" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Speak or write what’s on your mind…" rows={2} maxLength={8000} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} />
             <button type="submit" disabled={busy || !draft.trim()} aria-label="Send message">↗</button>
           </form>
@@ -475,7 +475,7 @@ export default function ZunaAtlasExperience({ authenticated }: { authenticated: 
         </div>
       </section>
 
-      <footer className="atlas-footer"><span>ZUNA SYSTEM ATLAS</span><span>Memory · Research · Context · Reasoning · Outcomes</span><span>PREVIEW — NOT A PRODUCTION RELEASE</span></footer>
+      <footer className="atlas-footer"><span>XIO SYSTEM ATLAS</span><span>Memory · Research · Context · Reasoning · Outcomes</span><span>PREVIEW — NOT A PRODUCTION RELEASE</span></footer>
     </main>
   );
 }
