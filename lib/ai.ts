@@ -1,47 +1,22 @@
+import { env } from "cloudflare:workers";
+
 export type AiMessage = { role: "system" | "user" | "assistant"; content: string };
 
-const AI_GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
-const AI_TIMEOUT_MS = 20_000;
+const WORKERS_AI_MODEL = "@cf/zai-org/glm-4.7-flash";
 
 export async function generateAiResponse(messages: AiMessage[]) {
-  const apiKey = process.env.AI_GATEWAY_API_KEY;
-  if (!apiKey) {
-    const lastUserMsg = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
-    return `Context noted: "${lastUserMsg.slice(0, 100)}". Operating with in-memory workspace context.\n\nRecommendation: Review the highest leverage goals in your current workspace.`;
+  const binding = env.AI;
+  if (!binding) {
+    throw new Error("Cloudflare Workers AI binding is not configured for this deployment.");
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  const result = await binding.run(WORKERS_AI_MODEL, {
+    messages,
+    temperature: 0.2,
+    max_tokens: 1200,
+  });
 
-  try {
-    const response = await fetch(AI_GATEWAY_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: process.env.AI_MODEL ?? "openai/gpt-5.6-luna",
-        messages,
-        temperature: 0.2,
-        stream: false,
-      }),
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      throw new Error(`AI Gateway request failed (${response.status})${detail ? `: ${detail.slice(0, 300)}` : ""}`);
-    }
-
-    const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
-    const text = payload.choices?.[0]?.message?.content?.trim();
-    if (!text) throw new Error("AI Gateway returned no assistant content");
-    return text;
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") throw new Error("AI Gateway request timed out");
-    throw error;
-  } finally {
-    clearTimeout(timeout);
-  }
+  const text = result.response?.trim();
+  if (!text) throw new Error("Cloudflare Workers AI returned no assistant content.");
+  return text;
 }
