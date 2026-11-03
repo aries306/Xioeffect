@@ -186,6 +186,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
         </Link>
         <div className="genesis-top-status"><span className="genesis-status-dot" /> {authenticated ? (workspace?.name ?? "Private universe") : "A living intelligent reality"}</div>
         <nav className="genesis-nav" aria-label="Account">
+          <Link className="genesis-nav-link" href="/atlas">System Atlas</Link>
           {authenticated ? <Link className="genesis-nav-link" href="/app">Enter universe <span aria-hidden="true">↗</span></Link> : <><Link className="genesis-nav-link" href="/sign-in">Sign in</Link><Link className="genesis-nav-cta" href="/sign-up">Begin</Link></>}
         </nav>
       </header>
