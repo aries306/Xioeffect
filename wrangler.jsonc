@@ -30,5 +30,11 @@
   },
   "vars": {
     "APP_ENV": "production"
-  }
+  },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "21a940560ded47ea8f0ed10eda49dbe9"
+    }
+  ]
 }
