@@ -230,6 +230,16 @@ Speech synthesis (“read this answer aloud”) is not voice-to-voice. A complet
 
 The initial Atlas preview implements a browser-native voice loop over the existing authenticated chat API. Production-grade streaming speech, interruption handling and server-managed voice identity can be layered in after the core loop is validated.
 
+### Current preview branch additions (not yet merged to main)
+
+The review branch `feat/zuna-unified-atlas-voice-3d` adds an `/atlas` surface:
+- A pointer-responsive 3D-projected particle sphere, perspective depth, orbital geometry and selectable system nodes. This is a lightweight canvas projection/CSS 3D composition, not a Three.js/WebGL scene.
+- Browser-native speech recognition for microphone input, the existing authenticated `/api/chat` endpoint for the AI turn, and browser speech synthesis for spoken replies.
+- Visible transcript, text fallback, voice-reply toggle, listening/speaking states and a stop-audio control.
+- A direct link from the Genesis front door and this consolidated Atlas document.
+
+These features are preview-branch code only until the pull request is reviewed and merged. The voice loop still depends on browser API support, microphone permission, a valid authenticated workspace, and a configured live AI Gateway. If the app uses its documented local fallback, the response is not a real model-generated answer.
+
 ---
 
 ## 7. Experience and interaction requirements
