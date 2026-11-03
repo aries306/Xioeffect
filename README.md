@@ -1,6 +1,6 @@
 # XIO
 
-XIO is a Next.js server-backed SaaS application with a browser-first experience. The existing Living System remains the visual front door while authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities run through server-side routes.
+Zuna (formerly XIO) is a server-backed application with a browser-first experience. Its front door is a bright, spatial 3D five-minute arrival, with authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities running through server-side routes.
 
 ## Runtime
 
@@ -12,9 +12,9 @@ local compatibility checks.
 
 ## Current state
 
-- `/` embeds the existing demo unchanged
+- `/` serves the bright 3D Zuna arrival and five-minute onboarding
 - `/api/health` is a deployment health endpoint
-- `/api/chat` validates input, authorizes the workspace, retrieves contextual Memory Fabric evidence, calls the server-side AI Gateway, and persists the conversation
+- `/api/chat` validates input, authorizes the workspace, retrieves contextual Memory Fabric evidence, calls Cloudflare Workers AI through the `AI` binding, and persists the conversation
 - GitHub integration lives on `main` behind authenticated server routes; `feat/github-nexus` is a historical branch and is not the deployment baseline
 
 ## GitHub → Research → NEXUS
@@ -47,7 +47,7 @@ Required server-side variables:
 ```text
 CLERK_SECRET_KEY=
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-DATABASE_URL=
+DATABASE_URL= # local development fallback only; production uses the HYPERDRIVE binding
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 GITHUB_REDIRECT_URI=
@@ -90,7 +90,7 @@ The product must retain the demo's privacy controls: consent before memory creat
 
 ## Billing and AI configuration
 
-Subscription changes must originate with Stripe Checkout and be applied only from verified Stripe webhook events. The checkout and webhook routes are intentionally fail-closed until Stripe credentials, price IDs, and webhook signing verification are installed. AI requests must be executed server-side through Vercel AI Gateway only after authentication, entitlement checks, rate limits, and consented-memory retrieval are enabled.
+Subscription changes must originate with Stripe Checkout and be applied only from verified Stripe webhook events. The checkout and webhook routes are intentionally fail-closed until Stripe credentials, price IDs, and webhook signing verification are installed. AI requests run server-side through the Cloudflare Workers AI `AI` binding using `@cf/zai-org/glm-4.7-flash`. Requests must remain behind authentication, entitlement checks, rate limits, and consented-memory retrieval.
 
 ## Authentication
 
