@@ -31,7 +31,7 @@ declare global {
 const PHASES: Phase[] = ["arrival", "name", "story", "intention", "reveal"];
 const GREETINGS = [
   "Oh… there you are. I've been waiting for you.",
-  "I'm Vea. I'm glad you've arrived.",
+  "I'm Vea. I'm happy you've arrived.",
   "Let's make this space mean something.",
 ];
 
@@ -339,7 +339,7 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
         setNotice(error instanceof Error ? `Your context is saved. The first insight is not ready yet: ${error.message}` : "Your context is saved. The first insight is not ready yet.");
       }
       setPhase("reveal");
-      say(`Thank you, ${name.trim()}. Your first context is in place. Let's see what we can build from here.`);
+      say(`Thank you, ${name.trim()}. Your first context is in place. Let's see what we can create together, and grow this system around what matters to you.`);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Your onboarding could not be saved. Please try again.");
     } finally {
