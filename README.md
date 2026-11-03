@@ -1,6 +1,6 @@
 # XIO
 
-Zuna (formerly XIO) is a server-backed application with a browser-first experience. Its front door is a bright, spatial 3D five-minute arrival, with authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities running through server-side routes.
+XIO is a server-backed application with a browser-first experience. Its front door is a bright, spatial 3D five-minute arrival led by EXelta, with authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities running through server-side routes.
 
 ## Runtime
 
@@ -12,7 +12,7 @@ local compatibility checks.
 
 ## Current state
 
-- `/` serves the bright 3D Zuna arrival and five-minute onboarding
+- `/` serves XIO's bright 3D five-minute arrival and EXelta-led onboarding
 - `/api/health` is a deployment health endpoint
 - `/api/chat` validates input, authorizes the workspace, retrieves contextual Memory Fabric evidence, calls Cloudflare Workers AI through the `AI` binding, and persists the conversation
 - GitHub integration lives on `main` behind authenticated server routes; `feat/github-nexus` is a historical branch and is not the deployment baseline
