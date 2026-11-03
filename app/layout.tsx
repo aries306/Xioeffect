@@ -4,9 +4,9 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./genesis.css";
 
 export const metadata: Metadata = {
-  title: "XIO — Living Intelligence — A Living Intelligent Reality",
-  description: "Bring me the thought. Explore the connections, evidence, and possibilities that emerge.",
-  applicationName: "XIO — Living Intelligence",
+  title: "XIO — A Living Intelligence Environment",
+  description: "XIO and Zioren share a contextual Intelligence Layer, with EXelta as the user-facing AI across both experiences.",
+  applicationName: "XIO",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
