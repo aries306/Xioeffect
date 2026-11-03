@@ -406,7 +406,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
       <div className="zuna-depth-rings" aria-hidden="true"><i /><i /><i /></div>
       <header className="zuna-arrival-header">
         <Link href="/" className="zuna-arrival-brand" aria-label="XIO home">
-          <span className="zuna-brand-glyph">Z</span>
+          <span className="zuna-brand-glyph">X</span>
           <span><strong>XIO</strong><small>A LIVING INTELLIGENCE</small></span>
         </Link>
         <div className="zuna-header-center"><span className="zuna-online-dot" /> EXELTA IS HERE</div>
