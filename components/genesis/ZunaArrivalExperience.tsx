@@ -31,7 +31,7 @@ declare global {
 const PHASES: Phase[] = ["arrival", "name", "story", "intention", "reveal"];
 const GREETINGS = [
   "Oh… there you are. I've been waiting for you.",
-  "I'm EXelta. I'm happy you've arrived.",
+  "I'm Exelta. I'm happy you've arrived.",
   "Let's make this space mean something.",
 ];
 
@@ -369,7 +369,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
       }
       setSaved(true);
       sessionStorage.removeItem("zuna-onboarding-draft");
-      setNotice("Your introduction and intention are now saved with their source and context. EXelta is connecting the first thread.");
+      setNotice("Your introduction and intention are now saved with their source and context. Exelta is connecting the first thread.");
       try {
         const chatResponse = await fetch("/api/chat", {
           method: "POST",
@@ -405,9 +405,9 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
       <div className="zuna-light-wash" aria-hidden="true" />
       <div className="zuna-depth-rings" aria-hidden="true"><i /><i /><i /></div>
       <header className="zuna-arrival-header">
-        <Link href="/" className="zuna-arrival-brand" aria-label="XIO home">
+        <Link href="/" className="zuna-arrival-brand" aria-label="Exelta home">
           <span className="zuna-brand-glyph">X</span>
-          <span><strong>XIO</strong><small>A LIVING INTELLIGENCE</small></span>
+          <span><strong>EXELTA</strong><small>A LIVING INTELLIGENCE</small></span>
         </Link>
         <div className="zuna-header-center"><span className="zuna-online-dot" /> EXELTA IS HERE</div>
         <nav className="zuna-header-links">
@@ -435,10 +435,10 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
             <p className="zuna-kicker">A DIFFERENT KIND OF BEGINNING</p>
             <h1>Oh… there you are.</h1>
             <p className="zuna-subtitle">I've been waiting for you.</p>
-            <p className="zuna-body">I'm EXelta. This is the beginning of your own living intelligence space. In the next few minutes, we'll give it a shape around what matters to you.</p>
-            <button className="zuna-primary-button" type="button" onClick={begin}>{isAuthenticated ? "Meet EXelta" : "Begin the five-minute experience"} <span>↗</span></button>
+            <p className="zuna-body">I'm Exelta. This is the beginning of your own living intelligence space. In the next few minutes, we'll give it a shape around what matters to you.</p>
+            <button className="zuna-primary-button" type="button" onClick={begin}>{isAuthenticated ? "Meet Exelta" : "Begin the five-minute experience"} <span>↗</span></button>
             {!isAuthenticated && <p className="zuna-privacy-note">You can explore first. Your details are saved only after you create a private space and confirm consent.</p>}
-            <button className="zuna-voice-link" type="button" onClick={() => say(GREETINGS.join(" "))} disabled={!voiceSupported}>{speaking ? "EXelta is speaking…" : "Hear EXelta speak"}</button>
+            <button className="zuna-voice-link" type="button" onClick={() => say(GREETINGS.join(" "))} disabled={!voiceSupported}>{speaking ? "Exelta is speaking…" : "Hear Exelta speak"}</button>
           </div>}
 
           {phase === "name" && <div className="zuna-phase-content">
