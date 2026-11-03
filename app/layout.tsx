@@ -4,9 +4,9 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./genesis.css";
 
 export const metadata: Metadata = {
-  title: "ZIO Genesis — A Living Intelligent Reality",
-  description: "Bring me the thought. Explore the connections, evidence, and possibilities that emerge.",
-  applicationName: "ZIO Genesis",
+  title: "Exelta — A Living Intelligence Universe",
+  description: "Exelta is a living intelligence environment built around contextual memory, reasoning, and action.",
+  applicationName: "Exelta",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
