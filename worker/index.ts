@@ -18,6 +18,7 @@ const worker = {
     // use DATABASE_URL directly.
     if (env.HYPERDRIVE?.connectionString) {
       process.env.DATABASE_URL = env.HYPERDRIVE.connectionString;
+      process.env.DATABASE_CONNECTION_SOURCE = "Cloudflare Hyperdrive";
     }
 
     return (handler.fetch as unknown as (request: Request, env: WorkerEnv, ctx: ExecutionContextLike) => Promise<Response>)(request, env, ctx);
