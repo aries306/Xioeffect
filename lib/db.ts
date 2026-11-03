@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { env } from "cloudflare:workers";
 
 let sqlClient: any = null;
 
@@ -105,8 +106,8 @@ function createMockSql() {
 }
 
 export function db(): ReturnType<typeof postgres> {
-  const runtime = globalThis as typeof globalThis & { __ZUNA_DATABASE_URL?: string; __ZUNA_DB_SOURCE?: string };
-  const url = runtime.__ZUNA_DATABASE_URL || process.env.DATABASE_URL;
+  const hyperdriveUrl = env.HYPERDRIVE?.connectionString;
+  const url = hyperdriveUrl || process.env.DATABASE_URL;
   if (!url) {
     if (!sqlClient) {
       sqlClient = createMockSql();
@@ -121,7 +122,7 @@ export function db(): ReturnType<typeof postgres> {
         fetch_types: false,
         prepare: true,
         connection: {
-          application_name: runtime.__ZUNA_DB_SOURCE ?? "Zuna",
+          application_name: hyperdriveUrl ? "Cloudflare Hyperdrive" : "Zuna",
         },
       });
     }
