@@ -61,10 +61,11 @@ function speak(text: string, onStart?: () => void, onEnd?: () => void) {
   window.speechSynthesis.speak(utterance);
 }
 
-export default function ZunaArrivalExperience({ authenticated }: { authenticated: boolean }) {
+export default function ZunaArrivalExperience({ authenticated: initialAuthenticated }: { authenticated: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const [phase, setPhase] = useState<Phase>("arrival");
+  const [isAuthenticated, setIsAuthenticated] = useState(initialAuthenticated);
   const [name, setName] = useState("");
   const [introduction, setIntroduction] = useState("");
   const [intention, setIntention] = useState("");
@@ -82,17 +83,50 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
   useEffect(() => {
     const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     setVoiceSupported(Boolean(Recognition && "speechSynthesis" in window));
-    if (!authenticated) return;
     let active = true;
+
+    try {
+      const draft = sessionStorage.getItem("zuna-onboarding-draft");
+      if (draft) {
+        const parsed = JSON.parse(draft) as { name?: string; introduction?: string; intention?: string };
+        if (parsed.name && parsed.introduction && parsed.intention) {
+          setName(parsed.name);
+          setIntroduction(parsed.introduction);
+          setIntention(parsed.intention);
+          setConsent(true);
+          setConcepts(extractConcepts(parsed.introduction));
+          setPhase("intention");
+          setNotice("Your introduction is ready. Sign in to save it to your private Memory Fabric.");
+        }
+      }
+    } catch {
+      sessionStorage.removeItem("zuna-onboarding-draft");
+    }
+
     fetch("/api/workspace", { credentials: "same-origin" })
       .then(async (response) => {
+        if (response.status === 401) return null;
         if (!response.ok) throw new Error("Workspace unavailable");
         return response.json() as Promise<{ workspace?: Workspace }>;
       })
-      .then((payload) => { if (active) setWorkspace(payload.workspace ?? null); })
-      .catch(() => { if (active) setNotice("Your private workspace could not be connected. Refresh and try again."); });
+      .then((payload) => {
+        if (!active) return;
+        if (payload?.workspace?.id) {
+          setWorkspace(payload.workspace);
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setIsAuthenticated(false);
+          setNotice("Your private workspace could not be connected. Refresh and try again.");
+        }
+      });
+
     return () => { active = false; };
-  }, [authenticated]);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -241,10 +275,6 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
   }, [listening]);
 
   function begin() {
-    if (!authenticated) {
-      window.location.href = "/sign-up?redirect_url=/";
-      return;
-    }
     setPhase("name");
     say(GREETINGS.join(" "));
   }
@@ -266,7 +296,20 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
 
   async function submitIntention(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!intention.trim() || !workspace?.id || busy) return;
+    if (!intention.trim() || !consent || busy) return;
+    if (!isAuthenticated) {
+      sessionStorage.setItem("zuna-onboarding-draft", JSON.stringify({
+        name: name.trim(),
+        introduction: introduction.trim(),
+        intention: intention.trim(),
+      }));
+      window.location.href = "/sign-up?redirect_url=%2F";
+      return;
+    }
+    if (!workspace?.id) {
+      setNotice("Your private workspace is still connecting. Try again in a moment.");
+      return;
+    }
     setBusy(true);
     setNotice("Bringing your context into your private Memory Fabric…");
     const capturedAt = new Date().toISOString();
@@ -320,6 +363,7 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
         throw new Error(payload.error ?? "Your workspace context could not be updated.");
       }
       setSaved(true);
+      sessionStorage.removeItem("zuna-onboarding-draft");
       setNotice("Your introduction and intention are now saved with their source and context. Vea is connecting the first thread.");
       try {
         const chatResponse = await fetch("/api/chat", {
@@ -362,7 +406,7 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
         </Link>
         <div className="zuna-header-center"><span className="zuna-online-dot" /> VEA IS HERE</div>
         <nav className="zuna-header-links">
-          {authenticated ? <Link href="/atlas">Explore system ↗</Link> : <Link href="/sign-in">Sign in</Link>}
+          {isAuthenticated ? <Link href="/atlas">Explore system ↗</Link> : <Link href="/sign-in">Sign in</Link>}
         </nav>
       </header>
 
@@ -387,8 +431,8 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
             <h1>Oh… there you are.</h1>
             <p className="zuna-subtitle">I've been waiting for you.</p>
             <p className="zuna-body">I'm Vea. This is the beginning of your own living intelligence space. In the next few minutes, we'll give it a shape around what matters to you.</p>
-            <button className="zuna-primary-button" type="button" onClick={begin}>{authenticated ? "Meet Vea" : "Begin your private space"} <span>↗</span></button>
-            {!authenticated && <p className="zuna-privacy-note">Create your private space first. Your introduction will be saved only to your authenticated workspace.</p>}
+            <button className="zuna-primary-button" type="button" onClick={begin}>{isAuthenticated ? "Meet Vea" : "Begin your private space"} <span>↗</span></button>
+            {!isAuthenticated && <p className="zuna-privacy-note">You can explore first. Your details are saved only after you create a private space and confirm consent.</p>}
             <button className="zuna-voice-link" type="button" onClick={() => say(GREETINGS.join(" "))} disabled={!voiceSupported}>{speaking ? "Vea is speaking…" : "Hear Vea speak"}</button>
           </div>}
 
@@ -424,10 +468,10 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
               <label htmlFor="zuna-intention">YOUR FIRST INTENTION</label>
               <textarea id="zuna-intention" value={intention} onChange={(event) => setIntention(event.target.value)} maxLength={2000} rows={3} placeholder="I want to…" autoFocus />
               <label className="zuna-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Save my name, introduction, and intention to my private Zuna Memory Fabric. I can review or change them later.</span></label>
-              <button className="zuna-primary-button" type="submit" disabled={!intention.trim() || !consent || busy || !workspace?.id}>{busy ? "Connecting your context…" : "Bring Zuna to life"} <span>✦</span></button>
+              <button className="zuna-primary-button" type="submit" disabled={!intention.trim() || !consent || busy || (isAuthenticated && !workspace?.id)}>{busy ? "Connecting your context…" : isAuthenticated ? "Bring Zuna to life" : "Create private space & save"} <span>✦</span></button>
             </form>
             {voiceSupported && <button className="zuna-voice-link" type="button" onClick={() => startListening("intention")}>{listening ? "Stop listening" : "Speak your intention"}</button>}
-            {!workspace?.id && <p className="zuna-privacy-note">Connecting your private workspace before saving…</p>}
+            {!isAuthenticated && <p className="zuna-privacy-note">Your details remain in this browser until you sign in and confirm saving.</p>}{isAuthenticated && !workspace?.id && <p className="zuna-privacy-note">Connecting your private workspace before saving…</p>}
           </div>}
 
           {phase === "reveal" && <div className="zuna-phase-content zuna-phase-reveal">
