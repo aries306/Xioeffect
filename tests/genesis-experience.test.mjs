@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 
-test("Zuna front door is a native bright 3D arrival experience", async () => {
+test("XIO front door is a native bright 3D arrival experience", async () => {
   const home = await fs.readFile("app/page.tsx", "utf8");
   const experience = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
   const styles = await fs.readFile("app/zuna-arrival.css", "utf8");
