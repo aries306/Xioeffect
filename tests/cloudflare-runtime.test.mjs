@@ -9,17 +9,18 @@ import fs from "node:fs/promises";
   const nextConfig = await fs.readFile("next.config.ts", "utf8");
   assert.equal(pkg.scripts.dev, "vinext dev");
   assert.equal(pkg.scripts.build, "vinext build");
-  assert.match(pkg.scripts["deploy:cloudflare"], /@vinext\\/cloudflare deploy/);
+  assert.ok(pkg.scripts["deploy:cloudflare"].includes("@vinext/cloudflare deploy"));
   assert.equal(worker.name, "zuna");
   assert.equal(worker.ai.binding, "AI");
-  assert.match(ai, /@cf\\/zai-org\\/glm-4\\.7-flash/);
-  assert.doesNotMatch(ai, /vercel\\.sh|AI_GATEWAY_API_KEY/);
-  assert.doesNotMatch(nextConfig, /living\\.html|standalone/);
+  assert.ok(ai.includes("@cf/zai-org/glm-4.7-flash"));
+  assert.ok(!ai.includes("vercel.sh") && !ai.includes("AI_GATEWAY_API_KEY"));
+  assert.ok(!nextConfig.includes("living.html") && !nextConfig.includes("standalone"));
 });
 
-test("Cloudflare runtime uses Hyperdrive when bound and keeps local Neon fallback", async () => {
+test("Cloudflare Worker routes Neon through Hyperdrive and retains local DATABASE_URL support", async () => {
   const db = await fs.readFile("lib/db.ts", "utf8");
-  assert.match(db, /env\\.HYPERDRIVE\\?\\.connectionString/);
-  assert.match(db, /process\\.env\\.DATABASE_URL/);
-  assert.match(db, /application_name: hyperdriveUrl/);
+  const worker = await fs.readFile("worker/index.ts", "utf8");
+  assert.ok(db.includes("process.env.DATABASE_URL"));
+  assert.ok(worker.includes("env.HYPERDRIVE?.connectionString"));
+  assert.ok(worker.includes("Cloudflare Hyperdrive"));
 });
