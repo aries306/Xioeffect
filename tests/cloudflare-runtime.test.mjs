@@ -22,7 +22,6 @@ test("Cloudflare Worker routes Neon through Hyperdrive and retains local DATABAS
   const db = await fs.readFile("lib/db.ts", "utf8");
   const worker = await fs.readFile("worker/index.ts", "utf8");
   const health = await fs.readFile("app/api/health/route.ts", "utf8");
-  const health = await fs.readFile("app/api/health/route.ts", "utf8");
   assert.ok(db.includes("env.HYPERDRIVE?.connectionString"));
   assert.ok(db.includes("process.env.DATABASE_URL"));
   assert.ok(worker.includes("handler.fetch"));
