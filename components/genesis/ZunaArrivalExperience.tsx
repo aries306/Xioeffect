@@ -76,6 +76,7 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
   const [answer, setAnswer] = useState("");
   const [notice, setNotice] = useState("");
   const [saved, setSaved] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [concepts, setConcepts] = useState<string[]>([]);
 
   useEffect(() => {
@@ -422,7 +423,8 @@ export default function ZunaArrivalExperience({ authenticated }: { authenticated
             <form className="zuna-entry-form" onSubmit={submitIntention}>
               <label htmlFor="zuna-intention">YOUR FIRST INTENTION</label>
               <textarea id="zuna-intention" value={intention} onChange={(event) => setIntention(event.target.value)} maxLength={2000} rows={3} placeholder="I want to…" autoFocus />
-              <button className="zuna-primary-button" type="submit" disabled={!intention.trim() || busy || !workspace?.id}>{busy ? "Connecting your context…" : "Bring Zuna to life"} <span>✦</span></button>
+              <label className="zuna-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Save my name, introduction, and intention to my private Zuna Memory Fabric. I can review or change them later.</span></label>
+              <button className="zuna-primary-button" type="submit" disabled={!intention.trim() || !consent || busy || !workspace?.id}>{busy ? "Connecting your context…" : "Bring Zuna to life"} <span>✦</span></button>
             </form>
             {voiceSupported && <button className="zuna-voice-link" type="button" onClick={() => startListening("intention")}>{listening ? "Stop listening" : "Speak your intention"}</button>}
             {!workspace?.id && <p className="zuna-privacy-note">Connecting your private workspace before saving…</p>}
