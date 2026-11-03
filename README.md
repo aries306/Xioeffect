@@ -62,7 +62,13 @@ Apply migrations in order: `001_xio_core.sql`, `002_github_nexus.sql`, `003_memo
 
 Every user-owned query must be scoped by the verified Clerk user ID. The GitHub integration uses text `user_id` values because Clerk user IDs are strings.
 
-## Deployment architecture\n\nNext.js is the primary application runtime. The repository also contains a Vinext/Cloudflare deployment path; it is an alternate target and should not be mixed into the primary Vercel deployment configuration. Vercel AI Gateway is called server-side from `lib/ai.ts`.\n\n## Production verification
+## Deployment architecture
+
+Cloudflare Workers is the production application platform. Vinext runs the App Router on the Worker, Wrangler manages deployment, and the Worker exposes the `AI` binding for Cloudflare Workers AI and the optional `HYPERDRIVE` binding for the existing Neon PostgreSQL database. Vercel is not part of the application deployment or inference path.
+
+The production Worker is named `zuna`. Cloudflare Workers Builds will connect the GitHub repository and deploy on pushes after the Cloudflare GitHub App is authorized. The production Worker must have a Neon Hyperdrive binding before authenticated data operations are enabled.
+
+## Production verification
 
 Before merging/deploying the GitHub branch:
 
