@@ -42,8 +42,11 @@ test("The onboarding concept field is derived from visitor-provided words", asyn
 test("the arrival names EXelta as the user-facing intelligence", async () => {
   const experience = await fs.readFile("components/genesis/ZunaArrivalExperience.tsx", "utf8");
   const atlas = await fs.readFile("components/atlas/ZunaAtlasExperience.tsx", "utf8");
+  const workspace = await fs.readFile("components/genesis/GenesisExperience.tsx", "utf8");
   assert.match(experience, /EXelta/);
   assert.match(experience, /EXELTA IS HERE/);
   assert.match(atlas, /Talk to EXelta/);
+  assert.match(workspace, /RESPONSE FROM EXELTA/);
+  assert.match(workspace, /XIO living universe/);
   assert.doesNotMatch(experience, /\bVea\b/);
 });
