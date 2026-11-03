@@ -11,15 +11,10 @@
     "not_found_handling": "none",
     "run_worker_first": ["/*", "!/_next/static/*", "!/*/_next/static/*"]
   },
-  "ai": {
-    "binding": "AI"
-  },
+  "ai": { "binding": "AI" },
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,
-    "logs": {
-      "enabled": true,
-      "invocation_logs": true
-    }
+    "logs": { "enabled": true, "invocation_logs": true }
   }
 }
