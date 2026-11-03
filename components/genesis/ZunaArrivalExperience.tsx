@@ -86,7 +86,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
     let active = true;
 
     try {
-      const draft = sessionStorage.getItem("exelta-onboarding-draft");
+      const draft = sessionStorage.getItem("zuna-onboarding-draft");
       if (draft) {
         const parsed = JSON.parse(draft) as { name?: string; introduction?: string; intention?: string };
         if (parsed.name && parsed.introduction && parsed.intention) {
@@ -100,7 +100,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
         }
       }
     } catch {
-      sessionStorage.removeItem("exelta-onboarding-draft");
+      sessionStorage.removeItem("zuna-onboarding-draft");
     }
 
     fetch("/api/workspace", { credentials: "same-origin" })
@@ -299,7 +299,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
     if (!intention.trim() || !consent || busy) return;
     if (!isAuthenticated) {
       try {
-        sessionStorage.setItem("exelta-onboarding-draft", JSON.stringify({
+        sessionStorage.setItem("zuna-onboarding-draft", JSON.stringify({
           name: name.trim(),
           introduction: introduction.trim(),
           intention: intention.trim(),
@@ -368,7 +368,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
         throw new Error(payload.error ?? "Your workspace context could not be updated.");
       }
       setSaved(true);
-      sessionStorage.removeItem("exelta-onboarding-draft");
+      sessionStorage.removeItem("zuna-onboarding-draft");
       setNotice("Your introduction and intention are now saved with their source and context. EXelta is connecting the first thread.");
       try {
         const chatResponse = await fetch("/api/chat", {
