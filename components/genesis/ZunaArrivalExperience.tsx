@@ -298,11 +298,16 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
     event.preventDefault();
     if (!intention.trim() || !consent || busy) return;
     if (!isAuthenticated) {
-      sessionStorage.setItem("zuna-onboarding-draft", JSON.stringify({
-        name: name.trim(),
-        introduction: introduction.trim(),
-        intention: intention.trim(),
-      }));
+      try {
+        sessionStorage.setItem("zuna-onboarding-draft", JSON.stringify({
+          name: name.trim(),
+          introduction: introduction.trim(),
+          intention: intention.trim(),
+        }));
+      } catch {
+        setNotice("Your browser could not preserve this draft. Please try again after enabling site storage.");
+        return;
+      }
       window.location.href = "/sign-up?redirect_url=%2F";
       return;
     }
@@ -431,7 +436,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
             <h1>Oh… there you are.</h1>
             <p className="zuna-subtitle">I've been waiting for you.</p>
             <p className="zuna-body">I'm Vea. This is the beginning of your own living intelligence space. In the next few minutes, we'll give it a shape around what matters to you.</p>
-            <button className="zuna-primary-button" type="button" onClick={begin}>{isAuthenticated ? "Meet Vea" : "Begin your private space"} <span>↗</span></button>
+            <button className="zuna-primary-button" type="button" onClick={begin}>{isAuthenticated ? "Meet Vea" : "Begin the five-minute experience"} <span>↗</span></button>
             {!isAuthenticated && <p className="zuna-privacy-note">You can explore first. Your details are saved only after you create a private space and confirm consent.</p>}
             <button className="zuna-voice-link" type="button" onClick={() => say(GREETINGS.join(" "))} disabled={!voiceSupported}>{speaking ? "Vea is speaking…" : "Hear Vea speak"}</button>
           </div>}
