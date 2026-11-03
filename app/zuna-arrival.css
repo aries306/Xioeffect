@@ -1,0 +1,77 @@
+:root{color-scheme:light}
+.zuna-arrival{--z-ink:#1d2945;--z-muted:#75819b;--z-line:rgba(105,128,171,.2);--z-blue:#7898ef;--z-cyan:#67cbd3;--z-lilac:#a69ce9;position:relative;isolation:isolate;min-height:100svh;overflow:hidden;background:radial-gradient(ellipse at 50% 43%,#ffffff 0,#f7faff 34%,#eaf2ff 72%,#e4edfb 100%);color:var(--z-ink);font-family:Manrope,Inter,system-ui,sans-serif}
+.zuna-arrival:before{content:"";position:absolute;inset:0;z-index:-4;pointer-events:none;background:radial-gradient(circle at 12% 15%,rgba(255,255,255,.96),transparent 24%),radial-gradient(circle at 86% 20%,rgba(173,220,242,.36),transparent 26%),radial-gradient(circle at 72% 85%,rgba(199,188,247,.26),transparent 30%),linear-gradient(135deg,rgba(255,255,255,.7),rgba(231,240,255,.15))}
+.zuna-particle-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-2;pointer-events:auto}
+.zuna-light-wash{position:absolute;z-index:-3;inset:-15%;pointer-events:none;background:radial-gradient(ellipse at 48% 46%,rgba(180,199,255,.24),transparent 36%),radial-gradient(ellipse at 18% 70%,rgba(133,223,225,.16),transparent 26%);filter:blur(32px);animation:zuna-wash 22s ease-in-out infinite alternate}
+.zuna-depth-rings{position:absolute;z-index:-1;left:50%;top:46%;width:min(76vw,920px);height:min(28vw,350px);transform:translate(-50%,-50%) perspective(900px) rotateX(67deg) rotateZ(-15deg);pointer-events:none}
+.zuna-depth-rings i{position:absolute;inset:0;border:1px solid rgba(109,147,217,.18);border-radius:50%;box-shadow:0 0 32px rgba(134,167,238,.12),inset 0 0 24px rgba(255,255,255,.6);animation:zuna-ring 28s linear infinite}
+.zuna-depth-rings i:nth-child(2){inset:13%;border-color:rgba(111,204,210,.24);animation-duration:35s;animation-direction:reverse}
+.zuna-depth-rings i:nth-child(3){inset:27%;border-color:rgba(172,151,233,.24);animation-duration:42s}
+.zuna-arrival-header{height:78px;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 clamp(18px,4vw,58px);border-bottom:1px solid rgba(107,133,181,.15);background:rgba(255,255,255,.46);backdrop-filter:blur(20px);position:relative;z-index:5}
+.zuna-arrival-brand{display:flex;align-items:center;gap:11px;color:#243454;text-decoration:none;letter-spacing:.18em}
+.zuna-brand-glyph{width:37px;height:37px;display:grid;place-items:center;border:1px solid rgba(118,143,213,.5);border-radius:50%;font:italic 25px Georgia,serif;color:#738ad1;background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(223,235,255,.6));box-shadow:0 7px 24px rgba(106,135,205,.16),inset 0 0 14px rgba(255,255,255,.95)}
+.zuna-arrival-brand strong{display:block;font-size:13px;font-weight:800;letter-spacing:.24em}
+.zuna-arrival-brand small{display:block;margin-top:4px;font:8px ui-monospace,monospace;letter-spacing:.18em;color:#8793ab}
+.zuna-header-center{display:flex;align-items:center;gap:9px;color:#73819b;font:9px ui-monospace,monospace;letter-spacing:.16em}
+.zuna-online-dot{width:7px;height:7px;border-radius:50%;background:#65c8b5;box-shadow:0 0 0 4px rgba(101,200,181,.13),0 0 14px rgba(101,200,181,.65)}
+.zuna-header-links a{color:#65748f;text-decoration:none;font:10px ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase}
+.zuna-header-links a:hover{color:#334a78}
+.zuna-arrival-stage{position:relative;min-height:calc(100svh - 132px);display:grid;place-items:center;padding:58px 20px 80px;isolation:isolate}
+.zuna-stage-orb{position:absolute;left:50%;top:47%;width:min(68vw,800px);height:min(68vw,800px);transform:translate(-50%,-50%);z-index:-1;pointer-events:none;perspective:1000px}
+.zuna-orb-halo{position:absolute;inset:12%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.92) 0,rgba(188,209,255,.36) 28%,rgba(131,218,224,.14) 48%,transparent 72%);filter:blur(14px);animation:zuna-breathe 7s ease-in-out infinite}
+.zuna-orb-shell{position:absolute;inset:17%;border-radius:50%;transform-style:preserve-3d;transform:rotateX(18deg) rotateY(-22deg);background:radial-gradient(circle at 33% 28%,rgba(255,255,255,.92),rgba(207,224,255,.48) 23%,rgba(153,168,238,.17) 43%,rgba(255,255,255,0) 70%);box-shadow:inset -28px -34px 80px rgba(118,145,215,.12),inset 18px 18px 46px rgba(255,255,255,.88),0 40px 100px rgba(112,143,213,.12);animation:zuna-float 11s ease-in-out infinite}
+.zuna-orb-shell:before,.zuna-orb-shell:after{content:"";position:absolute;inset:7%;border:1px solid rgba(117,157,223,.34);border-radius:50%;transform:rotateX(68deg) rotateZ(-22deg);box-shadow:0 0 35px rgba(113,172,225,.12)}
+.zuna-orb-shell:after{inset:18%;border-color:rgba(115,202,207,.38);transform:rotateY(65deg) rotateZ(34deg)}
+.zuna-orb-shell>i{position:absolute;left:50%;top:50%;width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 16px 6px rgba(115,190,224,.45)}
+.zuna-orb-shell>i:nth-child(1){transform:translate3d(-130px,-80px,65px)}
+.zuna-orb-shell>i:nth-child(2){transform:translate3d(140px,35px,-30px);background:#9edee1}
+.zuna-orb-shell>i:nth-child(3){transform:translate3d(-10px,145px,25px);background:#b5aaf0}
+.zuna-orb-shell>span{position:absolute;left:50%;top:50%;transform:translate(-50%,-53%) translateZ(55px);font:italic 300 clamp(64px,9vw,110px) Georgia,serif;color:rgba(255,255,255,.82);text-shadow:0 5px 35px rgba(109,140,217,.32)}
+.zuna-orb-shadow{position:absolute;left:26%;right:26%;bottom:12%;height:8%;border-radius:50%;background:rgba(107,131,183,.12);filter:blur(24px);transform:rotateX(65deg)}
+.zuna-experience-card{width:min(660px,100%);position:relative;z-index:2;padding:clamp(22px,4vw,42px);border:1px solid rgba(255,255,255,.86);border-radius:28px;background:linear-gradient(145deg,rgba(255,255,255,.84),rgba(246,250,255,.68));box-shadow:0 28px 90px rgba(86,113,173,.14),0 5px 20px rgba(101,139,199,.08),inset 0 1px 0 rgba(255,255,255,.98);backdrop-filter:blur(26px);animation:zuna-card-in 900ms cubic-bezier(.16,1,.3,1) both}
+.zuna-card-topline{display:flex;justify-content:space-between;gap:14px;color:#8995ac;font:8px ui-monospace,monospace;letter-spacing:.16em}
+.zuna-progress-track{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:15px 0 28px}
+.zuna-progress-track i{height:3px;border-radius:99px;background:rgba(122,145,187,.16);transition:background .4s,box-shadow .4s}
+.zuna-progress-track i.is-complete{background:linear-gradient(90deg,#82b5d9,#a79de7);box-shadow:0 0 12px rgba(135,168,224,.4)}
+.zuna-phase-content{animation:zuna-content-in 550ms cubic-bezier(.16,1,.3,1) both}
+.zuna-kicker{margin:0 0 13px;color:#8b9ab7;font:9px ui-monospace,monospace;letter-spacing:.19em;text-transform:uppercase}
+.zuna-phase-content h1{max-width:15ch;margin:0;color:#253451;font:400 clamp(34px,5vw,54px)/1.04 Georgia,"Times New Roman",serif;letter-spacing:-.045em}
+.zuna-subtitle{margin:10px 0 0;color:#7586a4;font:italic 24px/1.3 Georgia,serif}
+.zuna-body{max-width:53ch;margin:18px 0 0;color:#687792;font:400 14px/1.75 Manrope,Inter,system-ui,sans-serif}
+.zuna-primary-button{min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:22px;padding:0 22px;border:1px solid rgba(119,144,211,.38);border-radius:999px;background:linear-gradient(110deg,#829de0,#a8a0e6 58%,#8bcbd1);color:#fff;text-decoration:none;font:600 10px ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;box-shadow:0 9px 24px rgba(113,143,208,.24),inset 0 1px 0 rgba(255,255,255,.42);cursor:pointer;transition:transform .2s,box-shadow .2s,filter .2s}
+.zuna-primary-button:hover{transform:translateY(-2px);filter:saturate(1.08);box-shadow:0 14px 30px rgba(113,143,208,.3),inset 0 1px 0 rgba(255,255,255,.5)}
+.zuna-primary-button:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.zuna-phase-arrival>.zuna-primary-button{margin-top:26px}
+.zuna-voice-link{display:block;margin:15px auto 0;border:0;background:transparent;color:#8492ae;font:9px ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.zuna-voice-link:disabled{opacity:.38;cursor:not-allowed}
+.zuna-privacy-note{margin:15px 0 0;color:#9aa5b9;font:9px/1.6 ui-monospace,monospace;letter-spacing:.025em}
+.zuna-entry-form{display:grid;gap:11px;margin-top:23px}
+.zuna-entry-form label{color:#8794ae;font:8px ui-monospace,monospace;letter-spacing:.16em}
+.zuna-entry-form input,.zuna-entry-form textarea{width:100%;border:1px solid rgba(123,149,194,.22);border-radius:15px;outline:none;background:rgba(255,255,255,.7);color:#283957;padding:14px 16px;font:400 15px/1.55 Manrope,Inter,system-ui,sans-serif;box-shadow:inset 0 1px 4px rgba(86,116,167,.035);transition:border-color .2s,box-shadow .2s}
+.zuna-entry-form input{height:52px}
+.zuna-entry-form textarea{resize:vertical;min-height:105px}
+.zuna-entry-form input::placeholder,.zuna-entry-form textarea::placeholder{color:#b1bac9}
+.zuna-entry-form input:focus,.zuna-entry-form textarea:focus{border-color:rgba(116,151,219,.62);box-shadow:0 0 0 4px rgba(129,164,224,.11)}
+.zuna-entry-form .zuna-primary-button{justify-self:start;margin-top:4px}
+.zuna-phase-reveal h1{max-width:17ch}
+.zuna-concept-cloud{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0}
+.zuna-concept-cloud span{display:inline-flex;align-items:center;padding:8px 12px;border:1px solid rgba(131,153,207,.22);border-radius:999px;background:rgba(255,255,255,.68);color:#697ba1;font:9px ui-monospace,monospace;letter-spacing:.035em;box-shadow:0 6px 16px rgba(105,137,190,.07);animation:zuna-concept-in 500ms calc(var(--concept-index)*75ms) both}
+.zuna-concept-cloud span:nth-child(3n+1){border-color:rgba(111,191,199,.3);color:#548e9a}
+.zuna-concept-cloud span:nth-child(3n+2){border-color:rgba(164,150,219,.32);color:#8075b2}
+.zuna-first-insight{padding:17px 18px;border:1px solid rgba(129,152,205,.2);border-radius:17px;background:linear-gradient(120deg,rgba(255,255,255,.8),rgba(239,246,255,.78));box-shadow:inset 0 1px 0 rgba(255,255,255,.92)}
+.zuna-first-insight>span{color:#8a96b0;font:8px ui-monospace,monospace;letter-spacing:.16em}
+.zuna-first-insight p{margin:9px 0 0;color:#536580;font:13px/1.7 Manrope,Inter,system-ui,sans-serif}
+.zuna-reveal-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px}
+.zuna-secondary-button{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 17px;border:1px solid rgba(121,145,188,.28);border-radius:999px;color:#70809d;text-decoration:none;font:9px ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.45)}
+.zuna-status-message{margin:15px 0 0;padding:10px 12px;border-radius:10px;background:rgba(231,240,255,.58);color:#72809b;font:9px/1.55 ui-monospace,monospace}
+.zuna-card-footer{display:flex;justify-content:space-between;gap:12px;margin-top:28px;padding-top:14px;border-top:1px solid rgba(119,143,185,.14);color:#a0abc0;font:7px ui-monospace,monospace;letter-spacing:.12em}
+.zuna-arrival-footer{position:relative;z-index:2;display:flex;justify-content:space-between;gap:15px;padding:0 clamp(18px,4vw,58px) 18px;color:#9aa6bb;font:7px ui-monospace,monospace;letter-spacing:.12em}
+@keyframes zuna-wash{to{transform:translate3d(2%,2%,0) scale(1.06)}}
+@keyframes zuna-ring{to{transform:rotate(360deg)}}
+@keyframes zuna-breathe{0%,100%{transform:scale(.96);opacity:.75}50%{transform:scale(1.06);opacity:1}}
+@keyframes zuna-float{0%,100%{transform:rotateX(18deg) rotateY(-22deg) translateY(0)}50%{transform:rotateX(22deg) rotateY(-13deg) translateY(-13px)}}
+@keyframes zuna-card-in{from{opacity:0;transform:translateY(22px) scale(.985);filter:blur(8px)}to{opacity:1;transform:none;filter:none}}
+@keyframes zuna-content-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes zuna-concept-in{from{opacity:0;transform:translateY(8px) scale(.94)}to{opacity:1;transform:none}}
+@media(max-width:700px){.zuna-arrival-header{height:68px}.zuna-header-center{display:none}.zuna-arrival-stage{min-height:calc(100svh - 118px);padding:35px 14px 56px}.zuna-experience-card{padding:22px 19px;border-radius:22px}.zuna-stage-orb{width:100vw;height:100vw;top:43%}.zuna-depth-rings{width:110vw;height:42vw;top:43%}.zuna-arrival-footer{flex-direction:column;gap:6px;padding-bottom:14px}.zuna-card-footer{font-size:6px;letter-spacing:.06em}.zuna-phase-content h1{font-size:clamp(31px,9vw,43px)}.zuna-reveal-actions{align-items:stretch;flex-direction:column}.zuna-reveal-actions>*{width:100%}.zuna-entry-form .zuna-primary-button{width:100%}}
+@media(prefers-reduced-motion:reduce){.zuna-arrival *,.zuna-arrival *:before,.zuna-arrival *:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.zuna-particle-canvas{display:none}}
