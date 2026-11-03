@@ -1,4 +1,5 @@
 import postgres from "postgres";
+import { env } from "cloudflare:workers";
 
 let sqlClient: any = null;
 
@@ -105,7 +106,7 @@ function createMockSql() {
 }
 
 export function db(): ReturnType<typeof postgres> {
-  const url = process.env.DATABASE_URL;
+  const hyperdriveUrl = env.HYPERDRIVE?.connectionString;\n  const url = hyperdriveUrl || process.env.DATABASE_URL;
   if (!url) {
     if (!sqlClient) {
       sqlClient = createMockSql();
