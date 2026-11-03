@@ -86,7 +86,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
     let active = true;
 
     try {
-      const draft = sessionStorage.getItem("zuna-onboarding-draft");
+      const draft = sessionStorage.getItem("exelta-onboarding-draft");
       if (draft) {
         const parsed = JSON.parse(draft) as { name?: string; introduction?: string; intention?: string };
         if (parsed.name && parsed.introduction && parsed.intention) {
@@ -100,7 +100,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
         }
       }
     } catch {
-      sessionStorage.removeItem("zuna-onboarding-draft");
+      sessionStorage.removeItem("exelta-onboarding-draft");
     }
 
     fetch("/api/workspace", { credentials: "same-origin" })
@@ -299,7 +299,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
     if (!intention.trim() || !consent || busy) return;
     if (!isAuthenticated) {
       try {
-        sessionStorage.setItem("zuna-onboarding-draft", JSON.stringify({
+        sessionStorage.setItem("exelta-onboarding-draft", JSON.stringify({
           name: name.trim(),
           introduction: introduction.trim(),
           intention: intention.trim(),
@@ -368,7 +368,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
         throw new Error(payload.error ?? "Your workspace context could not be updated.");
       }
       setSaved(true);
-      sessionStorage.removeItem("zuna-onboarding-draft");
+      sessionStorage.removeItem("exelta-onboarding-draft");
       setNotice("Your introduction and intention are now saved with their source and context. EXelta is connecting the first thread.");
       try {
         const chatResponse = await fetch("/api/chat", {
@@ -446,8 +446,8 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
             <h1>What should I call you?</h1>
             <p className="zuna-body">A name makes this space yours. You decide what to share.</p>
             <form className="zuna-entry-form" onSubmit={submitName}>
-              <label htmlFor="zuna-name">YOUR NAME</label>
-              <input id="zuna-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={80} autoComplete="given-name" placeholder="What do you go by?" autoFocus />
+              <label htmlFor="exelta-name">YOUR NAME</label>
+              <input id="exelta-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={80} autoComplete="given-name" placeholder="What do you go by?" autoFocus />
               <button className="zuna-primary-button" type="submit" disabled={!name.trim()}>Continue <span>→</span></button>
             </form>
             {voiceSupported && <button className="zuna-voice-link" type="button" onClick={() => startListening("name")}>{listening ? "Stop listening" : "Or say your name"}</button>}
@@ -458,8 +458,8 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
             <h1>Tell me who you are, {name.trim()}.</h1>
             <p className="zuna-body">What are you interested in? What are you working toward? What matters enough that you'd like it carried forward?</p>
             <form className="zuna-entry-form" onSubmit={submitStory}>
-              <label htmlFor="zuna-introduction">YOUR INTRODUCTION</label>
-              <textarea id="zuna-introduction" value={introduction} onChange={(event) => setIntroduction(event.target.value)} maxLength={2000} rows={4} placeholder="I'm someone who…" autoFocus />
+              <label htmlFor="exelta-introduction">YOUR INTRODUCTION</label>
+              <textarea id="exelta-introduction" value={introduction} onChange={(event) => setIntroduction(event.target.value)} maxLength={2000} rows={4} placeholder="I'm someone who…" autoFocus />
               <button className="zuna-primary-button" type="submit" disabled={!introduction.trim()}>Let the space take shape <span>→</span></button>
             </form>
             {voiceSupported && <button className="zuna-voice-link" type="button" onClick={() => startListening("story")}>{listening ? "Stop listening" : "Speak your introduction"}</button>}
@@ -470,10 +470,10 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
             <h1>What do you want to make possible?</h1>
             <p className="zuna-body">Choose one meaningful direction. It can be a project, a problem, a decision, or a possibility you want to explore.</p>
             <form className="zuna-entry-form" onSubmit={submitIntention}>
-              <label htmlFor="zuna-intention">YOUR FIRST INTENTION</label>
-              <textarea id="zuna-intention" value={intention} onChange={(event) => setIntention(event.target.value)} maxLength={2000} rows={3} placeholder="I want to…" autoFocus />
-              <label className="zuna-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Save my name, introduction, and intention to my private XIO Memory Fabric. I can review or change them later.</span></label>
-              <button className="zuna-primary-button" type="submit" disabled={!intention.trim() || !consent || busy || (isAuthenticated && !workspace?.id)}>{busy ? "Connecting your context…" : isAuthenticated ? "Enter XIO" : "Create private space & save"} <span>✦</span></button>
+              <label htmlFor="exelta-intention">YOUR FIRST INTENTION</label>
+              <textarea id="exelta-intention" value={intention} onChange={(event) => setIntention(event.target.value)} maxLength={2000} rows={3} placeholder="I want to…" autoFocus />
+              <label className="zuna-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Save my name, introduction, and intention to my private Exelta Memory Fabric. I can review or change them later.</span></label>
+              <button className="zuna-primary-button" type="submit" disabled={!intention.trim() || !consent || busy || (isAuthenticated && !workspace?.id)}>{busy ? "Connecting your context…" : isAuthenticated ? "Enter Exelta" : "Create your Exelta space & save"} <span>✦</span></button>
             </form>
             {voiceSupported && <button className="zuna-voice-link" type="button" onClick={() => startListening("intention")}>{listening ? "Stop listening" : "Speak your intention"}</button>}
             {!isAuthenticated && <p className="zuna-privacy-note">Your details remain in this browser until you sign in and confirm saving.</p>}{isAuthenticated && !workspace?.id && <p className="zuna-privacy-note">Connecting your private workspace before saving…</p>}
@@ -491,7 +491,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
               <p>{answer || "Your context is saved. Open your workspace to continue the conversation and develop your first insight."}</p>
             </div>
             <div className="zuna-reveal-actions">
-              <Link className="zuna-primary-button" href="/app">Enter XIO <span>↗</span></Link>
+              <Link className="zuna-primary-button" href="/app">Enter Exelta <span>↗</span></Link>
               <Link className="zuna-secondary-button" href="/atlas">Explore the system</Link>
             </div>
             <p className="zuna-privacy-note">{saved ? "3 context records saved · workspace context updated" : "Your private context is ready"}</p>
