@@ -4,9 +4,9 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./genesis.css";
 
 export const metadata: Metadata = {
-  title: "XIO — A Living Intelligence Environment",
-  description: "XIO and Zioren share a contextual Intelligence Layer, with EXelta as the user-facing AI across both experiences.",
-  applicationName: "XIO",
+  title: "Exelta — A Living Intelligence Universe",
+  description: "Exelta is a living intelligence environment built around contextual memory, reasoning, and action.",
+  applicationName: "Exelta",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
