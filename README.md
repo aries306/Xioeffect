@@ -1,6 +1,6 @@
 # Exelta
 
-Exelta is a server-backed application with a browser-first experience. Its front door is a bright, spatial 3D five-minute arrival led by EXelta, with authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities running through server-side routes.
+Exelta is a server-backed application with a browser-first experience. Its front door is a bright, spatial 3D five-minute arrival led by Exelta, with authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities running through server-side routes.
 
 ## Runtime
 
@@ -12,7 +12,7 @@ local compatibility checks.
 
 ## Current state
 
-- `/` serves Exelta's bright 3D five-minute arrival and EXelta-led onboarding
+- `/` serves Exelta's bright 3D five-minute arrival and Exelta-led onboarding
 - `/api/health` is a deployment health endpoint
 - `/api/chat` validates input, authorizes the workspace, retrieves contextual Memory Fabric evidence, calls Cloudflare Workers AI through the `AI` binding, and persists the conversation
 - GitHub integration lives on `main` behind authenticated server routes; `feat/github-nexus` is a historical branch and is not the deployment baseline
@@ -105,9 +105,8 @@ Clerk is connected to the application. `/sign-up` and `/sign-in` provide hosted 
 
 ## Product identity
 
-- **XIO** is the product environment and the recovered Exelta 2.0 experience.
 - **Exelta** is the companion personal-intelligence ecosystem; the two experiences share the same architectural principles without being collapsed into one product.
-- **EXelta** is the named user-facing AI across both experiences.
+- **Exelta** is the unified product and user-facing intelligence.
 - **Intelligence Layer** is the shared underlying architecture for context assembly, retrieval, reasoning, orchestration, governance, and outcome verification.
 - **Memory Fabric** preserves contextual scope, provenance, confidence, lifecycle, and user control. Research evidence is not automatically promoted into memory.
 - **NEXUS** connects and processes eligible evidence and work items while keeping memory, beliefs, patterns, insights, and recommendations distinct.
