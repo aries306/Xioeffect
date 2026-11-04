@@ -13,6 +13,10 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    env:
+      CI_REQUIRE_LIVE_ACCEPTANCE: "1"
+      STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
+      STAGING_CLERK_TEST_COOKIE: ${{ secrets.STAGING_CLERK_TEST_COOKIE }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
