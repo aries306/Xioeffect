@@ -50,7 +50,10 @@
           "binding": "HYPERDRIVE",
           "id": "430591688b914fe3b293876ff7736704"
         }
-      ]
+      ],
+      "ai": {
+        "binding": "AI"
+      }
     }
   }
 }
