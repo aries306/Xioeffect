@@ -19,7 +19,7 @@ This document records the verified staging architecture and the remaining accoun
 
 Migrations `001`–`007` are applied to the isolated staging database. The database currently has 19 application tables.
 
-The Hyperdrive origin is the staging Neon host/database and authenticates as `exelta_app`. Hyperdrive caching is disabled. Runtime grants allow schema usage and table SELECT/INSERT/UPDATE/DELETE; schema CREATE, table TRUNCATE, REFERENCES, and TRIGGER are denied. A direct role-authenticated CRUD smoke test passed and its temporary rows were removed. Migration operations remain separate and use the database owner.
+The Hyperdrive origin is the staging Neon host/database and authenticates as `exelta_app`. Hyperdrive caching is disabled. Runtime grants allow schema usage and table SELECT/INSERT/UPDATE/DELETE; schema CREATE, table TRUNCATE, REFERENCES, and TRIGGER are denied. A direct role-authenticated CRUD smoke test passed and its temporary rows were removed. The staging schema currently has no public sequences, so no sequence grants are required. Migration operations remain separate and use the database owner.
 
 The production Worker `zuna` and its Hyperdrive binding are not used by staging. No production database, DNS, credentials, or deployment was changed.
 
