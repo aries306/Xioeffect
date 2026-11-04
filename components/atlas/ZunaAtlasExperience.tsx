@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 
 type Workspace = { id: string; name?: string };
@@ -38,6 +38,10 @@ declare global {
     webkitSpeechRecognition?: SpeechRecognitionConstructor;
   }
 }
+
+const subscribeToVoiceSupport = () => () => {};
+const getVoiceSupportSnapshot = () => typeof window !== "undefined" && Boolean((window.SpeechRecognition ?? window.webkitSpeechRecognition) && "speechSynthesis" in window);
+const getServerVoiceSupportSnapshot = () => false;
 
 const MODULES: Module[] = [
   { id: "memory", label: "Memory", description: "User-owned context that can persist, become dormant, and return when relevant.", status: "connected", x: 18, y: 38, color: "violet" },
@@ -80,15 +84,13 @@ export default function XIOAtlasExperience({ authenticated }: { authenticated: b
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [voiceSupported, setVoiceSupported] = useState(false);
+  const voiceSupported = useSyncExternalStore(subscribeToVoiceSupport, getVoiceSupportSnapshot, getServerVoiceSupportSnapshot);
   const [notice, setNotice] = useState("");
   const [workspaceReady, setWorkspaceReady] = useState(false);
 
   const activeModule = MODULES.find((module) => module.id === selected) ?? MODULES[0];
 
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    setVoiceSupported(Boolean(SpeechRecognition && "speechSynthesis" in window));
     if (!authenticated) return;
     let active = true;
     fetch("/api/workspace", { credentials: "same-origin" })
