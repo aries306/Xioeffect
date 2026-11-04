@@ -63,6 +63,18 @@ test("Memory lifecycle supports contextual re-evaluation and explicit archive/ed
   assert.match(feedbackMigration, /\x27archive\x27/);
 });
 
+test("Stale active memories transition to dormant without entering reasoning", async () => {
+  const memory = await read("lib/memory.ts");
+  const evaluator = await read("app/api/memory/evaluate/route.ts");
+  const migration = await read("db/migrations/007_stale_memory_dormancy.sql");
+  assert.match(memory, /evaluation.status === "stale"/);
+  assert.match(memory, /stale_without_recent_confirmation/);
+  assert.match(memory, /set lifecycle_state='dormant'/);
+  assert.match(evaluator, /set lifecycle_state='dormant'/);
+  assert.match(evaluator, /lifecycleAfter = "dormant"/);
+  assert.match(migration, /'dormant'/);
+});
+
 test("Sanctum displays the actual evaluated Memory Fabric state", async () => {
   const sanctum = await read("components/sanctum/SanctumExperience.tsx");
   const evaluator = await read("app/api/memory/evaluate/route.ts");
