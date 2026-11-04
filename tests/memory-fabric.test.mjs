@@ -199,6 +199,24 @@ test("Live authenticated Memory Fabric context-switch and contradiction acceptan
     assert.ok(evaluationBody.potentialConflicts?.some((item) => item.id === second.id));
     assert.equal(evaluationBody.conflictDetection, "lexical_candidates_require_user_review");
 
+    const correctedText = `[${nonce}] For launch planning, preferred deployment region is Canada Central (user-corrected).`;
+    const correction = await fetch(`${baseUrl}/api/memory`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ workspaceId: workspace.id, memoryId: first.id, text: correctedText }),
+    });
+    assert.equal(correction.status, 200);
+    const correctionBody = await correction.json();
+    assert.equal(correctionBody.memory?.text, correctedText);
+
+    const correctedRetrieval = await fetch(
+      `${baseUrl}/api/memory?workspaceId=${workspace.id}&context=project-alpha&q=${encodeURIComponent(nonce + " Canada Central user-corrected")}`,
+      { headers },
+    );
+    assert.equal(correctedRetrieval.status, 200);
+    const correctedBody = await correctedRetrieval.json();
+    assert.ok(correctedBody.memories?.some((item) => item.id === first.id && item.text === correctedText));
+
     const feedback = await fetch(`${baseUrl}/api/feedback`, {
       method: "POST",
       headers,
@@ -224,6 +242,23 @@ test("Live authenticated Memory Fabric context-switch and contradiction acceptan
       assert.equal(body.evaluation?.status, "review");
       assert.equal(body.evaluation?.influenceWeight, 0);
     }
+
+    const archive = await fetch(`${baseUrl}/api/memory`, {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({ workspaceId: workspace.id, memoryId: second.id }),
+    });
+    assert.equal(archive.status, 200);
+    const archiveBody = await archive.json();
+    assert.equal(archiveBody.memory?.lifecycleState, "archived");
+
+    const afterArchive = await fetch(
+      `${baseUrl}/api/memory?workspaceId=${workspace.id}&context=project-beta&q=${encodeURIComponent(nonce)}`,
+      { headers },
+    );
+    assert.equal(afterArchive.status, 200);
+    const archivedRetrieval = await afterArchive.json();
+    assert.ok(!archivedRetrieval.memories?.some((item) => item.id === second.id));
   } finally {
     await Promise.all(createdIds.map((memoryId) => fetch(`${baseUrl}/api/memory`, {
       method: "DELETE",
