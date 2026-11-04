@@ -131,7 +131,8 @@ test("Health and privacy endpoints are implemented instead of stubs", async () =
 test("Staging database fails closed instead of using in-memory mock storage", async () => {
   const database = await read("lib/db.ts");
   assert.match(database, /env\.HYPERDRIVE\?\.connectionString/);
-  assert.match(database, /env\.APP_ENV \?\? process\.env\.APP_ENV/);
+  assert.match(database, /env as typeof env & \{ APP_ENV\?: string \}/);
+  assert.match(database, /process\.env\.APP_ENV/);
   assert.match(database, /appEnv === "production" \|\| appEnv === "staging"/);
   assert.match(database, /staging database is not configured/);
   assert.match(database, /refusing to fall back to in-memory mock storage/);
