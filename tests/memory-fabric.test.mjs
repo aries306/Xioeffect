@@ -120,6 +120,9 @@ test("Live authenticated Memory Fabric context-switch and contradiction acceptan
   const baseUrl = process.env.XIO_TEST_BASE_URL;
   const cookie = process.env.XIO_TEST_COOKIE;
   if (!baseUrl || !cookie) {
+    if (process.env.CI_REQUIRE_LIVE_ACCEPTANCE === "1") {
+      assert.fail("CI_REQUIRE_LIVE_ACCEPTANCE=1 requires XIO_TEST_BASE_URL and XIO_TEST_COOKIE; refusing a green build with the authenticated acceptance test skipped");
+    }
     t.skip("Set XIO_TEST_BASE_URL and XIO_TEST_COOKIE to run the real authenticated integration loop");
     return;
   }
