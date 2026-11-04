@@ -131,21 +131,30 @@ test("Health and privacy endpoints are implemented instead of stubs", async () =
 test("Live authenticated Memory Fabric context-switch and contradiction acceptance flow", async (t) => {
   const baseUrl = process.env.STAGING_BASE_URL ?? process.env.XIO_TEST_BASE_URL;
   const cookie = process.env.STAGING_CLERK_TEST_COOKIE ?? process.env.XIO_TEST_COOKIE;
-  if (!baseUrl || !cookie) {
+  const otherCookie = process.env.STAGING_CLERK_OTHER_TEST_COOKIE;
+  if (!baseUrl || !cookie || !otherCookie) {
     if (process.env.CI_REQUIRE_LIVE_ACCEPTANCE === "1") {
-      assert.fail("CI_REQUIRE_LIVE_ACCEPTANCE=1 requires STAGING_BASE_URL and STAGING_CLERK_TEST_COOKIE; refusing a green build with the authenticated acceptance test skipped");
+      assert.fail("CI_REQUIRE_LIVE_ACCEPTANCE=1 requires STAGING_BASE_URL, STAGING_CLERK_TEST_COOKIE, and STAGING_CLERK_OTHER_TEST_COOKIE; refusing a green build with authenticated acceptance skipped");
     }
-    t.skip("Set STAGING_BASE_URL and STAGING_CLERK_TEST_COOKIE to run the real authenticated integration loop");
+    t.skip("Set STAGING_BASE_URL, STAGING_CLERK_TEST_COOKIE, and STAGING_CLERK_OTHER_TEST_COOKIE to run the real authenticated integration loop");
     return;
   }
 
   const headers = { Cookie: cookie, "Content-Type": "application/json" };
+  const otherHeaders = { Cookie: otherCookie, "Content-Type": "application/json" };
   const anonymous = await fetch(`${baseUrl}/api/workspace`, { redirect: "manual" });
   assert.notEqual(anonymous.status, 200);
   const workspaceResponse = await fetch(`${baseUrl}/api/workspace`, { headers });
   assert.equal(workspaceResponse.status, 200);
   const { workspace } = await workspaceResponse.json();
   assert.ok(workspace?.id);
+
+  // A second independently authenticated Clerk user must not be able to
+  // resolve, read, or mutate the first user's private workspace.
+  const crossUserWorkspace = await fetch(`${baseUrl}/api/workspace?workspaceId=${workspace.id}`, { headers: otherHeaders });
+  assert.equal(crossUserWorkspace.status, 403);
+  const crossUserMemories = await fetch(`${baseUrl}/api/memory?workspaceId=${workspace.id}`, { headers: otherHeaders });
+  assert.equal(crossUserMemories.status, 403);
 
   const nonce = `acceptance-${Date.now()}`;
   const createdIds = [];
@@ -174,6 +183,13 @@ test("Live authenticated Memory Fabric context-switch and contradiction acceptan
   try {
     const first = await createMemory(`[${nonce}] For launch planning, preferred deployment region is Canada Central.`);
     const second = await createMemory(`[${nonce}] For launch planning, preferred deployment region is US East.`);
+
+    const crossUserMutation = await fetch(`${baseUrl}/api/memory`, {
+      method: "PATCH",
+      headers: otherHeaders,
+      body: JSON.stringify({ workspaceId: workspace.id, memoryId: first.id, text: `[${nonce}] unauthorized overwrite` }),
+    });
+    assert.equal(crossUserMutation.status, 403);
 
     // Return in a different context. The origin context is provenance, not a
     // hard fence: the candidate must be re-evaluated before it can influence.
