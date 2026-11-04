@@ -129,13 +129,13 @@ test("Health and privacy endpoints are implemented instead of stubs", async () =
 });
 
 test("Live authenticated Memory Fabric context-switch and contradiction acceptance flow", async (t) => {
-  const baseUrl = process.env.XIO_TEST_BASE_URL;
-  const cookie = process.env.XIO_TEST_COOKIE;
+  const baseUrl = process.env.STAGING_BASE_URL ?? process.env.XIO_TEST_BASE_URL;
+  const cookie = process.env.STAGING_CLERK_TEST_COOKIE ?? process.env.XIO_TEST_COOKIE;
   if (!baseUrl || !cookie) {
     if (process.env.CI_REQUIRE_LIVE_ACCEPTANCE === "1") {
-      assert.fail("CI_REQUIRE_LIVE_ACCEPTANCE=1 requires XIO_TEST_BASE_URL and XIO_TEST_COOKIE; refusing a green build with the authenticated acceptance test skipped");
+      assert.fail("CI_REQUIRE_LIVE_ACCEPTANCE=1 requires STAGING_BASE_URL and STAGING_CLERK_TEST_COOKIE; refusing a green build with the authenticated acceptance test skipped");
     }
-    t.skip("Set XIO_TEST_BASE_URL and XIO_TEST_COOKIE to run the real authenticated integration loop");
+    t.skip("Set STAGING_BASE_URL and STAGING_CLERK_TEST_COOKIE to run the real authenticated integration loop");
     return;
   }
 
