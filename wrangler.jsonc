@@ -38,21 +38,7 @@
     }
   ],
   "preview_urls": false,
-  "previews": {},
-  "env": {
-    "staging": {
-      "name": "exelta-staging",
-      "vars": {
-        "APP_ENV": "staging"
-      },
-      "hyperdrive": [
-        {
-          "binding": "HYPERDRIVE",
-          "id": "430591688b914fe3b293876ff7736704"
-        }
-      ]
-    }
-  },
+  "previews": {},,
   "env": {
     "staging": {
       "name": "exelta-staging",
