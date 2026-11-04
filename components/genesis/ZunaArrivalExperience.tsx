@@ -34,7 +34,7 @@ const getServerVoiceSupportSnapshot = () => false;
 
 const PHASES: Phase[] = ["arrival", "name", "story", "intention", "reveal"];
 const GREETINGS = [
-  "Oh… there you are. I&apos;ve been waiting for you.",
+  "Oh… there you are. I've been waiting for you.",
   "I'm Exelta. I'm happy you've arrived.",
   "Let's make this space mean something.",
 ];
@@ -86,19 +86,23 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
 
   useEffect(() => {
     let active = true;
+    let restoreFrame: number | null = null;
 
     try {
       const draft = sessionStorage.getItem("zuna-onboarding-draft");
       if (draft) {
         const parsed = JSON.parse(draft) as { name?: string; introduction?: string; intention?: string };
         if (parsed.name && parsed.introduction && parsed.intention) {
-          setName(parsed.name);
-          setIntroduction(parsed.introduction);
-          setIntention(parsed.intention);
-          setConsent(true);
-          setConcepts(extractConcepts(parsed.introduction));
-          setPhase("intention");
-          setNotice("Your introduction is ready. Sign in to save it to your private Memory Fabric.");
+          restoreFrame = window.requestAnimationFrame(() => {
+            if (!active) return;
+            setName(parsed.name!);
+            setIntroduction(parsed.introduction!);
+            setIntention(parsed.intention!);
+            setConsent(true);
+            setConcepts(extractConcepts(parsed.introduction!));
+            setPhase("intention");
+            setNotice("Your introduction is ready. Sign in to save it to your private Memory Fabric.");
+          });
         }
       }
     } catch {
@@ -127,7 +131,10 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
         }
       });
 
-    return () => { active = false; };
+    return () => {
+      active = false;
+      if (restoreFrame !== null) window.cancelAnimationFrame(restoreFrame);
+    };
   }, []);
 
   useEffect(() => {
@@ -436,7 +443,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
           {phase === "arrival" && <div className="zuna-phase-content zuna-phase-arrival">
             <p className="zuna-kicker">A DIFFERENT KIND OF BEGINNING</p>
             <h1>Oh… there you are.</h1>
-            <p className="zuna-subtitle">I've been waiting for you.</p>
+            <p className="zuna-subtitle">I&apos;ve been waiting for you.</p>
             <p className="zuna-body">I&apos;m Exelta. This is the beginning of your own living intelligence space. In the next few minutes, we&apos;ll give it a shape around what matters to you.</p>
             <button className="zuna-primary-button" type="button" onClick={begin}>{isAuthenticated ? "Meet Exelta" : "Begin the five-minute experience"} <span>↗</span></button>
             {!isAuthenticated && <p className="zuna-privacy-note">You can explore first. Your details are saved only after you create a private space and confirm consent.</p>}
