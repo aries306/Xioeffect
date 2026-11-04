@@ -108,7 +108,7 @@ function createMockSql() {
 export function db(): ReturnType<typeof postgres> {
   const hyperdriveUrl = env.HYPERDRIVE?.connectionString;
   const url = hyperdriveUrl || process.env.DATABASE_URL;
-  const appEnv = process.env.APP_ENV ?? "development";
+  const appEnv = env.APP_ENV ?? process.env.APP_ENV ?? "development";
   const requiresPersistentDatabase = appEnv === "production" || appEnv === "staging";
   if (!url) {
     if (requiresPersistentDatabase) {
