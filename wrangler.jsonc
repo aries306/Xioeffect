@@ -38,7 +38,7 @@
     }
   ],
   "preview_urls": false,
-  "previews": {},,
+  "previews": {},
   "env": {
     "staging": {
       "name": "exelta-staging",
