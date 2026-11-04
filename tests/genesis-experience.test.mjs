@@ -20,6 +20,15 @@ test("Exelta front door is a native bright 3D arrival experience", async () => {
   assert.match(experience, /prefers-reduced-motion/);
   assert.match(styles, /perspective/);
   assert.match(styles, /color-scheme:light/);
+  const atlasStyles = await fs.readFile("app/atlas/atlas.css", "utf8");
+  const sanctumStyles = await fs.readFile("app/sanctum/sanctum.css", "utf8");
+  const workspaceStyles = await fs.readFile("app/genesis.css", "utf8");
+  assert.match(atlasStyles, /--atlas-bg:\s*#0B1020/i);
+  assert.match(atlasStyles, /--atlas-violet:\s*#7C5CFF/i);
+  assert.match(sanctumStyles, /--violet:#7C5CFF/i);
+  assert.match(sanctumStyles, /#0B1020/i);
+  assert.match(workspaceStyles, /--gen-violet:#7C5CFF/i);
+  assert.match(workspaceStyles, /--gen-bg:#0B1020/i);
 });
 
 test("Five-minute onboarding persists user-provided context with provenance", async () => {
