@@ -20,6 +20,20 @@ export async function retrieveContextualMemories(workspaceId: string, query: str
       : { ...storedProvenance, capturedAt: String(row.created_at) };
     return { row, evaluation: evaluateMemoryForContext({ text: String(row.text), scope: (row.scope ?? {}) as Record<string, unknown>, provenance, lifecycleState: String(row.lifecycle_state), confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at), lastConfirmedAt: row.last_confirmed_at ? String(row.last_confirmed_at) : null }, context) };
   });
+  const staleActive = evaluated.filter(({ row, evaluation }) =>
+    String(row.lifecycle_state) === "active" &&
+    evaluation.status === "stale" &&
+    evaluation.reasons.includes("stale_without_recent_confirmation")
+  );
+  if (staleActive.length > 0) {
+    await sql.begin(async (tx) => {
+      for (const { row, evaluation } of staleActive) {
+        const changed = await tx`update memories set lifecycle_state='dormant',active=true,last_evaluated_at=now(),evaluation=${JSON.stringify(evaluation)}::jsonb where id=${row.id} and workspace_id=${workspace.id} and user_id=${userId} and lifecycle_state='active' returning id`;
+        if (!changed[0]) continue;
+        await tx`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata) values (${row.id},${workspace.id},${userId},'dormant',${row.confidence},${row.confidence},${row.relevance},${row.relevance},'active','dormant','contextual-retrieval',${JSON.stringify({ reason: "stale_without_recent_confirmation" })}::jsonb)`;
+      }
+    });
+  }
   const scored = evaluated.filter(({ evaluation }) => evaluation.eligible).map(({ row, evaluation }) => ({ row, evaluation, score: scoreContextualMemory({ text: String(row.text), scope: row.scope ?? {}, lifecycleState: String(row.lifecycle_state) as "active" | "dormant" | "review", confidence: Number(row.confidence), relevance: Number(row.relevance), updatedAt: String(row.updated_at) }, query, context) * evaluation.influenceWeight })).filter((item) => item.score >= 1).sort((a, b) => b.score - a.score).slice(0, Math.max(1, Math.min(limit, 20)));
   await Promise.all(scored.map(async ({ row, score, evaluation }) => {
     await sql`update memories set last_retrieved_at=now(),last_evaluated_at=now(),evaluation=${JSON.stringify(evaluation)}::jsonb where id=${row.id} and workspace_id=${workspace.id}`;
