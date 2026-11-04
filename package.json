@@ -21,7 +21,8 @@
     "dev:next": "next dev -p 3000 -H 0.0.0.0",
     "build:next": "next build",
     "start:next": "next start",
-    "validate:staging": "node scripts/validate-staging-config.mjs"
+    "validate:staging": "node scripts/validate-staging-config.mjs",
+    "test:acceptance": "node --test tests/live-acceptance.mjs"
   },
   "dependencies": {
     "next": "16.2.5",
