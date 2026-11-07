@@ -86,7 +86,7 @@ When appropriate, provide a clear recommendation. If you do, put it on its own l
   );
   const answer = confidenceLedger.answer;
   await sql`insert into messages (conversation_id, role, content) values (${conversationId}, 'assistant', ${answer})`;
-  const recommendation = answer.match(/^Recommendation:\\s*(.+)$/im)?.[1]?.trim() ?? null;
+  const recommendation = answer.match(/^Recommendation:\s*(.+)$/im)?.[1]?.trim() ?? null;
   const diagnostics = {
     memoryCount: memories.length,
     retrievalWallMs,
