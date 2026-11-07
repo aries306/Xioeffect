@@ -96,7 +96,7 @@ export function parseInferenceLedger(
   return {
     answer: response.replace(match[0], "").trim(),
     inferences,
-    status: inferences.length > 0 ? "available" : "invalid",
+    status: parsed.length === 0 || inferences.length > 0 ? "available" : "invalid",
     issues,
   };
 }
