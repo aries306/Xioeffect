@@ -1,12 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
 
 .zuna-atlas {
-  --atlas-bg: #050711;
+  --atlas-bg: #0B1020;
   --atlas-panel: rgba(12, 16, 34, .78);
   --atlas-line: rgba(167, 180, 255, .13);
   --atlas-muted: #929ab9;
   --atlas-text: #edf0ff;
-  --atlas-violet: #a59bff;
+  --atlas-violet: #7C5CFF;
   min-height: 100vh;
   overflow: hidden;
   color: var(--atlas-text);

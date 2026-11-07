@@ -5,20 +5,28 @@ on:
     branches: ["**"]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   verify:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 20
     permissions:
       contents: read
+    env:
+      CI_REQUIRE_LIVE_ACCEPTANCE: "1"
+      STAGING_BASE_URL: ${{ vars.STAGING_BASE_URL }}
+      STAGING_CLERK_TEST_COOKIE: ${{ secrets.STAGING_CLERK_TEST_COOKIE }}
+      STAGING_CLERK_OTHER_TEST_COOKIE: ${{ secrets.STAGING_CLERK_OTHER_TEST_COOKIE }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
       - run: npm install --no-audit --no-fund
-      - run: npm run test
       - run: npm run typecheck
+      - run: npm run test
       - run: npm run lint
       - run: npm run build
+      - run: npm run validate:staging
+      - run: npm run test:acceptance

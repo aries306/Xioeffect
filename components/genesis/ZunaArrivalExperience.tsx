@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 
 type Phase = "arrival" | "name" | "story" | "intention" | "reveal";
@@ -27,6 +27,10 @@ declare global {
     webkitSpeechRecognition?: SpeechRecognitionConstructor;
   }
 }
+
+const subscribeToVoiceSupport = () => () => {};
+const getVoiceSupportSnapshot = () => typeof window !== "undefined" && Boolean((window.SpeechRecognition ?? window.webkitSpeechRecognition) && "speechSynthesis" in window);
+const getServerVoiceSupportSnapshot = () => false;
 
 const PHASES: Phase[] = ["arrival", "name", "story", "intention", "reveal"];
 const GREETINGS = [
@@ -73,7 +77,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
   const [busy, setBusy] = useState(false);
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
-  const [voiceSupported, setVoiceSupported] = useState(false);
+  const voiceSupported = useSyncExternalStore(subscribeToVoiceSupport, getVoiceSupportSnapshot, getServerVoiceSupportSnapshot);
   const [answer, setAnswer] = useState("");
   const [notice, setNotice] = useState("");
   const [saved, setSaved] = useState(false);
@@ -81,22 +85,24 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
   const [concepts, setConcepts] = useState<string[]>([]);
 
   useEffect(() => {
-    const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    setVoiceSupported(Boolean(Recognition && "speechSynthesis" in window));
     let active = true;
+    let restoreFrame: number | null = null;
 
     try {
       const draft = sessionStorage.getItem("zuna-onboarding-draft");
       if (draft) {
         const parsed = JSON.parse(draft) as { name?: string; introduction?: string; intention?: string };
         if (parsed.name && parsed.introduction && parsed.intention) {
-          setName(parsed.name);
-          setIntroduction(parsed.introduction);
-          setIntention(parsed.intention);
-          setConsent(true);
-          setConcepts(extractConcepts(parsed.introduction));
-          setPhase("intention");
-          setNotice("Your introduction is ready. Sign in to save it to your private Memory Fabric.");
+          restoreFrame = window.requestAnimationFrame(() => {
+            if (!active) return;
+            setName(parsed.name!);
+            setIntroduction(parsed.introduction!);
+            setIntention(parsed.intention!);
+            setConsent(true);
+            setConcepts(extractConcepts(parsed.introduction!));
+            setPhase("intention");
+            setNotice("Your introduction is ready. Sign in to save it to your private Memory Fabric.");
+          });
         }
       }
     } catch {
@@ -125,7 +131,10 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
         }
       });
 
-    return () => { active = false; };
+    return () => {
+      active = false;
+      if (restoreFrame !== null) window.cancelAnimationFrame(restoreFrame);
+    };
   }, []);
 
   useEffect(() => {
@@ -434,15 +443,15 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
           {phase === "arrival" && <div className="zuna-phase-content zuna-phase-arrival">
             <p className="zuna-kicker">A DIFFERENT KIND OF BEGINNING</p>
             <h1>Oh… there you are.</h1>
-            <p className="zuna-subtitle">I've been waiting for you.</p>
-            <p className="zuna-body">I'm Exelta. This is the beginning of your own living intelligence space. In the next few minutes, we'll give it a shape around what matters to you.</p>
+            <p className="zuna-subtitle">I&apos;ve been waiting for you.</p>
+            <p className="zuna-body">I&apos;m Exelta. This is the beginning of your own living intelligence space. In the next few minutes, we&apos;ll give it a shape around what matters to you.</p>
             <button className="zuna-primary-button" type="button" onClick={begin}>{isAuthenticated ? "Meet Exelta" : "Begin the five-minute experience"} <span>↗</span></button>
             {!isAuthenticated && <p className="zuna-privacy-note">You can explore first. Your details are saved only after you create a private space and confirm consent.</p>}
             <button className="zuna-voice-link" type="button" onClick={() => say(GREETINGS.join(" "))} disabled={!voiceSupported}>{speaking ? "Exelta is speaking…" : "Hear Exelta speak"}</button>
           </div>}
 
           {phase === "name" && <div className="zuna-phase-content">
-            <p className="zuna-kicker">01 · LET'S START WITH YOU</p>
+            <p className="zuna-kicker">01 · LET&apos;S START WITH YOU</p>
             <h1>What should I call you?</h1>
             <p className="zuna-body">A name makes this space yours. You decide what to share.</p>
             <form className="zuna-entry-form" onSubmit={submitName}>
@@ -456,7 +465,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
           {phase === "story" && <div className="zuna-phase-content">
             <p className="zuna-kicker">02 · YOUR WORLD</p>
             <h1>Tell me who you are, {name.trim()}.</h1>
-            <p className="zuna-body">What are you interested in? What are you working toward? What matters enough that you'd like it carried forward?</p>
+            <p className="zuna-body">What are you interested in? What are you working toward? What matters enough that you&apos;d like it carried forward?</p>
             <form className="zuna-entry-form" onSubmit={submitStory}>
               <label htmlFor="exelta-introduction">YOUR INTRODUCTION</label>
               <textarea id="exelta-introduction" value={introduction} onChange={(event) => setIntroduction(event.target.value)} maxLength={2000} rows={4} placeholder="I'm someone who…" autoFocus />
@@ -487,7 +496,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
               {conceptsToShow.map((concept, index) => <span key={concept} style={{ "--concept-index": index } as React.CSSProperties}>{concept}</span>)}
             </div>
             <div className="zuna-first-insight">
-              <span>EXELTA'S FIRST RESPONSE</span>
+              <span>EXELTA&apos;S FIRST RESPONSE</span>
               <p>{answer || "Your context is saved. Open your workspace to continue the conversation and develop your first insight."}</p>
             </div>
             <div className="zuna-reveal-actions">
