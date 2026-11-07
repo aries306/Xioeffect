@@ -8,7 +8,7 @@ const stagingHyperdrive = staging?.hyperdrive?.find((binding) => binding.binding
 
 assert.equal(staging?.name, "exelta-staging", "staging Worker must use its isolated script name");
 assert.equal(staging?.vars?.APP_ENV, "staging", "staging must set APP_ENV=staging");
-assert.equal(stagingHyperdrive?.id, "430591688b914fe3b293876ff7736704", "staging must use the isolated Exelta Hyperdrive");
+assert.equal(stagingHyperdrive?.id, "6b65f8e46ab34ec39b87abd9fdbf5636", "staging must use the isolated Exelta Hyperdrive");
 assert.ok(productionHyperdrive?.id, "production Hyperdrive binding must remain configured");
 assert.notEqual(stagingHyperdrive?.id, productionHyperdrive?.id, "staging must never reuse the production Hyperdrive");
 assert.equal(staging?.ai?.binding, "AI", "staging must bind Workers AI explicitly");
