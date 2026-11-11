@@ -1,12 +1,38 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { ClerkProvider } from "@clerk/nextjs";
+import "./genesis.css";
 
-export const metadata: Metadata = { title: "XIO", description: "Your personal intelligence layer" };
+export const metadata: Metadata = {
+  title: "XIO — A Living Intelligence Environment",
+  description: "XIO is a distinct application experience powered by EXelta and the shared Intelligence Layer.",
+  applicationName: "XIO",
+};
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  const content = <html lang="en"><body>{children}</body></html>;
-  if (!publishableKey) return content;
-  return <ClerkProvider publishableKey={publishableKey} signInUrl="/sign-in" signUpUrl="/sign-up" signInFallbackRedirectUrl="/app" signUpFallbackRedirectUrl="/app">{content}</ClerkProvider>;
+  const appEnv = process.env.APP_ENV ?? "development";
+
+  if (!publishableKey) {
+    if (appEnv === "production" || appEnv === "staging") {
+      throw new Error("Clerk is required in staging and production. Configure NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY before serving the application.");
+    }
+    return <html lang="en"><body>{children}</body></html>;
+  }
+
+  return (
+    <html lang="en">
+      <body>
+        <ClerkProvider
+          publishableKey={publishableKey}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+          signInFallbackRedirectUrl="/app"
+          signUpFallbackRedirectUrl="/app"
+        >
+          {children}
+        </ClerkProvider>
+      </body>
+    </html>
+  );
 }

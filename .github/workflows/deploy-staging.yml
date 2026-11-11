@@ -1,0 +1,52 @@
+name: Deploy Exelta Staging
+
+on:
+  push:
+    branches:
+      - fix/exelta-ui-brand-and-arrival-tests
+  workflow_dispatch:
+
+concurrency:
+  group: exelta-staging-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/fix/exelta-ui-brand-and-arrival-tests' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy-staging]'))
+    runs-on: ubuntu-24.04
+    environment: staging
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      APP_ENV: staging
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_YmVsb3ZlZC1pbXBhbGEtNjgzMS5jbGVyay5hY2NvdW50cy5kZXYk
+      STAGING_BASE_URL: https://exelta-staging.rieza902.workers.dev
+      CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      STAGING_CLERK_TEST_COOKIE: ${{ secrets.STAGING_CLERK_TEST_COOKIE }}
+      STAGING_CLERK_OTHER_TEST_COOKIE: ${{ secrets.STAGING_CLERK_OTHER_TEST_COOKIE }}
+      CI_REQUIRE_LIVE_ACCEPTANCE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --no-audit --no-fund
+      - run: npm run validate:staging
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run lint
+      - run: npm run build
+      - name: Verify required deployment credentials
+        shell: bash
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing staging environment secret: CLOUDFLARE_API_TOKEN"; exit 1; }
+          test -n "$CLERK_SECRET_KEY" || { echo "Missing staging environment secret: CLERK_SECRET_KEY"; exit 1; }
+      - name: Deploy isolated staging Worker
+        run: npx wrangler deploy --env staging --account-id 6266f92b054b68ec69ff619d3869f195
+      - name: Install Clerk staging secret
+        shell: bash
+        run: printf '%s' "$CLERK_SECRET_KEY" | npx wrangler secret put CLERK_SECRET_KEY --env staging --account-id 6266f92b054b68ec69ff619d3869f195
+      - name: Verify live authenticated staging flows
+        run: npm run test:acceptance

@@ -118,7 +118,7 @@ const VEYRON_CHAT = (() => {
       bubbleEl.appendChild(card);
       card.querySelector(".mp-yes").onclick = async () => {
         try {
-          const response = await fetch("/api/memory", { method:"POST", credentials:"same-origin", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ workspaceId, text:proposal.text, category:proposal.category, confidence:72, relevance:proposal.relevance ?? 60, source:"conversation", confirmed:true, provenance:{type:"conversation",conversationId}, scope:{conversationId} }) });
+          const response = await fetch("/api/memory", { method:"POST", credentials:"same-origin", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ workspaceId, text:proposal.text, category:proposal.category, confidence:72, relevance:proposal.relevance ?? 60, source:"conversation", confirmed:true, provenance:{type:"conversation",conversationId}, scope:{originContext:"personal"} }) });
           if (!response.ok) throw new Error("Memory save failed");
           const data = await response.json();
           card.innerHTML = "<div class='mp-label'>✓ Remembered</div><p class='muted small'>Stored in the Memory Fabric. It can be revisited, corrected, or retired later.</p>";

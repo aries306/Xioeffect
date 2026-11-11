@@ -1,0 +1,7 @@
+{
+  "name": "XIO",
+  "description": "A living intelligent reality and personal intelligence layer.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

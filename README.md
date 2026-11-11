@@ -1,12 +1,20 @@
 # XIO
 
-XIO is a Next.js server-backed SaaS application with a browser-first experience. The existing Living System remains the visual front door while authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities run through server-side routes.
+XIO is a server-backed application with a browser-first experience. Its front door is a bright, spatial 3D five-minute arrival led by Exelta, with authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities running through server-side routes.
+
+## Runtime
+
+XIO uses **Vinext on Cloudflare Workers** as its default development, production-build,
+and production-serving runtime. This is the deployment target configured in
+`wrangler.jsonc`, and it builds the full App Router surface successfully. The legacy
+Next.js scripts remain available as `dev:next`, `build:next`, and `start:next` for
+local compatibility checks.
 
 ## Current state
 
-- `/` embeds the existing demo unchanged
+- `/` serves XIO's bright 3D five-minute arrival and Exelta-led onboarding
 - `/api/health` is a deployment health endpoint
-- `/api/chat` validates input, authorizes the workspace, retrieves contextual Memory Fabric evidence, calls the server-side AI Gateway, and persists the conversation
+- `/api/chat` validates input, authorizes the workspace, retrieves contextual Memory Fabric evidence, calls Cloudflare Workers AI through the `AI` binding, and persists the conversation
 - GitHub integration lives on `main` behind authenticated server routes; `feat/github-nexus` is a historical branch and is not the deployment baseline
 
 ## GitHub → Research → NEXUS
@@ -39,7 +47,7 @@ Required server-side variables:
 ```text
 CLERK_SECRET_KEY=
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-DATABASE_URL=
+DATABASE_URL= # local development fallback only; production uses the HYPERDRIVE binding
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 GITHUB_REDIRECT_URI=
@@ -50,11 +58,17 @@ Generate the token-encryption key as a base64-encoded 32-byte value. Register th
 
 ## Database
 
-Apply migrations in order: `001_xio_core.sql`, `002_github_nexus.sql`, `003_memory_fabric_workspace.sql`, `004_memory_lifecycle_controls.sql`, then `005_memory_feedback_lifecycle_controls.sql`. The GitHub migration is upgrade-safe for the integration tables and adds encrypted token lifecycle fields, repository selection/sync state, provenance indexes, and NEXUS event deduplication.
+Apply migrations in order: `001_xio_core.sql`, `002_github_nexus.sql`, `003_memory_fabric_workspace.sql`, `004_memory_lifecycle_controls.sql`, then `005_memory_feedback_lifecycle_controls.sql`, then `006_memory_relations_evaluation.sql`. The GitHub migration is upgrade-safe for the integration tables and adds encrypted token lifecycle fields, repository selection/sync state, provenance indexes, and NEXUS event deduplication.
 
 Every user-owned query must be scoped by the verified Clerk user ID. The GitHub integration uses text `user_id` values because Clerk user IDs are strings.
 
-## Deployment architecture\n\nNext.js is the primary application runtime. The repository also contains a Vinext/Cloudflare deployment path; it is an alternate target and should not be mixed into the primary Vercel deployment configuration. Vercel AI Gateway is called server-side from `lib/ai.ts`.\n\n## Production verification
+## Deployment architecture
+
+Cloudflare Workers is the production application platform. Vinext runs the App Router on the Worker, Wrangler manages deployment, and the Worker exposes the `AI` binding for Cloudflare Workers AI and the optional `HYPERDRIVE` binding for the existing Neon PostgreSQL database. Vercel is not part of the application deployment or inference path.
+
+The production Worker is named `zuna`. Cloudflare Workers Builds will connect the GitHub repository and deploy on pushes after the Cloudflare GitHub App is authorized. The production Worker must have a Neon Hyperdrive binding before authenticated data operations are enabled.
+
+## Production verification
 
 Before merging/deploying the GitHub branch:
 
@@ -71,6 +85,8 @@ Before merging/deploying the GitHub branch:
 - push a new commit and confirm only changed blobs are re-indexed
 - test access-token refresh and expired/invalid refresh-token failure handling
 - verify account export excludes encrypted GitHub token material\n- verify account data deletion requires explicit confirmation and removes internal XIO data plus GitHub connection data through the same ownership boundary
+- verify contextual memory retrieval blocks missing provenance, scope mismatches, stale memories, and low-confidence memories before they influence AI responses
+- verify evaluation state and explicit memory relations are persisted with provenance
 
 ## Data model and privacy
 
@@ -80,8 +96,31 @@ The product must retain the demo's privacy controls: consent before memory creat
 
 ## Billing and AI configuration
 
-Subscription changes must originate with Stripe Checkout and be applied only from verified Stripe webhook events. The checkout and webhook routes are intentionally fail-closed until Stripe credentials, price IDs, and webhook signing verification are installed. AI requests must be executed server-side through Vercel AI Gateway only after authentication, entitlement checks, rate limits, and consented-memory retrieval are enabled.
+Subscription changes must originate with Stripe Checkout and be applied only from verified Stripe webhook events. The checkout and webhook routes are intentionally fail-closed until Stripe credentials, price IDs, and webhook signing verification are installed. AI requests run server-side through the Cloudflare Workers AI `AI` binding using `@cf/zai-org/glm-4.7-flash`. Requests must remain behind authentication, entitlement checks, rate limits, and consented-memory retrieval.
 
 ## Authentication
 
+Clerk is connected to this Vercel project. `/sign-up` and `/sign-in` provide hosted account creation and login; `/app` and sensitive API routes are protected by verified Clerk sessions. The existing browser demo remains isolated from personal cloud data until the Neon-backed data layer is implemented.
+
+## Stripe subscriptions
+
+Checkout is enabled for the configured Pro, Business, and Executive prices and requires a verified Clerk session. Before treating an account as paid, configure a Stripe webhook for `/api/billing/webhook`, set its signing secret as `STRIPE_WEBHOOK_SECRET`, and apply the Neon migration so verified subscription events can synchronize the `subscriptions` table. The portal route remains disabled until that lookup exists.
+
+## Money Builder app
+
+Visit `/money` to use the XIO Money Builder, a browser-based offer planner that helps users choose a monetizable path, model revenue and costs, and follow launch steps for validating demand before building.
 Clerk is connected to the application. `/sign-up` and `/sign-in` provide hosted account creation and login; `/app` and sensitive API routes are protected by verified Clerk sessions. The existing browser demo remains isolated from personal cloud data until the Neon-backed data layer is implemented.
+
+
+## Product identity
+
+- **XIO** is the application and product experience documented in this repository.
+- **Zioren** remains a distinct personal-intelligence ecosystem; it is not renamed, absorbed, or collapsed into XIO.
+- **EXelta** is the shared user-facing AI identity across XIO and Zioren. It is an intelligence presence, not a replacement product brand.
+- **Intelligence Layer** is the shared underlying architecture for context assembly, retrieval, reasoning, orchestration, governance, and outcome verification.
+- **Memory Fabric** preserves contextual scope, provenance, confidence, lifecycle, and user control. Research evidence is not automatically promoted into memory.
+- **NEXUS** connects and processes eligible evidence and work items while keeping memory, beliefs, patterns, insights, and recommendations distinct.
+- **Shadow** represents alternative possibilities and scenarios, not asserted facts.
+- **Zio Effect** is the compounding advantage produced when relevant context, learning, and verified outcomes improve future work.
+
+The visual experience is spatial and immersive rather than a conventional dashboard or chatbot. Motion must correspond to real system state; it must not imply retrieval, reasoning, verification, or learning that did not occur.
