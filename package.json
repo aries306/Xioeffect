@@ -18,6 +18,7 @@
     "start:vinext": "vinext start",
     "preview:cloudflare": "npm run build:vinext && wrangler dev",
     "deploy:cloudflare": "npm run build:vinext && wrangler deploy",
+    "deploy:staging": "npm run build:vinext && wrangler deploy --env staging",
     "dev:next": "next dev -p 3000 -H 0.0.0.0",
     "build:next": "next build",
     "start:next": "next start",

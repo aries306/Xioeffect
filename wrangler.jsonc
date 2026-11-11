@@ -3,7 +3,8 @@
   "name": "zuna",
   "compatibility_date": "2026-11-03",
   "compatibility_flags": [
-    "nodejs_compat"
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env"
   ],
   "main": "./worker/index.ts",
   "assets": {
@@ -43,7 +44,8 @@
     "staging": {
       "name": "exelta-staging",
       "vars": {
-        "APP_ENV": "staging"
+        "APP_ENV": "staging",
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YmVsb3ZlZC1pbXBhbGEtNjgzMS5jbGVyay5hY2NvdW50cy5kZXYk"
       },
       "hyperdrive": [
         {

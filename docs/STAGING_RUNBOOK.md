@@ -1,6 +1,6 @@
 # Exelta Staging Runbook
 
-This document records the staging architecture and the remaining release gates. Do not use production credentials or production resources to satisfy a staging check.
+This document records the staging architecture and release gates. Do not use production credentials or production resources to satisfy a staging check.
 
 ## Verified infrastructure
 
@@ -16,101 +16,76 @@ This document records the staging architecture and the remaining release gates. 
 | Runtime role | `exelta_app` |
 | Cloudflare account | `6266f92b054b68ec69ff619d3869f195` |
 | Cloudflare Hyperdrive | `exelta-staging` (`6b65f8e46ab34ec39b87abd9fdbf5636`) |
+| Expected staging URL | `https://exelta-staging.rieza902.workers.dev` |
+| Clerk application | `Exelta Staging` |
+| Clerk development instance | `ins_3Lwa3CgyxejXJAVQVCljPvOgBHB` |
 
-The Neon project and staging branch are accessible and report ready. The database has 19 application tables. PR #33 records migrations `001`–`007` as applied. The currently exposed public schema did not return a migration-ledger table during a separate metadata check, so migration status should be confirmed against the migration process before another migration is applied.
-
-The Hyperdrive origin is the staging Neon host/database and authenticates as `exelta_app`. Hyperdrive caching is disabled and its configured origin connection limit is 5. PR #33 records successful least-privilege role checks and a direct CRUD smoke test. Migration operations remain separate and use the database owner.
+The Neon project and staging branch are isolated. The staging Hyperdrive origin is the staging Neon host/database and authenticates as `exelta_app`. Hyperdrive caching is disabled and the configured origin connection limit is 5. Migration operations remain separate and use the database owner. The migration ledger was not visible in the latest metadata inspection; verify migration state before applying any migration again.
 
 The production Worker `zuna` and production Hyperdrive are not used by staging. No production database, DNS, credentials, or deployment was changed.
 
-## Cloudflare Worker configuration and deployment
+## Authentication implementation
 
-The repository's `wrangler.jsonc` defines `env.staging`:
+The authentication architecture and request flow are documented in [AUTHENTICATION.md](./AUTHENTICATION.md).
 
-- Worker name: `exelta-staging`
-- `APP_ENV=staging`
-- `HYPERDRIVE` points to `6b65f8e46ab34ec39b87abd9fdbf5636`
-- Workers AI binding: `AI`
+- Clerk `proxy.ts` is used because the repository is on Next.js 16. It initializes Clerk middleware for application and API requests and protects `/app`.
+- `ClerkProvider` is mounted by the root layout. Staging and production throw if the publishable key is absent; local development can still run without Clerk configured.
+- API handlers resolve identity through Clerk `auth()` / `requireUser()`, then enforce workspace membership and role before database access.
+- Clerk session tokens are not copied into the application database.
+- The separate Clerk application already exists. Its development instance is configured for email/password and email-code authentication; Google sign-in is enabled in the instance configuration. Use its secret key only in the staging Worker secret store.
+- The staging publishable key is a non-secret value in the staging Wrangler config. `CLERK_SECRET_KEY` is not committed.
 
-The current Cloudflare connection can access the account and the staging Hyperdrive. Its Worker-script listing does **not** contain an `exelta-staging` application Worker; it contains only an unrelated script named `black-voice-a0d2`. Do not treat an old dashboard-created placeholder in another account as the current staging deployment.
+## Cloudflare deployment
 
-Cloudflare Workers Builds is not currently connected to the GitHub repository. The repository-connection API returned an error stating that the project is disconnected from the Git account. No current build trigger or deploy pipeline was verified in this account. Do not claim that Cloudflare Workers Builds is executing CI until the GitHub integration is restored and a build is observed.
+Cloudflare Workers Builds is disconnected from the GitHub repository in the currently connected account. The repository now includes a gated GitHub Actions deploy workflow as an alternate Cloudflare deployment path: `.github/workflows/deploy-staging.yml`. It deploys only the named implementation branch to Worker `exelta-staging`, installs the Clerk secret, and runs the fail-closed live acceptance suite. It cannot deploy the production Worker. Trigger it by pushing a commit whose message contains `[deploy-staging]` to the implementation branch, or use `workflow_dispatch` when available.
 
-A direct Worker upload is also not a substitute for the application build: the actual Vinext application bundle and static assets must be built from this branch before deployment. Do not upload a placeholder Worker or publish a preview URL.
+The workflow uses:
 
-## Clerk staging application
+- Cloudflare account `6266f92b054b68ec69ff619d3869f195`
+- Worker `exelta-staging`
+- Isolated staging Hyperdrive `6b65f8e46ab34ec39b87abd9fdbf5636`
+- Expected workers.dev URL `https://exelta-staging.rieza902.workers.dev`
 
-No Clerk management plugin or authorized Clerk dashboard session is currently available. Create a separate Clerk application named **Exelta Staging**; do not reuse production keys.
+Configure these secrets in the GitHub Actions environment named `staging` before dispatching the workflow:
 
-Configure the Clerk application for the staging Worker origin and the application's routes:
+| Secret | Purpose |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Wrangler deploy access for the staging Cloudflare account |
+| `CLERK_SECRET_KEY` | Secret key from the Exelta Staging Clerk development instance |
+| `STAGING_CLERK_TEST_COOKIE` | Session cookie for test user one |
+| `STAGING_CLERK_OTHER_TEST_COOKIE` | Session cookie for a different test user |
 
-- Sign-in URL: `/sign-in`
-- Sign-up URL: `/sign-up`
-- Post-authentication destination: `/app`
-- Add the staging origin to the Clerk allowed origins/redirect allowlist.
+The initial deploy can publish the Worker before the two test sessions exist; the workflow then fails at the live acceptance step rather than reporting a false green result. After deployment, create/sign in two distinct Clerk staging users, save their session cookies as the two GitHub environment secrets, and trigger the workflow again with another `[deploy-staging]` commit or `workflow_dispatch`. Never paste cookies or secret keys into chat, source files, or logs.
 
-Configure the staging Worker only:
+The workflow requires `CLOUDFLARE_API_TOKEN` and `CLERK_SECRET_KEY` before deploying. The first run is therefore blocked until those two secrets are configured. It runs typecheck, unit tests, lint, build, staging-config validation, deploy, Clerk secret installation, and then authenticated acceptance with `CI_REQUIRE_LIVE_ACCEPTANCE=1`.
 
-| Binding | Type | Notes |
-|---|---|---|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Plain variable | Staging publishable key |
-| `CLERK_SECRET_KEY` | Secret | Staging secret key; never commit or log |
-| `APP_ENV` | Plain variable | Must be `staging`; Wrangler config already sets it |
+## Optional integration secrets
 
-After the application is deployed, enable its `workers.dev` subdomain and use that exact HTTPS origin as `STAGING_BASE_URL`. Do not publish a public preview before the Clerk keys and staging Hyperdrive binding are configured.
+The following are not required for Clerk sign-in or the Memory Fabric acceptance suite:
 
-## Authenticated acceptance credentials
+- GitHub integration: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_REDIRECT_URI`, and `GITHUB_TOKEN_ENCRYPTION_KEY`. The encryption key must be base64-encoded 32-byte material. Store the secret and client secret as Worker secrets; client ID and redirect URI are non-secret variables.
+- Stripe billing: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, and plan price IDs `STRIPE_PRICE_PRO`, `STRIPE_PRICE_BUSINESS`, `STRIPE_PRICE_EXECUTIVE`.
 
-The acceptance test requires **two independent Clerk test users**, not one shared session.
-
-Configure these values as GitHub Actions variables/secrets:
-
-| Name | Storage | Purpose |
-|---|---|---|
-| `STAGING_BASE_URL` | Plain variable | Exact HTTPS staging origin |
-| `STAGING_CLERK_TEST_COOKIE` | Secret | Session cookie for the first test user |
-| `STAGING_CLERK_OTHER_TEST_COOKIE` | Secret | Session cookie for a second, different test user |
-| `CI_REQUIRE_LIVE_ACCEPTANCE` | Plain variable, value `1` | Fail closed if live acceptance is missing |
-
-The second cookie is required by the cross-user isolation assertions. Session cookies are credentials: do not paste them into chat, commit them, or print them in CI logs. Rotate them when expired or exposed.
-
-If a Cloudflare Workers Builds trigger is restored, configure its environment separately; GitHub Actions settings do not automatically populate Cloudflare build variables.
+Do not configure production keys in the staging Worker. Staging database traffic uses Hyperdrive, not `DATABASE_URL`.
 
 ## Verification commands
 
-From the repository root, with Node 24 and dependencies installed:
+From the repository root with Node 24:
 
 ```sh
 npm run validate:staging
 npm run typecheck
 npm run test
 npm run lint
-npm run build
-CI_REQUIRE_LIVE_ACCEPTANCE=1 npm run test:acceptance
+APP_ENV=staging NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<staging-publishable-key> npm run build
+CI_REQUIRE_LIVE_ACCEPTANCE=1 STAGING_BASE_URL=https://exelta-staging.rieza902.workers.dev STAGING_CLERK_TEST_COOKIE=<user-one-cookie> STAGING_CLERK_OTHER_TEST_COOKIE=<user-two-cookie> npm run test:acceptance
 ```
 
-The live test covers anonymous access rejection, two-user workspace and memory isolation, context switching, provenance-aware retrieval, conflict candidate review, explicit user-confirmed contradiction quarantine, correction, archival, and cleanup of test memories.
+The live suite covers anonymous access rejection, two-user workspace and memory isolation, context switching, provenance-aware retrieval, conflict candidate review, user-confirmed contradiction quarantine, correction, archival, and cleanup. A skipped or unexecuted live test is not a pass.
 
-The live test must run against the deployed staging URL with both independent session cookies. A skipped test is not a pass. Do not remove the fail-closed gate to obtain a green build.
+## Release boundaries
 
-## Deployment sequence after access and Clerk setup
-
-1. Restore the GitHub-to-Cloudflare repository connection or establish another executable build path that can build this repository's actual application bundle.
-2. Create the separate Clerk staging application and configure staging-only keys.
-3. Configure `STAGING_BASE_URL` and the two independent session cookies in GitHub Actions.
-4. Build the branch and deploy with `npx wrangler deploy --env staging`; do not use the production deploy command.
-5. Enable the staging Worker `workers.dev` URL and record the exact origin.
-6. Verify Hyperdrive from the deployed Worker, Clerk sign-in, session persistence, and the complete authenticated acceptance workflow.
-7. Re-run all checks and require authenticated acceptance to pass with no skips before considering PR #33 ready for review. Merging, production deployment, DNS changes, and production migrations require separate explicit authorization.
-
-## Current known limitations
-
-- The isolated Neon staging project, branch, and Hyperdrive are present.
-- The actual `exelta-staging` application Worker is not deployed in the currently connected Cloudflare account.
-- Cloudflare Workers Builds reports that the GitHub repository is disconnected; no active build trigger was verified in the current account.
-- Clerk staging application and keys are not configured.
-- Two independent authenticated test sessions are not configured.
-- GitHub Actions job retries have failed before runner allocation (`steps: null`); no tests ran in those retries.
-- The live authenticated acceptance test has not passed.
-- Contradiction candidate detection is lexical and explicitly requires user review. This implementation does not claim autonomous semantic contradiction resolution.
-- No production change or PR merge has been performed.
+- Deploy only with `--env staging`.
+- Do not merge PR #33 or deploy production as part of staging verification.
+- Do not change production Hyperdrive, production Clerk credentials, DNS, or production Worker.
+- Conflict detection produces lexical candidates for explicit user review; it does not claim autonomous semantic contradiction resolution.
