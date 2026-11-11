@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 
@@ -180,13 +181,15 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
       <div className="genesis-nebula" aria-hidden="true" />
       <div className="genesis-vignette" aria-hidden="true" />
       <header className="genesis-topbar">
+        <Link className="genesis-brand" href="/" aria-label="ZIO Genesis home">
+          <span className="genesis-mark" aria-hidden="true"><i /></span>
+          <span><strong>ZIO</strong><small>GENESIS</small></span>
         <Link className="genesis-brand" href="/" aria-label="Exelta home">
           <span className="genesis-mark" aria-hidden="true"><i /></span>
           <span><strong>EXELTA</strong><small>GENESIS</small></span>
         </Link>
         <div className="genesis-top-status"><span className="genesis-status-dot" /> {authenticated ? (workspace?.name ?? "Private universe") : "A living intelligent reality"}</div>
         <nav className="genesis-nav" aria-label="Account">
-          <Link className="genesis-nav-link" href="/atlas">System Atlas</Link>
           {authenticated ? <Link className="genesis-nav-link" href="/app">Enter universe <span aria-hidden="true">↗</span></Link> : <><Link className="genesis-nav-link" href="/sign-in">Sign in</Link><Link className="genesis-nav-cta" href="/sign-up">Begin</Link></>}
         </nav>
       </header>
