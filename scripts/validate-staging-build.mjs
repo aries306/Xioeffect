@@ -6,6 +6,7 @@ assert.ok(fs.existsSync(path), "Cloudflare Vite build output must contain its ge
 const config = JSON.parse(fs.readFileSync(path, "utf8"));
 const hyperdrive = config.hyperdrive?.find((binding) => binding.binding === "HYPERDRIVE");
 
+assert.equal(config.account_id, "6266f92b054b68ec69ff619d3869f195", "build output must be pinned to the intended Cloudflare account");
 assert.equal(config.name, "exelta-staging", "build output must target only the isolated staging Worker");
 assert.equal(config.vars?.APP_ENV, "staging", "build output must set APP_ENV=staging");
 assert.equal(config.vars?.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, "pk_test_YmVsb3ZlZC1pbXBhbGEtNjgzMS5jbGVyay5hY2NvdW50cy5kZXYk", "build output must use the Exelta Staging Clerk key");
