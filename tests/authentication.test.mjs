@@ -59,9 +59,10 @@ test("GitHub OAuth uses state, PKCE, short-lived HttpOnly cookies, and encrypted
 test("Staging deployment is branch-scoped and requires live authenticated acceptance", async () => {
   const workflow = await read(".github/workflows/deploy-staging.yml");
   assert.match(workflow, /fix\/staging-pipeline-recovery/);
-  assert.match(workflow, /wrangler deploy --env staging/);
-  assert.match(workflow, /wrangler secret put CLERK_SECRET_KEY --env staging/);
+  assert.match(workflow, /CLOUDFLARE_ENV: staging/);
+  assert.match(workflow, /wrangler deploy --account-id 6266f92b054b68ec69ff619d3869f195/);
+  assert.match(workflow, /wrangler secret put CLERK_SECRET_KEY --account-id 6266f92b054b68ec69ff619d3869f195/);
   assert.match(workflow, /CI_REQUIRE_LIVE_ACCEPTANCE: "1"/);
   assert.match(workflow, /npm run test:acceptance/);
-  assert.doesNotMatch(workflow, /wrangler deploy(?! --env staging)/);
+  assert.doesNotMatch(workflow, /wrangler deploy --env/);
 });
