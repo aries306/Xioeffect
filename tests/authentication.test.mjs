@@ -60,6 +60,7 @@ test("Staging deployment is branch-scoped and requires live authenticated accept
   const workflow = await read(".github/workflows/deploy-staging.yml");
   assert.match(workflow, /fix\/staging-pipeline-recovery/);
   assert.match(workflow, /CLOUDFLARE_ENV: staging/);
+  assert.match(workflow, /npm run validate:staging-build/);
   assert.match(workflow, /wrangler deploy --account-id 6266f92b054b68ec69ff619d3869f195/);
   assert.match(workflow, /wrangler secret put CLERK_SECRET_KEY --account-id 6266f92b054b68ec69ff619d3869f195/);
   assert.match(workflow, /CI_REQUIRE_LIVE_ACCEPTANCE: "1"/);
