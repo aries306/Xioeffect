@@ -1,6 +1,9 @@
 name: Deploy Exelta Staging
 
 on:
+  push:
+    branches:
+      - fix/exelta-ui-brand-and-arrival-tests
   workflow_dispatch:
 
 concurrency:
@@ -9,7 +12,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/fix/exelta-ui-brand-and-arrival-tests'
+    if: github.ref == 'refs/heads/fix/exelta-ui-brand-and-arrival-tests' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy-staging]'))
     runs-on: ubuntu-22.04
     environment: staging
     timeout-minutes: 30
