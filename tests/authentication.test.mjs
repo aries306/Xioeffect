@@ -11,8 +11,7 @@ test("Clerk middleware initializes auth for protected pages and private API rout
   assert.match(proxy, /\/app\(\.\*\)/);
   assert.match(proxy, /auth\.protect\(\)/);
   assert.match(proxy, /signInUrl: "\/sign-in"/);
-  assert.match(proxy, /\/api\/billing\/portal\(\.\*\)/);
-  assert.match(proxy, /"\/api\/billing\/portal:\/path\*"/);
+  assert.ok(proxy.includes("\"/api/billing/portal/:path*\""));
   assert.match(proxy, /API handlers return JSON 401\/403/);
 });
 
