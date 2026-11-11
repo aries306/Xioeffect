@@ -414,9 +414,9 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
       <div className="zuna-light-wash" aria-hidden="true" />
       <div className="zuna-depth-rings" aria-hidden="true"><i /><i /><i /></div>
       <header className="zuna-arrival-header">
-        <Link href="/" className="zuna-arrival-brand" aria-label="Exelta home">
+        <Link href="/" className="zuna-arrival-brand" aria-label="XIO home">
           <span className="zuna-brand-glyph">X</span>
-          <span><strong>EXELTA</strong><small>A LIVING INTELLIGENCE</small></span>
+          <span><strong>XIO</strong><small>INTELLIGENCE ENVIRONMENT</small></span>
         </Link>
         <div className="zuna-header-center"><span className="zuna-online-dot" /> EXELTA IS HERE</div>
         <nav className="zuna-header-links">
@@ -481,8 +481,8 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
             <form className="zuna-entry-form" onSubmit={submitIntention}>
               <label htmlFor="exelta-intention">YOUR FIRST INTENTION</label>
               <textarea id="exelta-intention" value={intention} onChange={(event) => setIntention(event.target.value)} maxLength={2000} rows={3} placeholder="I want to…" autoFocus />
-              <label className="zuna-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Save my name, introduction, and intention to my private Exelta Memory Fabric. I can review or change them later.</span></label>
-              <button className="zuna-primary-button" type="submit" disabled={!intention.trim() || !consent || busy || (isAuthenticated && !workspace?.id)}>{busy ? "Connecting your context…" : isAuthenticated ? "Enter Exelta" : "Create your Exelta space & save"} <span>✦</span></button>
+              <label className="zuna-consent"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Save my name, introduction, and intention to my private XIO Memory Fabric. I can review or change them later.</span></label>
+              <button className="zuna-primary-button" type="submit" disabled={!intention.trim() || !consent || busy || (isAuthenticated && !workspace?.id)}>{busy ? "Connecting your context…" : isAuthenticated ? "Enter XIO" : "Create your XIO space & save"} <span>✦</span></button>
             </form>
             {voiceSupported && <button className="zuna-voice-link" type="button" onClick={() => startListening("intention")}>{listening ? "Stop listening" : "Speak your intention"}</button>}
             {!isAuthenticated && <p className="zuna-privacy-note">Your details remain in this browser until you sign in and confirm saving.</p>}{isAuthenticated && !workspace?.id && <p className="zuna-privacy-note">Connecting your private workspace before saving…</p>}
@@ -500,7 +500,7 @@ export default function ZunaArrivalExperience({ authenticated: initialAuthentica
               <p>{answer || "Your context is saved. Open your workspace to continue the conversation and develop your first insight."}</p>
             </div>
             <div className="zuna-reveal-actions">
-              <Link className="zuna-primary-button" href="/app">Enter Exelta <span>↗</span></Link>
+              <Link className="zuna-primary-button" href="/app">Enter XIO <span>↗</span></Link>
               <Link className="zuna-secondary-button" href="/atlas">Explore the system</Link>
             </div>
             <p className="zuna-privacy-note">{saved ? "3 context records saved · workspace context updated" : "Your private context is ready"}</p>

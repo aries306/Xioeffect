@@ -1,43 +1,57 @@
-# Exelta — unified product architecture
+# XIO and Zioren — shared Intelligence Layer architecture
 
-## Product identity
+## Product boundaries
 
-**Exelta is the product, the experience, and the user-facing intelligence.** Legacy XIO, Astara, Zuna, ZIO, and Zioren names are retired from user-facing product language. Historical API routes, database tables, component names, and deployment identifiers may remain temporarily where changing them would risk compatibility; they are implementation details, not separate products.
+XIO and Zioren are distinct product identities and remain separate experiences. Neither product is a renamed version of the other.
+
+**EXelta** is the shared user-facing AI identity across both products. EXelta is the intelligence presence users interact with; it is not a replacement brand for XIO or Zioren.
+
+The **Intelligence Layer** is shared underlying architecture for context assembly, retrieval, reasoning, orchestration, governance, and outcome verification. It is infrastructure, not a competing product identity.
+
+**Zio Effect** is the compounding advantage produced when relevant context, learning, and verified outcomes improve future work.
 
 ## Core experience
 
-Exelta is a living intelligence universe, not a dashboard, widget grid, prompt library, or generic chatbot. Its spatial interface uses fields, nodes, relationships, depth, light, and transitions to make real system state legible. Motion must correspond to actual listening, retrieval, reasoning, verification, approval, or learning; decorative animation must not imply work that did not happen.
+The experience is spatial and immersive rather than a conventional dashboard, widget grid, prompt library, or generic chatbot. Fields, nodes, relationships, depth, light, and transitions should make real system state legible. Motion must correspond to actual listening, retrieval, reasoning, verification, approval, or learning; decorative animation must not imply work that did not happen.
 
-The visual direction should be luminous and high-dimensional rather than uniformly dark: paper and pearl surfaces with deep midnight depth, Signal Violet (#7C5CFF), Memory Cyan (#27D7C5), and carefully controlled luminous highlights. Use dimensional 3D forms, atmospheric parallax, layered translucency, rich spatial composition, and responsive motion. Preserve readability, accessibility, responsive layouts, and reduced-motion preferences.
+The visual direction is luminous and high-dimensional: paper and pearl surfaces with midnight depth, Signal Violet (#7C5CFF), Memory Cyan (#27D7C5), and controlled highlights. Preserve readability, accessibility, responsive layouts, and reduced-motion preferences.
 
-## Five-minute wow
+## Five-minute arrival
 
-The arrival experience should demonstrate a real cognitive loop, not merely introduce features:
+The arrival experience should demonstrate a real cognitive loop:
 
 1. Establish the user's intention and current context.
 2. Ask permission before persisting personal information.
-3. Store approved memories with source, captured time, scope, confidence, and lifecycle.
-4. Transition to a different task/context.
+3. Store approved memories with source, capture time, scope, confidence, and lifecycle.
+4. Transition to a different task or context.
 5. Retrieve a relevant memory only when context matches.
 6. Re-evaluate provenance, freshness, confidence, scope, and conflicts before influence.
-7. Show the user why the memory resurfaced and let them inspect or correct it.
+7. Show why the memory resurfaced and let the user inspect or correct it.
 
-The arrival must transition into the same working environment; it must not end at an onboarding card and dump the user into a conventional dashboard.
+The arrival must transition into the same working environment, not end at an onboarding card and send the user to a generic dashboard.
 
 ## Memory Fabric
 
-Memory is persistent, user-controlled, and distinct from belief, pattern, insight, and recommendation. Records preserve context, scope, provenance, confidence, relationships, consent, timestamps, permissions, and lifecycle. Dormant memories can be reconsidered when relevant context returns, but retrieval never implies automatic influence. Insufficiently sourced, stale, out-of-scope, or conflicting memories fail closed pending review.
+Memory is persistent, user-controlled, and distinct from belief, pattern, insight, and recommendation. Records preserve context, scope, provenance, confidence, relationships, consent, timestamps, permissions, and lifecycle. Dormant memories can be reconsidered when relevant context returns, but retrieval never implies automatic influence. Insufficiently sourced, stale, out-of-scope, or conflicting memories should fail closed pending review.
 
 Research evidence remains separate from memory until an explicit, governed memory-capture action occurs. User inspection, correction, suppression, export, and deletion are required controls.
 
-## Intelligent Core
+## NEXUS and Shadow
 
-The orchestration loop is:
+NEXUS connects eligible context and evidence while preserving the distinction between memory, belief, pattern, insight, and recommendation. Each derived conclusion must retain its supporting evidence and uncertainty.
 
-`INTENT → CONTEXT → MEMORY → REASONING → ACTION → RESULT → FEEDBACK → LEARNING → MEMORY`
+Shadow represents alternative scenarios and counterfactual possibilities, not asserted facts or predictions. Possibilities remain labelled until evidence changes their status.
 
-The system assembles context, retrieves eligible memories and source-backed evidence, evaluates relevance and confidence, coordinates specialized capabilities, applies governance and approval boundaries, verifies outcomes, and records permitted learning.
+## Zio Effect
 
-## Compatibility
+The intelligence loop is:
 
-Do not rename API paths, database identifiers, auth claims, or deployment resource names in a blind global replacement. Consolidate all user-visible copy, metadata, onboarding, documentation, and public brand surfaces under Exelta while preserving internal contracts until a separately tested migration is justified.
+`INTENT → CONTEXT → MEMORY → REASONING → ACTION → RESULT → FEEDBACK → LEARNING`
+
+Zio Effect should be demonstrated through improved retrieval relevance, fewer repeated explanations, clearer decisions, user corrections, and verified outcomes—not decorative scores or unverified claims.
+
+## Compatibility and governance
+
+Do not rename API paths, database identifiers, auth claims, component identifiers, or deployment resource names in a blind global replacement. Preserve historical technical identifiers where changing them would risk compatibility; they do not determine product identity.
+
+EXelta may explain, challenge, and recommend, but the user retains authority over consequential actions. Never invent provenance, claim a memory is verified merely because it was retrieved, or present a possibility as a fact.

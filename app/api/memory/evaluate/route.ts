@@ -21,9 +21,9 @@ export async function POST(request: Request) {
     const evaluation = evaluateMemoryForContext({
       text: String(row.text),
       scope: (row.scope ?? {}) as Record<string, unknown>,
-      provenance: Object.prototype.hasOwnProperty.call((row.provenance ?? {}) as Record<string, unknown>, "capturedAt")
-        ? (row.provenance ?? {}) as Record<string, unknown>
-        : { ...((row.provenance ?? {}) as Record<string, unknown>), capturedAt: String(row.created_at) },
+      provenance: (row.provenance ?? {}) as Record<string, unknown>,
+      recordedAt: String(row.created_at),
+      ownerId: userId,
       lifecycleState: String(row.lifecycle_state),
       confidence: Number(row.confidence),
       relevance: Number(row.relevance),
@@ -59,9 +59,9 @@ export async function POST(request: Request) {
       confidence: Number(candidate.confidence),
       relevance: Number(candidate.relevance),
       scope: (candidate.scope ?? {}) as Record<string, unknown>,
-      provenance: Object.prototype.hasOwnProperty.call((candidate.provenance ?? {}) as Record<string, unknown>, "capturedAt")
-        ? (candidate.provenance ?? {}) as Record<string, unknown>
-        : { ...((candidate.provenance ?? {}) as Record<string, unknown>), capturedAt: String(candidate.created_at) },
+      provenance: (candidate.provenance ?? {}) as Record<string, unknown>,
+      recordedAt: String(candidate.created_at),
+      ownerId: userId,
       updatedAt: String(candidate.updated_at),
       lastConfirmedAt: candidate.last_confirmed_at ? String(candidate.last_confirmed_at) : null,
     }));
@@ -72,9 +72,9 @@ export async function POST(request: Request) {
       confidence: Number(row.confidence),
       relevance: Number(row.relevance),
       scope: (row.scope ?? {}) as Record<string, unknown>,
-      provenance: Object.prototype.hasOwnProperty.call((row.provenance ?? {}) as Record<string, unknown>, "capturedAt")
-        ? (row.provenance ?? {}) as Record<string, unknown>
-        : { ...((row.provenance ?? {}) as Record<string, unknown>), capturedAt: String(row.created_at) },
+      provenance: (row.provenance ?? {}) as Record<string, unknown>,
+      recordedAt: String(row.created_at),
+      ownerId: userId,
       updatedAt: String(row.updated_at),
       lastConfirmedAt: row.last_confirmed_at ? String(row.last_confirmed_at) : null,
     };
