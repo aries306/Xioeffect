@@ -77,7 +77,7 @@ npm run validate:staging
 npm run typecheck
 npm run test
 npm run lint
-APP_ENV=staging NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<staging-publishable-key> npm run build
+APP_ENV=staging CLOUDFLARE_ENV=staging NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<staging-publishable-key> npm run build
 CI_REQUIRE_LIVE_ACCEPTANCE=1 STAGING_BASE_URL=https://exelta-staging.rieza902.workers.dev STAGING_CLERK_TEST_COOKIE=<user-one-cookie> STAGING_CLERK_OTHER_TEST_COOKIE=<user-two-cookie> npm run test:acceptance
 ```
 
@@ -85,7 +85,7 @@ The live suite covers anonymous access rejection, two-user workspace and memory 
 
 ## Release boundaries
 
-- Deploy only with `--env staging`.
+- Build with `CLOUDFLARE_ENV=staging` before `wrangler deploy`; the Cloudflare Vite plugin resolves and flattens the selected environment at build time. Do not pass `--env` to the generated deployment config.
 - Do not merge PR #33 or deploy production as part of staging verification.
 - Do not change production Hyperdrive, production Clerk credentials, DNS, or production Worker.
 - Conflict detection produces lexical candidates for explicit user review; it does not claim autonomous semantic contradiction resolution.

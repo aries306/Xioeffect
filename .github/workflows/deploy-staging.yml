@@ -3,7 +3,7 @@ name: Deploy Exelta Staging
 on:
   push:
     branches:
-      - fix/exelta-ui-brand-and-arrival-tests
+      - fix/staging-pipeline-recovery
   workflow_dispatch:
 
 concurrency:
@@ -12,14 +12,15 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.ref == 'refs/heads/fix/exelta-ui-brand-and-arrival-tests' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy-staging]'))
-    runs-on: ubuntu-24.04
+    if: github.ref == 'refs/heads/fix/staging-pipeline-recovery' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy-staging]'))
+    runs-on: ubuntu-24.04-arm
     environment: staging
-    timeout-minutes: 30
+    timeout-minutes: 40
     permissions:
       contents: read
     env:
       APP_ENV: staging
+      CLOUDFLARE_ENV: staging
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_YmVsb3ZlZC1pbXBhbGEtNjgzMS5jbGVyay5hY2NvdW50cy5kZXYk
       STAGING_BASE_URL: https://exelta-staging.rieza902.workers.dev
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
@@ -37,16 +38,19 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run lint
-      - run: npm run build
+      - name: Build for the isolated staging environment
+        run: npm run build
+      - name: Verify generated Worker targets isolated staging resources
+        run: npm run validate:staging-build
       - name: Verify required deployment credentials
         shell: bash
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing staging environment secret: CLOUDFLARE_API_TOKEN"; exit 1; }
           test -n "$CLERK_SECRET_KEY" || { echo "Missing staging environment secret: CLERK_SECRET_KEY"; exit 1; }
       - name: Deploy isolated staging Worker
-        run: npx wrangler deploy --env staging --account-id 6266f92b054b68ec69ff619d3869f195
+        run: npx wrangler deploy
       - name: Install Clerk staging secret
         shell: bash
-        run: printf '%s' "$CLERK_SECRET_KEY" | npx wrangler secret put CLERK_SECRET_KEY --env staging --account-id 6266f92b054b68ec69ff619d3869f195
+        run: printf '%s' "$CLERK_SECRET_KEY" | npx wrangler secret put CLERK_SECRET_KEY
       - name: Verify live authenticated staging flows
         run: npm run test:acceptance

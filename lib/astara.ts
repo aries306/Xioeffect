@@ -96,7 +96,7 @@ When appropriate, provide a clear recommendation. If you do, put it on its own l
     inferenceConfidenceIssues: confidenceLedger.issues,
     durationMs: Date.now() - started,
   };
-  await sql`insert into events (user_id, kind, metadata) values (${userId}, 'avenne-response', ${JSON.stringify({ workspaceId: workspace.id, memoryCount: memories.length, recommendationGenerated: Boolean(recommendation), ...diagnostics })}::jsonb)`;
+  await sql`insert into events (user_id, kind, metadata) values (${userId}, 'avenne-response', ${JSON.stringify({ workspaceId: workspace.id, recommendationGenerated: Boolean(recommendation), ...diagnostics })}::jsonb)`;
   return {
     conversationId,
     answer,

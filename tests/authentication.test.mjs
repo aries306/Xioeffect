@@ -11,7 +11,7 @@ test("Clerk middleware initializes auth for protected pages and private API rout
   assert.match(proxy, /\/app\(\.\*\)/);
   assert.match(proxy, /auth\.protect\(\)/);
   assert.match(proxy, /signInUrl: "\/sign-in"/);
-  assert.ok(proxy.includes("\"/api/billing/portal/:path*\""));
+  assert.ok(proxy.includes('"\/api/billing/portal/:path*"'));
   assert.match(proxy, /API handlers return JSON 401\/403/);
 });
 
@@ -58,19 +58,14 @@ test("GitHub OAuth uses state, PKCE, short-lived HttpOnly cookies, and encrypted
 
 test("Staging deployment is branch-scoped and requires live authenticated acceptance", async () => {
   const workflow = await read(".github/workflows/deploy-staging.yml");
-  assert.match(workflow, /fix\/exelta-ui-brand-and-arrival-tests/);
-  assert.match(workflow, /wrangler deploy --env staging/);
-  assert.match(workflow, /wrangler secret put CLERK_SECRET_KEY --env staging/);
+  assert.match(workflow, /fix\/staging-pipeline-recovery/);
+  assert.match(workflow, /CLOUDFLARE_ENV: staging/);
+  assert.match(workflow, /npm run validate:staging-build/);
+  assert.match(workflow, /npx wrangler deploy/);
+  const wrangler = JSON.parse(await read("wrangler.jsonc"));
+  assert.equal(wrangler.account_id, "6266f92b054b68ec69ff619d3869f195");
+  assert.match(workflow, /npx wrangler secret put CLERK_SECRET_KEY/);
   assert.match(workflow, /CI_REQUIRE_LIVE_ACCEPTANCE: "1"/);
   assert.match(workflow, /npm run test:acceptance/);
-  assert.doesNotMatch(workflow, /wrangler deploy(?! --env staging)/);
-});
-
-test("Staging deployment is branch-scoped and requires live authenticated acceptance", async () => {
-  const workflow = await read(".github/workflows/deploy-staging.yml");
-  assert.match(workflow, /fix\/exelta-ui-brand-and-arrival-tests/);
-  assert.match(workflow, /wrangler deploy --env staging/);
-  assert.match(workflow, /wrangler secret put CLERK_SECRET_KEY --env staging/);
-  assert.match(workflow, /CI_REQUIRE_LIVE_ACCEPTANCE: "1"/);
-  assert.match(workflow, /npm run test:acceptance/);
+  assert.doesNotMatch(workflow, /wrangler deploy --env/);
 });
