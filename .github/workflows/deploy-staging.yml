@@ -20,6 +20,7 @@ jobs:
       contents: read
     env:
       APP_ENV: staging
+      CLOUDFLARE_ENV: staging
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_YmVsb3ZlZC1pbXBhbGEtNjgzMS5jbGVyay5hY2NvdW50cy5kZXYk
       STAGING_BASE_URL: https://exelta-staging.rieza902.workers.dev
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
@@ -37,16 +38,17 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run lint
-      - run: npm run build
+      - name: Build for the isolated staging environment
+        run: npm run build
       - name: Verify required deployment credentials
         shell: bash
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing staging environment secret: CLOUDFLARE_API_TOKEN"; exit 1; }
           test -n "$CLERK_SECRET_KEY" || { echo "Missing staging environment secret: CLERK_SECRET_KEY"; exit 1; }
       - name: Deploy isolated staging Worker
-        run: npx wrangler deploy --env staging --account-id 6266f92b054b68ec69ff619d3869f195
+        run: npx wrangler deploy --account-id 6266f92b054b68ec69ff619d3869f195
       - name: Install Clerk staging secret
         shell: bash
-        run: printf '%s' "$CLERK_SECRET_KEY" | npx wrangler secret put CLERK_SECRET_KEY --env staging --account-id 6266f92b054b68ec69ff619d3869f195
+        run: printf '%s' "$CLERK_SECRET_KEY" | npx wrangler secret put CLERK_SECRET_KEY --account-id 6266f92b054b68ec69ff619d3869f195
       - name: Verify live authenticated staging flows
         run: npm run test:acceptance
