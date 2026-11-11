@@ -4,14 +4,16 @@ import fs from "node:fs/promises";
 
 const read = (path) => fs.readFile(path, "utf8");
 
-test("Clerk middleware initializes auth for application and API requests", async () => {
+test("Clerk middleware initializes auth for protected pages and private API routes", async () => {
   const proxy = await read("proxy.ts");
   assert.match(proxy, /clerkMiddleware/);
   assert.match(proxy, /createRouteMatcher/);
   assert.match(proxy, /\/app\(\.\*\)/);
   assert.match(proxy, /auth\.protect\(\)/);
   assert.match(proxy, /signInUrl: "\/sign-in"/);
-  assert.match(proxy, /\/\(api\|trpc\)\(\.\*\)/);
+  assert.match(proxy, /\/api\/billing\/portal\(\.\*\)/);
+  assert.match(proxy, /"\/api\/billing\/portal:\/path\*"/);
+  assert.match(proxy, /API handlers return JSON 401\/403/);
 });
 
 test("Clerk is mandatory in staging and production", async () => {
@@ -23,17 +25,22 @@ test("Clerk is mandatory in staging and production", async () => {
   assert.match(layout, /ClerkProvider/);
   assert.match(layout, /signInUrl="\/sign-in"/);
   assert.match(layout, /signUpUrl="\/sign-up"/);
+  assert.ok(layout.indexOf("<body>") < layout.indexOf("<ClerkProvider"), "ClerkProvider must be inside the document body");
 });
 
 test("API identity is derived from a verified Clerk session before workspace authorization", async () => {
   const auth = await read("lib/auth.ts");
   const workspace = await read("lib/workspace.ts");
+  const workspaceRoute = await read("app/api/workspace/route.ts");
+  const memoryRoute = await read("app/api/memory/route.ts");
   assert.match(auth, /await auth\(\)/);
   assert.match(auth, /if \(!userId\)/);
   assert.match(workspace, /requireUser/);
   assert.match(workspace, /workspace_members/);
   assert.match(workspace, /assertRole/);
   assert.match(workspace, /wm\.user_id=\$\{userId\}/);
+  assert.match(workspaceRoute, /status: 401/);
+  assert.match(memoryRoute, /status: 401/);
 });
 
 test("GitHub OAuth uses state, PKCE, short-lived HttpOnly cookies, and encrypted token storage", async () => {
