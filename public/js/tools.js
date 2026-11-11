@@ -234,10 +234,122 @@ const XIO_TOOLS = (() => {
     });
   }
 
+
+
+  /* ══ BANK STATEMENT EDITOR ═════════════════════════════
+     Produces clearly watermarked internal planning copies only. */
+  const statementSample = [
+    { date: "2026-08-02", desc: "Payroll deposit", cat: "Income", amount: 4200.00 },
+    { date: "2026-08-04", desc: "Rent payment", cat: "Housing", amount: -1800.00 },
+    { date: "2026-08-07", desc: "Grocery market", cat: "Food", amount: -126.42 },
+    { date: "2026-08-12", desc: "Client reimbursement", cat: "Income", amount: 315.75 },
+    { date: "2026-08-18", desc: "Utilities", cat: "Bills", amount: -184.31 }
+  ];
+
+  function money(n){
+    return (Number(n) || 0).toLocaleString(undefined, { style: "currency", currency: "USD" });
+  }
+
+  function statementRows(){
+    return [...document.querySelectorAll(".bs-row")].map(row => ({
+      date: row.querySelector(".bs-date").value,
+      desc: row.querySelector(".bs-desc").value.trim(),
+      cat: row.querySelector(".bs-cat").value.trim(),
+      amount: Number(row.querySelector(".bs-amount").value || 0)
+    })).filter(t => t.date || t.desc || t.cat || t.amount);
+  }
+
+  function addStatementRow(tx = {}){
+    const rows = document.getElementById("bs-rows");
+    const row = document.createElement("div");
+    row.className = "bs-row";
+    row.innerHTML = `
+      <input class="bs-date" type="date" value="${esc(tx.date || "")}" aria-label="Transaction date" />
+      <input class="bs-desc" value="${esc(tx.desc || "")}" placeholder="Description" aria-label="Description" />
+      <input class="bs-cat" value="${esc(tx.cat || "")}" placeholder="Category" aria-label="Category" />
+      <input class="bs-amount" type="number" step="0.01" value="${tx.amount ?? ""}" placeholder="Amount" aria-label="Amount" />
+      <button class="icon-btn bs-del" title="Delete row">🗑</button>`;
+    row.querySelector(".bs-del").onclick = () => { row.remove(); renderStatements(); };
+    row.querySelectorAll("input").forEach(input => input.addEventListener("input", renderStatements));
+    rows.appendChild(row);
+  }
+
+  function loadStatementSample(){
+    document.getElementById("bs-bank").value = "Northstar Bank";
+    document.getElementById("bs-holder").value = E().state.profile.name || "Alex Morgan";
+    document.getElementById("bs-account").value = "Everyday Checking •••• 4821";
+    document.getElementById("bs-period").value = "Aug 1–31, 2026";
+    document.getElementById("bs-open").value = "2450.00";
+    document.getElementById("bs-rows").innerHTML = "";
+    statementSample.forEach(addStatementRow);
+    renderStatements();
+    XIO_APP.toast("Sample statement loaded as a watermarked planning copy.");
+  }
+
+  function renderStatements(){
+    const preview = document.getElementById("bs-preview");
+    if (!preview) return;
+    const bank = document.getElementById("bs-bank").value.trim() || "Bank name";
+    const holder = document.getElementById("bs-holder").value.trim() || "Account holder";
+    const account = document.getElementById("bs-account").value.trim() || "Account label";
+    const period = document.getElementById("bs-period").value.trim() || "Statement period";
+    const status = document.getElementById("bs-status").value;
+    const opening = Number(document.getElementById("bs-open").value || 0);
+    const txs = statementRows().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    let running = opening;
+    const rows = txs.map(tx => {
+      running += tx.amount;
+      return `<tr><td>${esc(tx.date || "—")}</td><td>${esc(tx.desc || "Untitled")}</td><td>${esc(tx.cat || "Uncategorized")}</td><td class="num ${tx.amount < 0 ? "neg" : "pos"}">${money(tx.amount)}</td><td class="num">${money(running)}</td></tr>`;
+    }).join("");
+    const deposits = txs.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+    const withdrawals = txs.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0);
+    preview.innerHTML = `
+      <div class="statement-watermark">INTERNAL COPY</div>
+      <div class="statement-disclaimer">Watermarked planning/reconciliation copy — not an official bank document.</div>
+      <div class="statement-head"><div><h3>${esc(bank)}</h3><p>${esc(status)}</p></div><div class="statement-period">${esc(period)}</div></div>
+      <div class="statement-meta"><span>${esc(holder)}</span><span>${esc(account)}</span></div>
+      <div class="statement-summary">
+        <div><b>${money(opening)}</b><span>Opening</span></div>
+        <div><b>${money(deposits)}</b><span>Deposits</span></div>
+        <div><b>${money(Math.abs(withdrawals))}</b><span>Withdrawals</span></div>
+        <div><b>${money(running)}</b><span>Ending</span></div>
+      </div>
+      <table class="statement-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th>Balance</th></tr></thead><tbody>${rows || `<tr><td colspan="5">Add transactions to build the planning copy.</td></tr>`}</tbody></table>`;
+  }
+
+  function exportStatement(){
+    const payload = {
+      bank: document.getElementById("bs-bank").value.trim(),
+      holder: document.getElementById("bs-holder").value.trim(),
+      account: document.getElementById("bs-account").value.trim(),
+      period: document.getElementById("bs-period").value.trim(),
+      openingBalance: Number(document.getElementById("bs-open").value || 0),
+      status: document.getElementById("bs-status").value,
+      watermark: "INTERNAL COPY - not an official bank document",
+      transactions: statementRows()
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "statement-planning-copy.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    XIO_APP.toast("Watermarked statement data exported.");
+  }
+
   /* ══ INIT ════════════════════════════════════════════ */
   function initContent(){
     document.getElementById("cg-go").onclick = generateContent;
     document.getElementById("cg-copy").onclick = copyAllContent;
+  }
+  function initStatements(){
+    ["bs-bank","bs-holder","bs-account","bs-period","bs-open","bs-status"].forEach(id => document.getElementById(id)?.addEventListener("input", renderStatements));
+    document.getElementById("bs-add").onclick = () => { addStatementRow(); renderStatements(); };
+    document.getElementById("bs-load").onclick = loadStatementSample;
+    document.getElementById("bs-render").onclick = renderStatements;
+    document.getElementById("bs-export").onclick = exportStatement;
+    document.getElementById("bs-print").onclick = () => window.print();
+    addStatementRow(); renderStatements();
   }
   function initPrompts(){
     ["pb-role","pb-objective","pb-context","pb-format","pb-tone","pb-constraints"].forEach(id =>
@@ -247,7 +359,7 @@ const XIO_TOOLS = (() => {
     renderLibrary(); refreshPreview();
   }
 
-  return { initContent, initPrompts, renderPacks, renderToolkits, renderLibrary };
+  return { initContent, initPrompts, initStatements, renderPacks, renderToolkits, renderLibrary, renderStatements };
 })();
 
 window.XIO_TOOLS = XIO_TOOLS;
