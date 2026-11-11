@@ -64,7 +64,7 @@ test("Staging deployment is branch-scoped and requires live authenticated accept
   assert.match(workflow, /npx wrangler deploy/);
   const wrangler = JSON.parse(await read("wrangler.jsonc"));
   assert.equal(wrangler.account_id, "6266f92b054b68ec69ff619d3869f195");
-  assert.match(workflow, /wrangler secret put CLERK_SECRET_KEY --account-id 6266f92b054b68ec69ff619d3869f195/);
+  assert.match(workflow, /npx wrangler secret put CLERK_SECRET_KEY/);
   assert.match(workflow, /CI_REQUIRE_LIVE_ACCEPTANCE: "1"/);
   assert.match(workflow, /npm run test:acceptance/);
   assert.doesNotMatch(workflow, /wrangler deploy --env/);
