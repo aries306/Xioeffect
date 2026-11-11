@@ -24,7 +24,8 @@
     "build:next": "next build",
     "start:next": "next start",
     "validate:staging": "node scripts/validate-staging-config.mjs",
-    "test:acceptance": "node --test tests/live-acceptance.mjs"
+    "test:acceptance": "node --test tests/live-acceptance.mjs",
+    "validate:staging-build": "node scripts/validate-staging-build.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "6.36.4",
