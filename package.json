@@ -4,20 +4,23 @@
   "version": "0.1.0",
   "type": "module",
   "engines": {
-    "node": "24.x"
+    "node": ">=22"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "vinext dev",
+    "build": "vinext build",
+    "start": "vinext start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --test tests/*.test.mjs",
     "dev:vinext": "vinext dev",
     "build:vinext": "vinext build",
     "start:vinext": "vinext start",
-    "preview:cloudflare": "npm run build:vinext && npx wrangler dev",
-    "deploy:cloudflare": "npm run build:vinext && npx wrangler deploy"
+    "preview:cloudflare": "npm run build:vinext && wrangler dev",
+    "deploy:cloudflare": "npm run build:vinext && wrangler deploy",
+    "dev:next": "next dev -p 3000 -H 0.0.0.0",
+    "build:next": "next build",
+    "start:next": "next start"
   },
   "dependencies": {
     "next": "16.2.5",
@@ -40,6 +43,7 @@
     "eslint": "9.39.1",
     "eslint-config-next": "16.2.5",
     "typescript": "5.9.3",
-    "vite": "8.3.0"
+    "vite": "8.3.0",
+    "wrangler": "4.157.0"
   }
 }

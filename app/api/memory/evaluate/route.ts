@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         and ((relation.source_memory_id=memories.id and relation.target_memory_id=${row.id})
           or (relation.target_memory_id=memories.id and relation.source_memory_id=${row.id}))
     ) order by updated_at desc limit 40`;
-    const candidateInputs = candidateRows.map((candidate) => ({
+    const candidateInputs = candidateRows.map((candidate: Record<string, unknown>) => ({
       id: String(candidate.id),
       text: String(candidate.text),
       category: String(candidate.category),

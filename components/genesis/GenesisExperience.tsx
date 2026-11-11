@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 
 type GenesisExperienceProps = { authenticated?: boolean };
 type WorkspacePayload = {
@@ -143,7 +144,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
       return;
     }
     setBusy(true);
-    setNotice("The Core is considering your thought…");
+    setNotice("EXelta is considering your thought…");
     setRecommendation("");
     setEvidence([]);
     try {
@@ -156,7 +157,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
       const data = (await response.json()) as ChatPayload;
       if (!response.ok) {
         if (response.status === 401) throw new Error("Your session has expired. Sign in again to continue.");
-        throw new Error(data.error || "The Core could not complete that request.");
+        throw new Error(data.error || "EXelta could not complete that request.");
       }
       setAnswer(data.answer ?? "Your thought has been received.");
       setConversationId(data.conversationId);
@@ -190,7 +191,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
         </nav>
       </header>
 
-      <section className="genesis-stage" aria-label="ZIO living universe">
+      <section className="genesis-stage" aria-label="XIO living universe">
         <div className="genesis-orbit genesis-orbit-one" aria-hidden="true" />
         <div className="genesis-orbit genesis-orbit-two" aria-hidden="true" />
         <svg className="genesis-links" viewBox="0 0 1000 650" preserveAspectRatio="none" aria-hidden="true">
@@ -203,13 +204,13 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
           <p className="genesis-subtitle">Bring me the thought.<br /><em>Let’s see what it could become.</em></p>
         </div>
 
-        <div className="genesis-core-wrap" aria-label="Intelligence Core">
+        <div className="genesis-core-wrap" aria-label="EXelta intelligence presence">
           <div className="genesis-core-halo genesis-halo-back" />
           <div className="genesis-core-halo genesis-halo-front" />
           <div className="genesis-core">
             <div className="genesis-core-inner"><span className="genesis-core-star">✦</span></div>
           </div>
-          <span className="genesis-core-label">THE CORE</span>
+          <span className="genesis-core-label">EXELTA</span>
         </div>
 
         {constellation.map((node) => (
@@ -257,7 +258,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
 
         <div className="genesis-input-dock">
           {answer && <div className="genesis-answer">
-            <div className="genesis-answer-header"><span className="genesis-status-dot" /> RESPONSE FROM THE CORE</div>
+            <div className="genesis-answer-header"><span className="genesis-status-dot" /> RESPONSE FROM EXELTA</div>
             <p>{answer}</p>
             {recommendation && <div className="genesis-recommendation"><span>INSIGHT</span><strong>{recommendation}</strong></div>}
             {evidence && evidence.length > 0 && <details className="genesis-evidence"><summary>View supporting context ({evidence.length})</summary>{evidence.map((item) => <p key={item.id}>{item.text}<small>{item.category ? ` · ${item.category}` : ""}{typeof item.confidence === "number" ? ` · ${item.confidence}% confidence` : ""}</small></p>)}</details>}
