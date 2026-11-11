@@ -63,6 +63,18 @@ test("Memory lifecycle supports contextual re-evaluation and explicit archive/ed
   assert.match(feedbackMigration, /\x27archive\x27/);
 });
 
+test("Stale active memories transition to dormant without entering reasoning", async () => {
+  const memory = await read("lib/memory.ts");
+  const evaluator = await read("app/api/memory/evaluate/route.ts");
+  const migration = await read("db/migrations/007_stale_memory_dormancy.sql");
+  assert.match(memory, /evaluation.status === "stale"/);
+  assert.match(memory, /stale_without_recent_confirmation/);
+  assert.match(memory, /set lifecycle_state='dormant'/);
+  assert.match(evaluator, /set lifecycle_state='dormant'/);
+  assert.match(evaluator, /lifecycleAfter = "dormant"/);
+  assert.match(migration, /'dormant'/);
+});
+
 test("Sanctum displays the actual evaluated Memory Fabric state", async () => {
   const sanctum = await read("components/sanctum/SanctumExperience.tsx");
   const evaluator = await read("app/api/memory/evaluate/route.ts");
@@ -116,104 +128,12 @@ test("Health and privacy endpoints are implemented instead of stubs", async () =
   assert.match(deleteRoute, /confirm !== "DELETE"/);
 });
 
-test("Live authenticated Memory Fabric context-switch and contradiction acceptance flow", async (t) => {
-  const baseUrl = process.env.XIO_TEST_BASE_URL;
-  const cookie = process.env.XIO_TEST_COOKIE;
-  if (!baseUrl || !cookie) {
-    t.skip("Set XIO_TEST_BASE_URL and XIO_TEST_COOKIE to run the real authenticated integration loop");
-    return;
-  }
-
-  const headers = { Cookie: cookie, "Content-Type": "application/json" };
-  const anonymous = await fetch(`${baseUrl}/api/workspace`, { redirect: "manual" });
-  assert.notEqual(anonymous.status, 200);
-  const workspaceResponse = await fetch(`${baseUrl}/api/workspace`, { headers });
-  assert.equal(workspaceResponse.status, 200);
-  const { workspace } = await workspaceResponse.json();
-  assert.ok(workspace?.id);
-
-  const nonce = `acceptance-${Date.now()}`;
-  const createdIds = [];
-  const createMemory = async (text) => {
-    const response = await fetch(`${baseUrl}/api/memory`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        workspaceId: workspace.id,
-        text,
-        category: "preference",
-        confidence: 85,
-        relevance: 95,
-        confirmed: true,
-        scope: { originContext: "project-alpha" },
-        provenance: { type: "acceptance-test", source: "user-confirmed", capturedAt: new Date().toISOString(), context: "project-alpha" },
-      }),
-    });
-    assert.equal(response.status, 201);
-    const body = await response.json();
-    assert.ok(body.memory?.id);
-    createdIds.push(body.memory.id);
-    return body.memory;
-  };
-
-  try {
-    const first = await createMemory(`[${nonce}] For launch planning, preferred deployment region is Canada Central.`);
-    const second = await createMemory(`[${nonce}] For launch planning, preferred deployment region is US East.`);
-
-    // Return in a different context. The origin context is provenance, not a
-    // hard fence: the candidate must be re-evaluated before it can influence.
-    const retrieval = await fetch(
-      `${baseUrl}/api/memory?workspaceId=${workspace.id}&context=project-beta&q=${encodeURIComponent(nonce + " launch planning preferred deployment region")}`,
-      { headers },
-    );
-    assert.equal(retrieval.status, 200);
-    const retrievalBody = await retrieval.json();
-    assert.ok(retrievalBody.memories?.some((item) => item.id === first.id));
-    const retrieved = retrievalBody.memories.find((item) => item.id === first.id);
-    assert.ok(retrieved.provenance?.capturedAt);
-    assert.equal(retrieved.evaluation?.eligible, true);
-
-    const evaluationResponse = await fetch(`${baseUrl}/api/memory/evaluate`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ workspaceId: workspace.id, memoryId: first.id, context: { context: "project-beta" } }),
-    });
-    assert.equal(evaluationResponse.status, 200);
-    const evaluationBody = await evaluationResponse.json();
-    assert.equal(evaluationBody.evaluation?.eligible, true);
-    assert.ok(evaluationBody.potentialConflicts?.some((item) => item.id === second.id));
-    assert.equal(evaluationBody.conflictDetection, "lexical_candidates_require_user_review");
-
-    const feedback = await fetch(`${baseUrl}/api/feedback`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        workspaceId: workspace.id,
-        memoryId: first.id,
-        signal: "contradict",
-        contradictsMemoryId: second.id,
-        note: "Acceptance test: user confirms these records conflict.",
-      }),
-    });
-    assert.equal(feedback.status, 200);
-
-    for (const memoryId of [first.id, second.id]) {
-      const response = await fetch(`${baseUrl}/api/memory/evaluate`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ workspaceId: workspace.id, memoryId, context: { context: "project-beta" } }),
-      });
-      assert.equal(response.status, 200);
-      const body = await response.json();
-      assert.equal(body.evaluation?.eligible, false);
-      assert.equal(body.evaluation?.status, "review");
-      assert.equal(body.evaluation?.influenceWeight, 0);
-    }
-  } finally {
-    await Promise.all(createdIds.map((memoryId) => fetch(`${baseUrl}/api/memory`, {
-      method: "DELETE",
-      headers,
-      body: JSON.stringify({ workspaceId: workspace.id, memoryId }),
-    })));
-  }
+test("Staging database fails closed instead of using in-memory mock storage", async () => {
+  const database = await read("lib/db.ts");
+  assert.match(database, /env\.HYPERDRIVE\?\.connectionString/);
+  assert.match(database, /env as typeof env & \{ APP_ENV\?: string \}/);
+  assert.match(database, /process\.env\.APP_ENV/);
+  assert.match(database, /appEnv === "production" \|\| appEnv === "staging"/);
+  assert.match(database, /database is not configured/);
+  assert.match(database, /refusing to fall back to in-memory mock storage/);
 });

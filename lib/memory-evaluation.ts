@@ -1,9 +1,13 @@
+import { resolveProvenance, type ProvenanceResolution } from "@/lib/provenance-resolution";
+
 export type MemoryEvaluationInput = {
   lifecycleState: string;
   confidence: number;
   relevance: number;
   scope: Record<string, unknown>;
   provenance: Record<string, unknown>;
+  recordedAt?: string;
+  ownerId?: string;
   updatedAt: string;
   lastConfirmedAt?: string | null;
   text: string;
@@ -15,49 +19,47 @@ export type MemoryEvaluation = {
   status: "eligible" | "review" | "stale" | "out_of_scope" | "insufficient_provenance";
   reasons: string[];
   influenceWeight: number;
+  provenanceResolution?: ProvenanceResolution;
 };
 
 const ACTIVE_STATES = new Set(["active", "dormant", "review"]);
 const DAY_MS = 86400000;
 const MAX_MEMORY_AGE_DAYS = 180;
-const LINEAGE_KEYS = ["userId", "conversationId", "messageId", "sourceId", "documentId", "eventId", "uri"] as const;
-function rejected(status: MemoryEvaluation["status"], reason: string): MemoryEvaluation {
-  return { eligible: false, status, reasons: [reason], influenceWeight: 0 };
-}
-function hasUsableProvenance(p: Record<string, unknown> | null | undefined): boolean {
-  if (!p || typeof p !== "object" || Array.isArray(p) || typeof p.type !== "string" || !p.type.trim()) return false;
-  const hasId = LINEAGE_KEYS.some((key) => {
-    const value = p[key];
-    return (typeof value === "string" && !!value.trim()) || (typeof value === "number" && Number.isFinite(value));
-  });
-  const capturedAt = typeof p.capturedAt === "string" ? Date.parse(p.capturedAt) : Number.NaN;
-  const hasVerifiedTimestamp = Number.isFinite(capturedAt);
-  return hasVerifiedTimestamp && (hasId || (typeof p.source === "string" && !!p.source.trim()));
-}
 
+function rejected(
+  status: MemoryEvaluation["status"],
+  reason: string,
+  provenanceResolution?: ProvenanceResolution,
+): MemoryEvaluation {
+  return { eligible: false, status, reasons: [reason], influenceWeight: 0, provenanceResolution };
+}
 
 export function evaluateMemoryForContext(
   memory: MemoryEvaluationInput,
   context: Record<string, unknown>,
   now = Date.now(),
 ): MemoryEvaluation {
+  const provenanceResolution = resolveProvenance(memory.provenance, memory.recordedAt, memory.ownerId);
+  const reject = (status: MemoryEvaluation["status"], reason: string) => rejected(status, reason, provenanceResolution);
+
   if (!ACTIVE_STATES.has(memory.lifecycleState)) {
-    return rejected("out_of_scope", "lifecycle_state_not_eligible");
+    return reject("out_of_scope", "lifecycle_state_not_eligible");
   }
 
-  if (!Number.isFinite(now)) return rejected("stale", "invalid_evaluation_time");
+  if (!Number.isFinite(now)) return reject("stale", "invalid_evaluation_time");
   if (!Number.isFinite(memory.confidence) || memory.confidence < 0 || memory.confidence > 100) {
-    return rejected("review", "invalid_confidence");
+    return reject("review", "invalid_confidence");
   }
   if (!Number.isFinite(memory.relevance) || memory.relevance < 0 || memory.relevance > 100) {
-    return rejected("review", "invalid_relevance");
+    return reject("review", "invalid_relevance");
   }
-  if (!hasUsableProvenance(memory.provenance)) {
-    return rejected("insufficient_provenance", "missing_provenance_or_unverified_timestamp");
+  if (!provenanceResolution.mayInfluence) {
+    return reject("insufficient_provenance", provenanceResolution.issues[0] ?? "provenance_unresolved");
   }
-  const capturedAtMs = Date.parse(String(memory.provenance.capturedAt));
+
+  const capturedAtMs = Date.parse(String(provenanceResolution.capturedAt));
   if (capturedAtMs > now + 300000) {
-    return rejected("insufficient_provenance", "future_provenance_timestamp");
+    return reject("insufficient_provenance", "future_provenance_timestamp");
   }
 
   const scope = memory.scope ?? {};
@@ -69,29 +71,29 @@ export function evaluateMemoryForContext(
     : undefined;
 
   if (scopedContexts.length > 0) {
-    if (!contextName) return rejected("out_of_scope", "context_required_for_scoped_memory");
+    if (!contextName) return reject("out_of_scope", "context_required_for_scoped_memory");
     if (!scopedContexts.includes(contextName)) {
-      return rejected("out_of_scope", "context_scope_mismatch");
+      return reject("out_of_scope", "context_scope_mismatch");
     }
   }
 
   const updatedAtMs = Date.parse(memory.updatedAt);
   if (!Number.isFinite(updatedAtMs)) {
-    return rejected("stale", "invalid_updated_at");
+    return reject("stale", "invalid_updated_at");
   }
-  if (updatedAtMs > now + 300000) return rejected("stale", "future_updated_at");
+  if (updatedAtMs > now + 300000) return reject("stale", "future_updated_at");
 
   const confirmationValue = memory.lastConfirmedAt;
   const hasConfirmation = typeof confirmationValue === "string" && confirmationValue.trim().length > 0;
   const confirmedAtMs = hasConfirmation ? Date.parse(confirmationValue!) : Number.NaN;
   if (hasConfirmation && !Number.isFinite(confirmedAtMs)) {
-    return rejected("stale", "invalid_last_confirmed_at");
+    return reject("stale", "invalid_last_confirmed_at");
   }
   if (hasConfirmation && confirmedAtMs > now + 300000) {
-    return rejected("stale", "future_last_confirmed_at");
+    return reject("stale", "future_last_confirmed_at");
   }
 
-  const freshnessTimestamp = hasConfirmation ? confirmedAtMs : updatedAtMs;
+  const freshnessTimestamp = hasConfirmation ? confirmedAtMs : capturedAtMs;
   const ageDays = Math.max(0, (now - freshnessTimestamp) / DAY_MS);
   const stale = ageDays > MAX_MEMORY_AGE_DAYS;
   const reasons: string[] = [];
@@ -99,7 +101,7 @@ export function evaluateMemoryForContext(
   if (memory.confidence < 25) reasons.push("low_confidence");
   if (memory.relevance < 25) reasons.push("low_relevance");
 
-  if (stale) return { eligible: false, status: "stale", reasons, influenceWeight: 0 };
+  if (stale) return { eligible: false, status: "stale", reasons, influenceWeight: 0, provenanceResolution };
 
   if (memory.lifecycleState === "review" || memory.confidence < 40 || memory.relevance < 40) {
     return {
@@ -107,6 +109,7 @@ export function evaluateMemoryForContext(
       status: "review",
       reasons: reasons.length ? reasons : ["explicit_review_required"],
       influenceWeight: 0,
+      provenanceResolution,
     };
   }
 
@@ -118,6 +121,7 @@ export function evaluateMemoryForContext(
     status: "eligible",
     reasons,
     influenceWeight: Number((lifecycleWeight * confidenceWeight * relevanceWeight).toFixed(3)),
+    provenanceResolution,
   };
 }
 
