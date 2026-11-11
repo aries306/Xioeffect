@@ -12,14 +12,27 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const appEnv = process.env.APP_ENV ?? "development";
-  const content = <html lang="en"><body>{children}</body></html>;
 
   if (!publishableKey) {
     if (appEnv === "production" || appEnv === "staging") {
       throw new Error("Clerk is required in staging and production. Configure NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY before serving the application.");
     }
-    return content;
+    return <html lang="en"><body>{children}</body></html>;
   }
 
-  return <ClerkProvider publishableKey={publishableKey} signInUrl="/sign-in" signUpUrl="/sign-up" signInFallbackRedirectUrl="/app" signUpFallbackRedirectUrl="/app">{content}</ClerkProvider>;
+  return (
+    <html lang="en">
+      <body>
+        <ClerkProvider
+          publishableKey={publishableKey}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+          signInFallbackRedirectUrl="/app"
+          signUpFallbackRedirectUrl="/app"
+        >
+          {children}
+        </ClerkProvider>
+      </body>
+    </html>
+  );
 }
