@@ -16,7 +16,7 @@ const patterns: Array<{ re: RegExp; category: MemoryCandidate["category"]; label
 ];
 
 export function extractMemoryCandidates(text: string): MemoryCandidate[] {
-  return patterns.flatMap(({ re, category, label }) => {
+  return patterns.flatMap(({ re, category, label }): MemoryCandidate[] => {
     const match = re.exec(text);
     if (!match || match.index === undefined) return [];
     const remainder = text.slice(match.index + match[0].length).replace(/^[\s,:;-]+/, "").trim();
