@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-
 type GenesisExperienceProps = { authenticated?: boolean };
 type WorkspacePayload = {
   workspace?: { id: string; name: string; context?: Record<string, unknown> };
