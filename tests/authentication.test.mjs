@@ -44,7 +44,7 @@ test("GitHub OAuth uses state, PKCE, short-lived HttpOnly cookies, and encrypted
   assert.match(connect, /pkceChallenge\(verifier\)/);
   assert.match(connect, /HttpOnly; Secure; SameSite=Lax; Path=\/; Max-Age=600/);
   assert.match(callback, /state !== expectedState/);
-  assert.match(callback, /oauthUser !== user\.id/);
+  assert.match(callback, /decodeURIComponent\(oauthUser\) !== user\.id/);
   assert.match(github, /aes-256-gcm/);
   assert.match(github, /GITHUB_TOKEN_ENCRYPTION_KEY/);
   assert.match(github, /code_challenge_method: "S256"/);
