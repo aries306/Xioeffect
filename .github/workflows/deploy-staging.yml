@@ -40,7 +40,8 @@ jobs:
       - run: npm run lint
       - name: Build for the isolated staging environment
         run: npm run build
-      - name: Verify generated Worker targets isolated staging resources\n        run: npm run validate:staging-build\n      - name: Verify required deployment credentials
+      - name: Verify generated Worker targets isolated staging resources
+        run: npm run validate:staging-build\n      - name: Verify required deployment credentials
         shell: bash
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing staging environment secret: CLOUDFLARE_API_TOKEN"; exit 1; }
