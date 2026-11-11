@@ -37,7 +37,7 @@ The authentication architecture and request flow are documented in [AUTHENTICATI
 
 ## Cloudflare deployment
 
-Cloudflare Workers Builds is disconnected from the GitHub repository in the currently connected account. The repository now includes a manual GitHub Actions deploy workflow as an alternate Cloudflare deployment path: `.github/workflows/deploy-staging.yml`. It deploys only the named implementation branch to Worker `exelta-staging`, installs the Clerk secret, and runs the fail-closed live acceptance suite. It cannot deploy the production Worker.
+Cloudflare Workers Builds is disconnected from the GitHub repository in the currently connected account. The repository now includes a gated GitHub Actions deploy workflow as an alternate Cloudflare deployment path: `.github/workflows/deploy-staging.yml`. It deploys only the named implementation branch to Worker `exelta-staging`, installs the Clerk secret, and runs the fail-closed live acceptance suite. It cannot deploy the production Worker. Trigger it by pushing a commit whose message contains `[deploy-staging]` to the implementation branch, or use `workflow_dispatch` when available.
 
 The workflow uses:
 
@@ -55,7 +55,7 @@ Configure these secrets in the GitHub Actions environment named `staging` before
 | `STAGING_CLERK_TEST_COOKIE` | Session cookie for test user one |
 | `STAGING_CLERK_OTHER_TEST_COOKIE` | Session cookie for a different test user |
 
-The initial deploy can publish the Worker before the two test sessions exist; the workflow then fails at the live acceptance step rather than reporting a false green result. After deployment, create/sign in two distinct Clerk staging users, save their session cookies as the two GitHub environment secrets, and dispatch the workflow again. Never paste cookies or secret keys into chat, source files, or logs.
+The initial deploy can publish the Worker before the two test sessions exist; the workflow then fails at the live acceptance step rather than reporting a false green result. After deployment, create/sign in two distinct Clerk staging users, save their session cookies as the two GitHub environment secrets, and trigger the workflow again with another `[deploy-staging]` commit or `workflow_dispatch`. Never paste cookies or secret keys into chat, source files, or logs.
 
 The workflow requires `CLOUDFLARE_API_TOKEN` and `CLERK_SECRET_KEY` before deploying. The first run is therefore blocked until those two secrets are configured. It runs typecheck, unit tests, lint, build, staging-config validation, deploy, Clerk secret installation, and then authenticated acceptance with `CI_REQUIRE_LIVE_ACCEPTANCE=1`.
 
