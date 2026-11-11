@@ -21,9 +21,9 @@ export async function POST(request: Request) {
     const evaluation = evaluateMemoryForContext({
       text: String(row.text),
       scope: (row.scope ?? {}) as Record<string, unknown>,
-      provenance: Object.prototype.hasOwnProperty.call((row.provenance ?? {}) as Record<string, unknown>, "capturedAt")
-        ? (row.provenance ?? {}) as Record<string, unknown>
-        : { ...((row.provenance ?? {}) as Record<string, unknown>), capturedAt: String(row.created_at) },
+      provenance: (row.provenance ?? {}) as Record<string, unknown>,
+      recordedAt: String(row.created_at),
+      ownerId: userId,
       lifecycleState: String(row.lifecycle_state),
       confidence: Number(row.confidence),
       relevance: Number(row.relevance),
@@ -31,6 +31,19 @@ export async function POST(request: Request) {
       lastConfirmedAt: row.last_confirmed_at ? String(row.last_confirmed_at) : null,
     }, parsed.data.context);
 
+    let lifecycleAfter = String(row.lifecycle_state);
+    if (
+      lifecycleAfter === "active" &&
+      evaluation.status === "stale" &&
+      evaluation.reasons.includes("stale_without_recent_confirmation")
+    ) {
+      await sql.begin(async (tx) => {
+        const changed = await tx`update memories set lifecycle_state='dormant',active=true,last_evaluated_at=now(),evaluation=${JSON.stringify(evaluation)}::jsonb where id=${row.id} and workspace_id=${workspace.id} and user_id=${userId} and lifecycle_state='active' returning id`;
+        if (!changed[0]) return;
+        lifecycleAfter = "dormant";
+        await tx`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata) values (${row.id},${workspace.id},${userId},'dormant',${row.confidence},${row.confidence},${row.relevance},${row.relevance},'active','dormant','contextual-evaluation',${JSON.stringify({ reason: "stale_without_recent_confirmation" })}::jsonb)`;
+      });
+    }
     await sql`update memories set last_evaluated_at=now(), evaluation=${JSON.stringify(evaluation)}::jsonb where id=${row.id} and workspace_id=${workspace.id}`;
     const candidateRows = await sql`select id,text,category,confidence,relevance,lifecycle_state,scope,provenance,created_at,updated_at,last_confirmed_at from memories where workspace_id=${workspace.id} and user_id=${userId} and id<> ${row.id} and category=${row.category} and active=true and lifecycle_state in ('active','dormant','review') and not exists (
       select 1 from memory_relations relation
@@ -46,9 +59,9 @@ export async function POST(request: Request) {
       confidence: Number(candidate.confidence),
       relevance: Number(candidate.relevance),
       scope: (candidate.scope ?? {}) as Record<string, unknown>,
-      provenance: Object.prototype.hasOwnProperty.call((candidate.provenance ?? {}) as Record<string, unknown>, "capturedAt")
-        ? (candidate.provenance ?? {}) as Record<string, unknown>
-        : { ...((candidate.provenance ?? {}) as Record<string, unknown>), capturedAt: String(candidate.created_at) },
+      provenance: (candidate.provenance ?? {}) as Record<string, unknown>,
+      recordedAt: String(candidate.created_at),
+      ownerId: userId,
       updatedAt: String(candidate.updated_at),
       lastConfirmedAt: candidate.last_confirmed_at ? String(candidate.last_confirmed_at) : null,
     }));
@@ -59,16 +72,16 @@ export async function POST(request: Request) {
       confidence: Number(row.confidence),
       relevance: Number(row.relevance),
       scope: (row.scope ?? {}) as Record<string, unknown>,
-      provenance: Object.prototype.hasOwnProperty.call((row.provenance ?? {}) as Record<string, unknown>, "capturedAt")
-        ? (row.provenance ?? {}) as Record<string, unknown>
-        : { ...((row.provenance ?? {}) as Record<string, unknown>), capturedAt: String(row.created_at) },
+      provenance: (row.provenance ?? {}) as Record<string, unknown>,
+      recordedAt: String(row.created_at),
+      ownerId: userId,
       updatedAt: String(row.updated_at),
       lastConfirmedAt: row.last_confirmed_at ? String(row.last_confirmed_at) : null,
     };
     const potentialConflicts = findContradictionCandidates(currentInput, candidateInputs as MemoryEvaluationInput[])
       .map((candidate) => ({ id: (candidate as MemoryEvaluationInput & { id: string }).id, text: candidate.text, category: candidate.category ?? "other" }));
     await sql`insert into memory_events (memory_id,workspace_id,user_id,event_type,confidence_before,confidence_after,relevance_before,relevance_after,lifecycle_before,lifecycle_after,source,metadata)
-      values (${row.id},${workspace.id},${userId},'evaluated',${row.confidence},${row.confidence},${row.relevance},${row.relevance},${row.lifecycle_state},${row.lifecycle_state},'contextual-evaluation',${JSON.stringify({ evaluation })}::jsonb)`;
+      values (${row.id},${workspace.id},${userId},'evaluated',${row.confidence},${row.confidence},${row.relevance},${row.relevance},${row.lifecycle_state},${lifecycleAfter},'contextual-evaluation',${JSON.stringify({ evaluation })}::jsonb)`;
     return Response.json({ memoryId: row.id, evaluation, potentialConflicts, conflictDetection: "lexical_candidates_require_user_review" });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to evaluate memory";

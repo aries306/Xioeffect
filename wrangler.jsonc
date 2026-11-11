@@ -3,7 +3,8 @@
   "name": "zuna",
   "compatibility_date": "2026-11-03",
   "compatibility_flags": [
-    "nodejs_compat"
+    "nodejs_compat",
+    "nodejs_compat_populate_process_env"
   ],
   "main": "./worker/index.ts",
   "assets": {
@@ -37,5 +38,24 @@
       "id": "21a940560ded47ea8f0ed10eda49dbe9"
     }
   ],
-  "preview_urls": false
+  "preview_urls": false,
+  "previews": {},
+  "env": {
+    "staging": {
+      "name": "exelta-staging",
+      "vars": {
+        "APP_ENV": "staging",
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YmVsb3ZlZC1pbXBhbGEtNjgzMS5jbGVyay5hY2NvdW50cy5kZXYk"
+      },
+      "hyperdrive": [
+        {
+          "binding": "HYPERDRIVE",
+          "id": "6b65f8e46ab34ec39b87abd9fdbf5636"
+        }
+      ],
+      "ai": {
+        "binding": "AI"
+      }
+    }
+  }
 }

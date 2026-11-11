@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 
 type Workspace = { id: string; name?: string };
@@ -38,6 +38,10 @@ declare global {
     webkitSpeechRecognition?: SpeechRecognitionConstructor;
   }
 }
+
+const subscribeToVoiceSupport = () => () => {};
+const getVoiceSupportSnapshot = () => typeof window !== "undefined" && Boolean((window.SpeechRecognition ?? window.webkitSpeechRecognition) && "speechSynthesis" in window);
+const getServerVoiceSupportSnapshot = () => false;
 
 const MODULES: Module[] = [
   { id: "memory", label: "Memory", description: "User-owned context that can persist, become dormant, and return when relevant.", status: "connected", x: 18, y: 38, color: "violet" },
@@ -80,15 +84,13 @@ export default function XIOAtlasExperience({ authenticated }: { authenticated: b
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [voiceSupported, setVoiceSupported] = useState(false);
+  const voiceSupported = useSyncExternalStore(subscribeToVoiceSupport, getVoiceSupportSnapshot, getServerVoiceSupportSnapshot);
   const [notice, setNotice] = useState("");
   const [workspaceReady, setWorkspaceReady] = useState(false);
 
   const activeModule = MODULES.find((module) => module.id === selected) ?? MODULES[0];
 
   useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    setVoiceSupported(Boolean(SpeechRecognition && "speechSynthesis" in window));
     if (!authenticated) return;
     let active = true;
     fetch("/api/workspace", { credentials: "same-origin" })
@@ -359,9 +361,9 @@ export default function XIOAtlasExperience({ authenticated }: { authenticated: b
   return (
     <main className="zuna-atlas">
       <header className="atlas-topbar">
-        <Link href="/" className="atlas-brand" aria-label="XIO home">
+        <Link href="/" className="atlas-brand" aria-label="Exelta home">
           <span className="atlas-brand-mark">Z</span>
-          <span><strong>XIO</strong><small>INTELLIGENCE ENVIRONMENT</small></span>
+          <span><strong>EXELTA</strong><small>INTELLIGENCE ENVIRONMENT</small></span>
         </Link>
         <div className="atlas-top-center"><span className="atlas-live-dot" /> SYSTEM ATLAS <span className="atlas-top-divider">/</span> SPATIAL PREVIEW</div>
         <nav className="atlas-top-nav" aria-label="Main navigation">
@@ -375,7 +377,7 @@ export default function XIOAtlasExperience({ authenticated }: { authenticated: b
           <p className="atlas-eyebrow">A MAP OF THE LIVING SYSTEM</p>
           <h1>Everything connected.<br /><em>Nothing assumed.</em></h1>
         </div>
-        <p className="atlas-heading-copy">Explore XIO’s cognitive architecture, see what is connected, and speak with the intelligence layer. This map separates live application surfaces from foundations and future architecture.</p>
+        <p className="atlas-heading-copy">Explore Exelta’s cognitive architecture, see what is connected, and speak with the intelligence layer. This map separates live application surfaces from foundations and future architecture.</p>
       </section>
 
       <section className="atlas-grid">
@@ -435,7 +437,7 @@ export default function XIOAtlasExperience({ authenticated }: { authenticated: b
         </aside>
       </section>
 
-      <section className="atlas-voice-section" aria-label="Voice conversation with XIO">
+      <section className="atlas-voice-section" aria-label="Voice conversation with Exelta">
         <div className="atlas-voice-intro">
           <p className="atlas-eyebrow">VOICE-TO-VOICE INTERFACE</p>
           <h2>Talk to EXelta.<br /><em>Hear the response.</em></h2>
@@ -454,7 +456,7 @@ export default function XIOAtlasExperience({ authenticated }: { authenticated: b
         <div className="atlas-chat-card">
           <div className="atlas-chat-head">
             <div className={`atlas-chat-orb ${listening || speaking ? "is-active" : ""}`}><span /></div>
-            <div><strong>EXelta · XIO intelligence</strong><small>{listening ? "Listening to you" : speaking ? "Speaking response" : busy ? "Thinking" : "Ready for conversation"}</small></div>
+            <div><strong>Exelta · Zioren intelligence</strong><small>{listening ? "Listening to you" : speaking ? "Speaking response" : busy ? "Thinking" : "Ready for conversation"}</small></div>
             {speaking && <button type="button" className="atlas-stop-button" onClick={stopSpeaking}>Stop audio</button>}
           </div>
           <div className="atlas-chat-messages" aria-live="polite">
@@ -475,7 +477,7 @@ export default function XIOAtlasExperience({ authenticated }: { authenticated: b
         </div>
       </section>
 
-      <footer className="atlas-footer"><span>XIO SYSTEM ATLAS</span><span>Memory · Research · Context · Reasoning · Outcomes</span><span>PREVIEW — NOT A PRODUCTION RELEASE</span></footer>
+      <footer className="atlas-footer"><span>EXELTA SYSTEM ATLAS</span><span>Memory · Research · Context · Reasoning · Outcomes</span><span>PREVIEW — NOT A PRODUCTION RELEASE</span></footer>
     </main>
   );
 }

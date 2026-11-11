@@ -184,6 +184,9 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
         <Link className="genesis-brand" href="/" aria-label="ZIO Genesis home">
           <span className="genesis-mark" aria-hidden="true"><i /></span>
           <span><strong>ZIO</strong><small>GENESIS</small></span>
+        <Link className="genesis-brand" href="/" aria-label="Exelta home">
+          <span className="genesis-mark" aria-hidden="true"><i /></span>
+          <span><strong>EXELTA</strong><small>GENESIS</small></span>
         </Link>
         <div className="genesis-top-status"><span className="genesis-status-dot" /> {authenticated ? (workspace?.name ?? "Private universe") : "A living intelligent reality"}</div>
         <nav className="genesis-nav" aria-label="Account">
@@ -191,7 +194,7 @@ export default function GenesisExperience({ authenticated = false }: GenesisExpe
         </nav>
       </header>
 
-      <section className="genesis-stage" aria-label="XIO living universe">
+      <section className="genesis-stage" aria-label="Exelta living universe">
         <div className="genesis-orbit genesis-orbit-one" aria-hidden="true" />
         <div className="genesis-orbit genesis-orbit-two" aria-hidden="true" />
         <svg className="genesis-links" viewBox="0 0 1000 650" preserveAspectRatio="none" aria-hidden="true">

@@ -1,33 +1,27 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-const isProtectedRoute = createRouteMatcher([
-  "/app(.*)",
-  "/api/account(.*)",
-  "/api/chat(.*)",
-  "/api/workspace(.*)",
-  "/api/memory(.*)",
-  "/api/preferences(.*)",
-  "/api/feedback(.*)",
-  "/api/billing/checkout(.*)",
-  "/api/github(.*)",
-  "/api/nexus(.*)",
-]);
+const isProtectedPage = createRouteMatcher(["/app(.*)"]);
 
-export default clerkMiddleware(async (auth, request) => {
-  if (isProtectedRoute(request)) await auth.protect();
-});
+export default clerkMiddleware(
+  async (auth, request) => {
+    if (isProtectedPage(request)) await auth.protect();
+  },
+  { signInUrl: "/sign-in" },
+);
 
 export const config = {
-  // Keep Clerk at the protected boundary, avoiding a Next-only regex matcher and
-  // allowing public/static routes to run without loading authentication middleware.
+  // Clerk must run for private APIs so auth() can validate the request session.
+  // API handlers return JSON 401/403 responses instead of middleware redirects.
   matcher: [
     "/app/:path*",
     "/api/account/:path*",
     "/api/chat/:path*",
     "/api/workspace/:path*",
     "/api/memory/:path*",
+    "/api/preferences/:path*",
     "/api/feedback/:path*",
     "/api/billing/checkout/:path*",
+    "/api/billing/portal/:path*",
     "/api/github/:path*",
     "/api/nexus/:path*",
   ],
