@@ -13,7 +13,7 @@ concurrency:
 jobs:
   deploy:
     if: github.ref == 'refs/heads/fix/staging-pipeline-recovery' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy-staging]'))
-    runs-on: windows-2025
+    runs-on: ubuntu-24.04-arm
     environment: staging
     timeout-minutes: 40
     permissions:
