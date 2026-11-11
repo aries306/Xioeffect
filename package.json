@@ -19,7 +19,7 @@
     "preview:cloudflare": "npm run build:vinext && npx wrangler dev",
     "preview": "bash scripts/preview.sh",
     "deploy:cloudflare": "npm run build:vinext && npx wrangler deploy",
-    "deploy:staging": "CLOUDFLARE_ENV=staging npm run build:vinext && npx wrangler deploy --account-id 6266f92b054b68ec69ff619d3869f195",
+    "deploy:staging": "CLOUDFLARE_ENV=staging npm run build:vinext && npx wrangler deploy",
     "dev:next": "next dev -p 3000 -H 0.0.0.0",
     "build:next": "next build",
     "start:next": "next start",
