@@ -1,4 +1,4 @@
-import { resolveProvenance, type ProvenanceResolution } from "@/lib/provenance-resolution";
+import { resolveProvenance, type ProvenanceResolution } from "./provenance-resolution";
 
 export type MemoryEvaluationInput = {
   lifecycleState: string;
