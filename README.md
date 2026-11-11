@@ -1,10 +1,10 @@
-# Exelta
+# XIO
 
-Exelta is a server-backed application with a browser-first experience. Its front door is a bright, spatial 3D five-minute arrival led by Exelta, with authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities running through server-side routes.
+XIO is a server-backed application with a browser-first experience. Its front door is a bright, spatial 3D five-minute arrival led by Exelta, with authenticated workspace, chat, Memory Fabric, Research, and NEXUS capabilities running through server-side routes.
 
 ## Runtime
 
-Exelta uses **Vinext on Cloudflare Workers** as its default development, production-build,
+XIO uses **Vinext on Cloudflare Workers** as its default development, production-build,
 and production-serving runtime. This is the deployment target configured in
 `wrangler.jsonc`, and it builds the full App Router surface successfully. The legacy
 Next.js scripts remain available as `dev:next`, `build:next`, and `start:next` for
@@ -12,7 +12,7 @@ local compatibility checks.
 
 ## Current state
 
-- `/` serves Exelta's bright 3D five-minute arrival and Exelta-led onboarding
+- `/` serves XIO's bright 3D five-minute arrival and Exelta-led onboarding
 - `/api/health` is a deployment health endpoint
 - `/api/chat` validates input, authorizes the workspace, retrieves contextual Memory Fabric evidence, calls Cloudflare Workers AI through the `AI` binding, and persists the conversation
 - GitHub integration lives on `main` behind authenticated server routes; `feat/github-nexus` is a historical branch and is not the deployment baseline
@@ -24,7 +24,7 @@ The GitHub integration uses the authenticated Clerk user as the ownership bounda
 1. `/api/github/connect` starts GitHub OAuth with CSRF state and PKCE S256.
 2. `/api/github/callback` exchanges the one-time authorization code, validates the GitHub identity, and stores tokens only server-side using AES-256-GCM encryption.
 3. Expiring GitHub access tokens are refreshed with the encrypted refresh token when available.
-4. `/api/github/repositories` exposes only the authenticated user's repositories and lets the user select which repositories Exelta may index.
+4. `/api/github/repositories` exposes only the authenticated user's repositories and lets the user select which repositories XIO may index.
 5. `/api/github/sync` performs incremental repository synchronization using branch-head and blob SHAs, filters generated/binary content, and records failures without leaking tokens.
 6. Each changed source document becomes a provenance-backed Research record and a deduplicated NEXUS ingest event.
 7. `/api/nexus/research` exposes the authenticated user's Research records and lets the NEXUS layer enqueue additional processing events.
@@ -84,13 +84,13 @@ Before merging/deploying the GitHub branch:
 - repeat sync without a new commit and confirm it is a no-op
 - push a new commit and confirm only changed blobs are re-indexed
 - test access-token refresh and expired/invalid refresh-token failure handling
-- verify account export excludes encrypted GitHub token material\n- verify account data deletion requires explicit confirmation and removes internal Exelta data plus GitHub connection data through the same ownership boundary
+- verify account export excludes encrypted GitHub token material\n- verify account data deletion requires explicit confirmation and removes internal XIO data plus GitHub connection data through the same ownership boundary
 - verify contextual memory retrieval blocks missing provenance, scope mismatches, stale memories, and low-confidence memories before they influence AI responses
 - verify evaluation state and explicit memory relations are persisted with provenance
 
 ## Data model and privacy
 
-`db/migrations/001_xio_core.sql` models users, preferences, memories, goals, conversations, messages, events, and subscription state. The application server must scope every user-owned query by the verified authenticated Clerk user ID and internal Exelta user/workspace ownership boundary. Never expose `DATABASE_URL`, Stripe secrets, or AI credentials to the browser.
+`db/migrations/001_xio_core.sql` models users, preferences, memories, goals, conversations, messages, events, and subscription state. The application server must scope every user-owned query by the verified authenticated Clerk user ID and internal XIO user/workspace ownership boundary. Never expose `DATABASE_URL`, Stripe secrets, or AI credentials to the browser.
 
 The product must retain the demo's privacy controls: consent before memory creation, per-memory edit/delete, account export, account deletion, and a learning pause. Contextual Memory must remain distinct from Research and other derived knowledge: memories retain provenance, scope, confidence, and lifecycle, and should be re-evaluated before influencing recommendations when their original context returns.
 
@@ -114,8 +114,9 @@ Clerk is connected to the application. `/sign-up` and `/sign-in` provide hosted 
 
 ## Product identity
 
-- **Exelta** is the companion personal-intelligence ecosystem; the two experiences share the same architectural principles without being collapsed into one product.
-- **Exelta** is the unified product and user-facing intelligence.
+- **XIO** is the application and product experience documented in this repository.
+- **Zioren** remains a distinct personal-intelligence ecosystem; it is not renamed, absorbed, or collapsed into XIO.
+- **EXelta** is the shared user-facing AI identity across XIO and Zioren. It is an intelligence presence, not a replacement product brand.
 - **Intelligence Layer** is the shared underlying architecture for context assembly, retrieval, reasoning, orchestration, governance, and outcome verification.
 - **Memory Fabric** preserves contextual scope, provenance, confidence, lifecycle, and user control. Research evidence is not automatically promoted into memory.
 - **NEXUS** connects and processes eligible evidence and work items while keeping memory, beliefs, patterns, insights, and recommendations distinct.
