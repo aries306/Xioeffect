@@ -48,9 +48,9 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing staging environment secret: CLOUDFLARE_API_TOKEN"; exit 1; }
           test -n "$CLERK_SECRET_KEY" || { echo "Missing staging environment secret: CLERK_SECRET_KEY"; exit 1; }
       - name: Deploy isolated staging Worker
-        run: npx wrangler deploy --env staging
+        run: npx wrangler deploy --config dist/server/wrangler.json
       - name: Install Clerk staging secret
         shell: bash
-        run: printf '%s' "$CLERK_SECRET_KEY" | npx wrangler secret put CLERK_SECRET_KEY --env staging
+        run: printf '%s' "$CLERK_SECRET_KEY" | npx wrangler secret put CLERK_SECRET_KEY --config dist/server/wrangler.json
       - name: Verify live authenticated staging flows
         run: npm run test:acceptance
